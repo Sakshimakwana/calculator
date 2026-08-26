@@ -92,15 +92,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       }
 
       if (shouldResetDisplay) {
-        display = number;
-        shouldResetDisplay = false;
-        return;
-      }
+        if (operation != null) {
+          display += number;
+        } else {
+          display = number;
+        }
 
-      // If display contains an operation,
-      // start typing the second number.
-      if (operation != null && display.contains(operation!)) {
-        display = number;
         shouldResetDisplay = false;
         return;
       }
@@ -222,7 +219,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       operation = newOperation;
 
       // Show operation immediately.
-      display = '${_formatNumber(firstNumber!)} $newOperation';
+      display = '${_formatNumber(firstNumber!)}$newOperation';
 
       shouldResetDisplay = true;
     });
@@ -243,9 +240,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     String secondDisplay = display;
 
-    // Remove operation from display if it is visible.
-    if (secondDisplay.contains(' ')) {
-      secondDisplay = secondDisplay.split(' ').last;
+    if (operation != null && secondDisplay.contains(operation!)) {
+      secondDisplay = secondDisplay.split(operation!).last;
     }
 
     final secondNumber = double.tryParse(secondDisplay);
@@ -304,7 +300,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     operation = null;
     shouldResetDisplay = true;
   }
-
   // ---------------- FORMAT NUMBER ----------------
 
   String _formatNumber(double number) {
@@ -434,8 +429,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               child: GridView.count(
                 shrinkWrap: true,
                 crossAxisCount: 4,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+                crossAxisSpacing: 7,
+                mainAxisSpacing: 7,
                 childAspectRatio: 1,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
@@ -448,14 +443,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     ),
                     deleteLast,
                   ),
-
                   // AC
                   CalculatorButton(
                     isFunction: true,
                     onTap: clear,
-                    child: const Text(
-                      'AC',
-                      style: CalculatorTypography.function,
+                    child: CalculatorIcons.ac(
+                      hasValue: display != '0',
                     ),
                   ),
 
@@ -522,11 +515,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   ),
 
                   // +/- 0 . =
-                  functionButton(
-                    CalculatorIcons.plusMinus(),
-                    toggleSign,
+                  CalculatorButton(
+                    onTap: toggleSign,
+                    child: CalculatorIcons.plusMinus(),
                   ),
-
                   numberButton('0'),
 
                   CalculatorButton(

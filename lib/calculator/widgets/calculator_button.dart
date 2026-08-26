@@ -7,6 +7,7 @@ class CalculatorButton extends StatefulWidget {
   final bool isOperator;
   final bool isFunction;
   final bool isNumberPad;
+  final bool isPlusMinus;
 
   const CalculatorButton({
     super.key,
@@ -15,8 +16,8 @@ class CalculatorButton extends StatefulWidget {
     this.isOperator = false,
     this.isFunction = false,
     this.isNumberPad = false,
+    this.isPlusMinus = false,
   });
-
   @override
   State<CalculatorButton> createState() => _CalculatorButtonState();
 }

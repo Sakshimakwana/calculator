@@ -14,13 +14,16 @@ class CalculatorIcons {
   static const plus = LucideIcons.plus;
   static const equal = LucideIcons.equal;
 
+
+
   // AC
   static Widget ac({
     double size = 30,
     Color color = Colors.white,
+    bool hasValue = false,
   }) {
     return Text(
-      'AC',
+      hasValue ? 'C' : 'AC',
       style: TextStyle(
         color: color,
         fontSize: size,
@@ -40,7 +43,7 @@ class CalculatorIcons {
         alignment: Alignment.center,
         children: [
           Positioned(
-            top: 1,
+            top: 0,
             child: Icon(
               LucideIcons.plus,
               size: size * 0.48,
@@ -48,7 +51,7 @@ class CalculatorIcons {
             ),
           ),
           Positioned(
-            bottom: 1,
+            bottom: 0,
             child: Icon(
               LucideIcons.minus,
               size: size * 0.48,
