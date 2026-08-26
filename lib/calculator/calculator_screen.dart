@@ -368,19 +368,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     if (selectedMode == 'Scientific') {
       return ScientificCalculator(
-        onBack: goBackToBasic,
+        onModeMenu: showModeMenu,
       );
     }
 
     if (selectedMode == 'Convert') {
       return ConverterScreen(
-        onBack: goBackToBasic,
+        onModeMenu: showModeMenu,
       );
     }
 
     if (selectedMode == 'Maths Notes') {
       return MathsNotesScreen(
-        onBack: goBackToBasic,
+        onModeMenu: showModeMenu,
       );
     }
 

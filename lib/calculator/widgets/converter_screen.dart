@@ -7,11 +7,11 @@ import '../widgets/calculator_button.dart';
 import '../widgets/calculator_top_button.dart';
 
 class ConverterScreen extends StatefulWidget {
-  final VoidCallback onBack;
+  final VoidCallback onModeMenu;
 
   const ConverterScreen({
     super.key,
-    required this.onBack,
+    required this.onModeMenu,
   });
 
   @override
@@ -194,7 +194,7 @@ class _ConverterScreenState
                       color: Colors.white,
                       size: 30,
                     ),
-                    onTap: widget.onBack,
+                    onTap: widget.onModeMenu,
                   ),
                 ],
               ),

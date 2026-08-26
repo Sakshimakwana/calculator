@@ -1,14 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../icons/calculator_icons.dart';
 import '../widgets/calculator_button.dart';
+import 'calculator_top_button.dart';
 
 class ScientificCalculator extends StatefulWidget {
-  final VoidCallback onBack;
+  final VoidCallback onModeMenu;
 
   const ScientificCalculator({
     super.key,
-    required this.onBack,
+    required this.onModeMenu,
   });
 
   @override
@@ -458,20 +460,22 @@ class _ScientificCalculatorState
           children: [
             const SizedBox(height: 10),
 
-            Row(
-              children: [
-                IconButton(
-                  onPressed: widget.onBack,
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Colors.white,
-                    size: 26,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CalculatorTopButton(
+                    icon: const Icon(
+                      CalculatorIcons.calculator,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                    onTap: widget.onModeMenu,
                   ),
-                ),
-                const Spacer(),
-              ],
+                ],
+              ),
             ),
-
             Expanded(
               child: Align(
                 alignment: Alignment.bottomRight,

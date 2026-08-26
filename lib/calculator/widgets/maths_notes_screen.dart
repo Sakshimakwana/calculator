@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import '../icons/calculator_icons.dart';
+import 'calculator_top_button.dart';
 
 class MathsNotesScreen extends StatefulWidget {
-  final VoidCallback onBack;
+  final VoidCallback onModeMenu;
 
   const MathsNotesScreen({
     super.key,
-    required this.onBack,
+    required this.onModeMenu,
   });
 
   @override
@@ -77,15 +79,6 @@ class _MathsNotesScreenState
 
             Row(
               children: [
-                IconButton(
-                  onPressed: widget.onBack,
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-
                 const Spacer(),
 
                 const Text(
@@ -99,7 +92,25 @@ class _MathsNotesScreenState
 
                 const Spacer(),
 
-                const SizedBox(width: 48),
+                CalculatorTopButton(
+                  icon: const Icon(
+                    CalculatorIcons.calculator,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  onTap: widget.onModeMenu,
+                ),
+
+                const SizedBox(width: 8),
+
+                CalculatorTopButton(
+                  icon: const Icon(
+                    Icons.more_horiz,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  onTap: () {},
+                ),
               ],
             ),
             const SizedBox(height: 5),
