@@ -1,6 +1,5 @@
-import 'package:app_matic_tech_flutter_app/text_widgets/motivational_quotes.dart';
+import 'package:app_matic_tech_flutter_app/splash_screen.dart';
 import 'package:flutter/material.dart';
-import 'splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +12,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Motivational Quotes',
+      title: 'Forms and Settings',
+
+      theme: ThemeData(
+        brightness: Brightness.light,
+        fontFamily: 'Arial',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFFF2D68),
+        ),
+      ),
+
       home: const SplashScreen(),
     );
   }

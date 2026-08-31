@@ -3,6 +3,7 @@ import 'package:app_matic_tech_flutter_app/Login_page_T14/login_screen.dart';
 import 'package:app_matic_tech_flutter_app/Product_Catalogue_T11/widgets/home_screen.dart';
 import 'package:app_matic_tech_flutter_app/contact_app_T10/contact_list_screen.dart';
 import 'package:app_matic_tech_flutter_app/dashboard_T9/dashboard_screen.dart';
+import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/registration/registration_screen.dart';
 import 'package:app_matic_tech_flutter_app/instagram_style_ui/instagram_style_ui_screen.dart';
 import 'package:app_matic_tech_flutter_app/pricing_plan/pricing_plan_screen.dart';
 import 'package:app_matic_tech_flutter_app/product_details_header/product_details_header_screen.dart';
@@ -36,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => LoginScreen()
+            builder: (context) => RegistrationScreen()
           ),
         );
       },
