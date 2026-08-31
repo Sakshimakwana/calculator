@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:app_matic_tech_flutter_app/Login_page_T14/login_screen.dart';
 import 'package:app_matic_tech_flutter_app/Product_Catalogue_T11/widgets/home_screen.dart';
+import 'package:app_matic_tech_flutter_app/appointment_booking_T17/appointment_booking_screen.dart';
 import 'package:app_matic_tech_flutter_app/contact_app_T10/contact_list_screen.dart';
 import 'package:app_matic_tech_flutter_app/dashboard_T9/dashboard_screen.dart';
 import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/registration/registration_screen.dart';
@@ -37,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => RegistrationScreen()
+            builder: (context) => AppointmentBookingScreen()
           ),
         );
       },
