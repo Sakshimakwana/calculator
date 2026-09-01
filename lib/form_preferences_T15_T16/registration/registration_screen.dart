@@ -4,6 +4,7 @@ import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/settings/set
 import 'widgets/registration_header.dart';
 import 'widgets/registration_text_field.dart';
 import 'widgets/register_button.dart';
+import 'package:flutter/services.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({
@@ -48,8 +49,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return 'Please enter your full name';
     }
 
-    if (value.trim().length < 2) {
-      return 'Name must be at least 2 characters';
+    if (value.trim().length < 5) {
+      return 'Name must be at least 5 characters';
     }
 
     if (!RegExp(r'^[a-zA-Z ]+$').hasMatch(value.trim())) {
@@ -151,6 +152,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: RegistrationHeader(
+        onBack: () {
+          Navigator.pop(context);
+        },
+      ),
 
       body: SafeArea(
         child: Container(
@@ -164,11 +170,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
               child: Column(
                 children: [
-                  RegistrationHeader(
-                    onBack: () {
-                      Navigator.pop(context);
-                    },
-                  ),
 
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -186,6 +187,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           icon: Icons.person_outline,
                           controller: _nameController,
                           validator: _validateName,
+
+                          maxLength: 10,
                         ),
 
                         const SizedBox(height: 20),
@@ -201,14 +204,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ),
 
                         const SizedBox(height: 20),
-
                         RegistrationTextField(
                           label: 'Mobile Number',
                           hint: 'Enter your mobile number',
                           icon: Icons.phone_outlined,
                           controller: _mobileController,
-                          keyboardType: TextInputType.phone,
+                          keyboardType: TextInputType.number,
                           validator: _validateMobile,
+
+                          maxLength: 10,
+
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
                         ),
 
                         const SizedBox(height: 20),

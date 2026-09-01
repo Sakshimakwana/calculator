@@ -15,7 +15,10 @@ class TimePickerField extends StatelessWidget {
   Future<void> selectTime(BuildContext context) async {
     final selectedTime = await showTimePicker(
       context: context,
-      initialTime: value ?? const TimeOfDay(hour: 11, minute: 0),
+      initialTime: value ?? const TimeOfDay(
+        hour: 11,
+        minute: 0,
+      ),
     );
 
     if (selectedTime != null) {
@@ -61,10 +64,6 @@ class TimePickerField extends StatelessWidget {
                         : value!.format(context),
                     style: AppointmentTypography.fieldText,
                   ),
-                ),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 18,
                 ),
               ],
             ),

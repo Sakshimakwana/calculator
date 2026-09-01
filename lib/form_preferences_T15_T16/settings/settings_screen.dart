@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/theme/form_preferance_colors.dart';
+import '../theme/app_language.dart';
+import 'localization/app_localizations.dart';
+
 import 'widgets/settings_header.dart';
 import 'widgets/settings_tile.dart';
 import 'widgets/theme_selector.dart';
@@ -13,8 +17,7 @@ class SettingsScreen extends StatefulWidget {
   });
 
   @override
-  State<SettingsScreen> createState() =>
-      _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
@@ -22,11 +25,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   ThemeMode _themeMode = ThemeMode.light;
 
-  String _language = 'English';
+  String _language = 'en';
 
   String _gender = 'Female';
 
   double _volume = 75;
+
+  AppLocalizations get l10n => AppLocalizations.of(context);
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +39,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       data: _themeMode == ThemeMode.dark
           ? ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor:
-        AppColors.darkBackground,
+        fontFamily: AppLanguage.fontFamily,
+        scaffoldBackgroundColor: AppColors.darkBackground,
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.pink,
           brightness: Brightness.dark,
@@ -44,174 +49,163 @@ class _SettingsScreenState extends State<SettingsScreen> {
       )
           : ThemeData(
         brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.white,
+        fontFamily: AppLanguage.fontFamily,
+        scaffoldBackgroundColor: const Color(0xFFF5F5F7),
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.pink,
           brightness: Brightness.light,
         ),
+        dividerColor: const Color(0xFFE5E5E8),
       ),
-
       child: Builder(
         builder: (context) {
-          final isDark =
-              Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final isDark = theme.brightness == Brightness.dark;
 
           return Scaffold(
-            backgroundColor: Theme.of(context)
-                .scaffoldBackgroundColor,
+            backgroundColor: theme.scaffoldBackgroundColor,
+
+            appBar: const SettingsHeader(),
 
             body: SafeArea(
+              top: false,
               child: Container(
-               width: double.infinity,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCard
-                      : Colors.white,
-                ),
+                color: isDark
+                    ? AppColors.darkBackground
+                    : Colors.white,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                  ),
+                  child: Column(
+                    children: [
+                      // Notifications
+                      SettingsTile(
+                        icon: Icons.notifications_none_rounded,
+                        iconBackground: AppColors.lightPink,
+                        title: l10n.get('notifications'),
+                        subtitle: l10n.get(
+                          'notificationDescription',
+                        ),
+                        trailing: Switch(
+                          value: _notifications,
+                          activeThumbColor: AppColors.pink,
+                          onChanged: (value) {
+                            setState(() {
+                              _notifications = value;
+                            });
+                          },
+                        ),
+                      ),
 
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                      const _SettingsDivider(),
 
-                    child: Column(
-                      children: [
-                        const SettingsHeader(),
-
-                        Expanded(
-                          child: SingleChildScrollView(
-                           padding: EdgeInsetsGeometry.all(5),
-
-                            child: Column(
-                              children: [
-                                // Notifications
-                                SettingsTile(
-                                  icon: Icons.notifications_none,
-                                  iconBackground:
-                                  AppColors.lightPink,
-                                  title: 'Notifications',
-                                  subtitle:
-                                  'Enable or disable notifications',
-                                  trailing: Semantics(
-                                    label: 'Notifications',
-                                    value: _notifications
-                                        ? 'On'
-                                        : 'Off',
-                                    child: Switch(
-                                      value: _notifications,
-                                      activeThumbColor:
-                                      AppColors.pink,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _notifications = value;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ),
-
-                                Divider(
-                                  color: Theme.of(context)
-                                      .dividerColor,
-                                ),
-
-                                // Theme
-                                SettingsTile(
-                                  icon: Icons.nightlight_outlined,
-                                  iconBackground:
-                                  AppColors.lightPurple,
-                                  title: 'Theme',
-                                  subtitle:
-                                  'Choose your preferred theme',
-                                  child: ThemeSelector(
-                                    value: _themeMode,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _themeMode = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-
-                                Divider(
-                                  color: Theme.of(context)
-                                      .dividerColor,
-                                ),
-
-                                // Language
-                                SettingsTile(
-                                  icon: Icons.language,
-                                  iconBackground:
-                                  AppColors.lightBlue,
-                                  title: 'Language',
-                                  subtitle:
-                                  'Choose your language',
-                                  trailing: LanguageTile(
-                                    language: _language,
-                                    onChanged: (value) {
-                                      if (value == null) return;
-
-                                      setState(() {
-                                        _language = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-
-                                Divider(
-                                  color: Theme.of(context)
-                                      .dividerColor,
-                                ),
-
-                                // Gender
-                                SettingsTile(
-                                  icon: Icons.person_outline,
-                                  iconBackground:
-                                  AppColors.lightPurple,
-                                  title: 'Gender',
-                                  subtitle:
-                                  'Select your gender',
-                                  child: GenderSelector(
-                                    value: _gender,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _gender = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-
-                                Divider(
-                                  color: Theme.of(context)
-                                      .dividerColor,
-                                ),
-
-                                // Volume
-                                SettingsTile(
-                                  icon: Icons.volume_up_outlined,
-                                  iconBackground:
-                                  AppColors.lightGreen,
-                                  title: 'Volume',
-                                  subtitle:
-                                  'Adjust media volume',
-                                  child: VolumeSlider(
-                                    value: _volume,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _volume = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
+                      // Theme
+                      SettingsTile(
+                        icon: Icons.dark_mode_outlined,
+                        iconBackground: AppColors.lightPurple,
+                        title: l10n.get('theme'),
+                        subtitle: l10n.get(
+                          'themeDescription',
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: 12,
+                            right: 2,
+                          ),
+                          child: ThemeSelector(
+                            value: _themeMode,
+                            onChanged: (value) {
+                              setState(() {
+                                _themeMode = value;
+                              });
+                            },
                           ),
                         ),
+                      ),
 
-                        _BottomNavigationBar(),
-                      ],
-                    ),
+                      const _SettingsDivider(),
+
+                      // Language
+                      SettingsTile(
+                        icon: Icons.language_rounded,
+                        iconBackground: AppColors.lightBlue,
+                        title: l10n.get('language'),
+                        subtitle: l10n.get(
+                          'languageDescription',
+                        ),
+                        trailing: LanguageTile(
+                          language: _language,
+                          onChanged: (value) {
+                            if (value == null) return;
+
+                            setState(() {
+                              _language = value;
+                            });
+
+                            AppLanguage.changeLanguage(value);
+                          },
+                        ),
+                      ),
+
+                      const _SettingsDivider(),
+
+                      // Gender
+                      SettingsTile(
+                        icon: Icons.person_outline_rounded,
+                        iconBackground: AppColors.lightPurple,
+                        title: l10n.get('gender'),
+                        subtitle: l10n.get(
+                          'genderDescription',
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: 10,
+                            right: 2,
+                          ),
+                          child: GenderSelector(
+                            value: _gender,
+                            onChanged: (value) {
+                              setState(() {
+                                _gender = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+
+                      const _SettingsDivider(),
+
+                      // Volume
+                      SettingsTile(
+                        icon: Icons.volume_up_outlined,
+                        iconBackground: AppColors.lightGreen,
+                        title: l10n.get('volume'),
+                        subtitle: l10n.get(
+                          'volumeDescription',
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: 10,
+                            right: 2,
+                          ),
+                          child: VolumeSlider(
+                            value: _volume,
+                            onChanged: (value) {
+                              setState(() {
+                                _volume = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+            ),
+
+            bottomNavigationBar: const _BottomNavigationBar(),
           );
         },
       ),
@@ -219,52 +213,79 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class _BottomNavigationBar extends StatelessWidget {
+class _SettingsDivider extends StatelessWidget {
+  const _SettingsDivider();
+
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: Theme.of(context).dividerColor,
+    );
+  }
+}
 
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkCard
-            : Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).dividerColor,
+class _BottomNavigationBar extends StatelessWidget {
+  const _BottomNavigationBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 72,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          border: Border(
+            top: BorderSide(
+              color: theme.dividerColor,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _item(
-            context,
-            Icons.home_outlined,
-            'Home',
-            false,
-          ),
-          _item(
-            context,
-            Icons.search,
-            'Search',
-            false,
-          ),
-          _item(
-            context,
-            Icons.settings,
-            'Settings',
-            true,
-          ),
-          _item(
-            context,
-            Icons.person_outline,
-            'Profile',
-            false,
-          ),
-        ],
+        child: Row(
+          children: [
+            Expanded(
+              child: _item(
+                context,
+                Icons.home_outlined,
+                l10n.get('home'),
+                false,
+              ),
+            ),
+            Expanded(
+              child: _item(
+                context,
+                Icons.search_rounded,
+                l10n.get('search'),
+                false,
+              ),
+            ),
+            Expanded(
+              child: _item(
+                context,
+                Icons.settings_outlined,
+                l10n.get('settings'),
+                true,
+              ),
+            ),
+            Expanded(
+              child: _item(
+                context,
+                Icons.person_outline_rounded,
+                l10n.get('profile'),
+                false,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -275,33 +296,40 @@ class _BottomNavigationBar extends StatelessWidget {
       String title,
       bool selected,
       ) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: selected
-              ? AppColors.pink
-              : Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.color,
-          size: 27,
-        ),
-        const SizedBox(height: 5),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 13,
-            color: selected
-                ? AppColors.pink
-                : Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.color,
+    final theme = Theme.of(context);
+
+    final color = selected
+        ? AppColors.pink
+        : theme.textTheme.bodyMedium?.color;
+
+    return SizedBox(
+      height: 60,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 23,
+            color: color,
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: selected
+                    ? FontWeight.w600
+                    : FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

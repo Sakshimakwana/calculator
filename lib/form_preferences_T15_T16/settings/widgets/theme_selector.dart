@@ -1,5 +1,7 @@
+import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/settings/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/theme/form_preferance_colors.dart';
+
 
 class ThemeSelector extends StatelessWidget {
   const ThemeSelector({
@@ -30,8 +32,7 @@ class ThemeSelector extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: selected
-                  ? (Theme.of(context).brightness ==
-                  Brightness.dark
+                  ? (Theme.of(context).brightness == Brightness.dark
                   ? AppColors.darkCard
                   : Colors.white)
                   : Colors.transparent,
@@ -61,13 +62,31 @@ class ThemeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Row(
       children: [
-        _button(context, 'Light', ThemeMode.light),
+        _button(
+          context,
+          l10n.get('light'),
+          ThemeMode.light,
+        ),
+
         const SizedBox(width: 10),
-        _button(context, 'Dark', ThemeMode.dark),
+
+        _button(
+          context,
+          l10n.get('dark'),
+          ThemeMode.dark,
+        ),
+
         const SizedBox(width: 10),
-        _button(context, 'System', ThemeMode.system),
+
+        _button(
+          context,
+          l10n.get('system'),
+          ThemeMode.system,
+        ),
       ],
     );
   }

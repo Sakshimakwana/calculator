@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/theme/form_preferance_colors.dart';
 
-class RegistrationHeader extends StatelessWidget {
+class RegistrationHeader extends StatelessWidget
+    implements PreferredSizeWidget {
   const RegistrationHeader({
     super.key,
     required this.onBack,
@@ -10,63 +11,43 @@ class RegistrationHeader extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
+  Size get preferredSize => const Size.fromHeight(90);
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 90,
-      width: double.infinity,
-      child: Stack(
+    return AppBar(
+      automaticallyImplyLeading: false,
+      toolbarHeight: 90,
+      backgroundColor: AppColors.veryLightPink,
+      elevation: 0,
+      centerTitle: true,
+
+      leading: IconButton(
+        onPressed: onBack,
+        icon: const Icon(
+          Icons.arrow_back,
+          size: 25,
+          color: Colors.black,
+        ),
+      ),
+
+      title: const Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: double.infinity,
-            height: 105,
-            decoration: const BoxDecoration(
-              color: AppColors.veryLightPink,
+          Text(
+            'Create Account',
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.w700,
+              color: AppColors.black,
             ),
           ),
-
-          Positioned(
-            top: 22,
-            left: 10,
-            child: IconButton(
-              onPressed: onBack,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 35,
-                minHeight: 35,
-              ),
-              icon: const Icon(
-                Icons.arrow_back,
-                size: 25,
-                color: Colors.black,
-              ),
-            ),
-          ),
-
-          Positioned(
-            top: 10,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: const [
-                Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.black,
-                  ),
-                ),
-
-                SizedBox(height: 5),
-
-                Text(
-                  'Fill in your details to get started',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.grey,
-                  ),
-                ),
-              ],
+          SizedBox(height: 5),
+          Text(
+            'Fill in your details to get started',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.grey,
             ),
           ),
         ],

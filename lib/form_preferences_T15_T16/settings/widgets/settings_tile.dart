@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/theme/form_preferance_colors.dart';
+
 class SettingsTile extends StatelessWidget {
   const SettingsTile({
     super.key,
@@ -20,67 +22,95 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 18,horizontal: 18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 18,
+      ),
+      child: Column(
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? iconBackground.withOpacity(.18)
-                  : iconBackground,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 31,
-              color: isDark ? Colors.white : null,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: iconBackground,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 27,
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: theme
+                                  .textTheme
+                                  .titleMedium
+                                  ?.color,
+                            ),
+                          ),
+                        ),
+
+                        if (trailing != null) ...[
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: trailing!,
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.3,
+                        color: theme
+                            .textTheme
+                            .bodyMedium
+                            ?.color
+                            ?.withOpacity(0.65),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(width: 22),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? Colors.white
-                        : Colors.black,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: isDark
-                        ? Colors.white70
-                        : const Color(0xFF666666),
-                  ),
-                ),
-
-                if (child != null) ...[
-                  const SizedBox(height: 20),
-                  child!,
-                ],
-              ],
+          if (child != null)
+            SizedBox(
+              width: double.infinity,
+              child: child!,
             ),
-          ),
-
-          if (trailing != null) trailing!,
         ],
       ),
     );

@@ -4,7 +4,9 @@ import 'package:app_matic_tech_flutter_app/Product_Catalogue_T11/widgets/home_sc
 import 'package:app_matic_tech_flutter_app/appointment_booking_T17/appointment_booking_screen.dart';
 import 'package:app_matic_tech_flutter_app/contact_app_T10/contact_list_screen.dart';
 import 'package:app_matic_tech_flutter_app/dashboard_T9/dashboard_screen.dart';
+import 'package:app_matic_tech_flutter_app/dashboard_T9/widgets/dashboard_settings_screen.dart';
 import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/registration/registration_screen.dart';
+import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/settings/widgets/settings_section.dart';
 import 'package:app_matic_tech_flutter_app/instagram_style_ui/instagram_style_ui_screen.dart';
 import 'package:app_matic_tech_flutter_app/pricing_plan/pricing_plan_screen.dart';
 import 'package:app_matic_tech_flutter_app/product_details_header/product_details_header_screen.dart';
@@ -38,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => AppointmentBookingScreen()
+            builder: (context) => RegistrationScreen()
           ),
         );
       },

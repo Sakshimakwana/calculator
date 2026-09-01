@@ -100,10 +100,6 @@ class DatePickerField extends StatelessWidget {
                     style: AppointmentTypography.fieldText,
                   ),
                 ),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 18,
-                ),
               ],
             ),
           ),

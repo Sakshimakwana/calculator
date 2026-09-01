@@ -18,15 +18,15 @@ class LanguageTile extends StatelessWidget {
         icon: const Icon(Icons.keyboard_arrow_down),
         items: const [
           DropdownMenuItem(
-            value: 'English',
+            value: 'en',
             child: Text('English'),
           ),
           DropdownMenuItem(
-            value: 'Hindi',
+            value: 'hi',
             child: Text('Hindi'),
           ),
           DropdownMenuItem(
-            value: 'Gujarati',
+            value: 'gu',
             child: Text('Gujarati'),
           ),
         ],
