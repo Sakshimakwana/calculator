@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:app_matic_tech_flutter_app/AMT_lottie_animation.dart';
 import 'package:app_matic_tech_flutter_app/Login_page_T14/login_screen.dart';
 import 'package:app_matic_tech_flutter_app/Product_Catalogue_T11/widgets/home_screen.dart';
 import 'package:app_matic_tech_flutter_app/appointment_booking_T17/appointment_booking_screen.dart';
@@ -8,9 +9,11 @@ import 'package:app_matic_tech_flutter_app/dashboard_T9/widgets/dashboard_settin
 import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/registration/registration_screen.dart';
 import 'package:app_matic_tech_flutter_app/form_preferences_T15_T16/settings/widgets/settings_section.dart';
 import 'package:app_matic_tech_flutter_app/instagram_style_ui/instagram_style_ui_screen.dart';
+import 'package:app_matic_tech_flutter_app/lottie_animation.dart';
 import 'package:app_matic_tech_flutter_app/pricing_plan/pricing_plan_screen.dart';
 import 'package:app_matic_tech_flutter_app/product_details_header/product_details_header_screen.dart';
 import 'package:app_matic_tech_flutter_app/profile_card/Profile_screen.dart';
+import 'package:app_matic_tech_flutter_app/profileflow_T17/profileflow_registration_screen.dart';
 import 'package:app_matic_tech_flutter_app/reusable_card_gallery/reusable_card_gallery_screen.dart';
 import 'package:app_matic_tech_flutter_app/text_widgets/motivational_quotes.dart';
 import 'package:app_matic_tech_flutter_app/typography_profile/about_me.dart';
@@ -40,8 +43,10 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => RegistrationScreen()
-          ),
+            builder: (context) =>LottieAnimation(
+              path: AMTLottieAnimation.finalAnimation,
+            )
+          )
         );
       },
     );

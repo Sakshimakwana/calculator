@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.13.0
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -18,6 +18,9 @@ dependencies:
   google_fonts: ^8.2.1
   font_awesome_flutter: ^11.0.0
   lucide_icons_flutter: ^3.1.15
+  lottie: ^3.3.1
+  audioplayers: ^6.5.0
+  dotlottie_flutter: ^0.1.7
 
 dev_dependencies:
   flutter_test:
@@ -25,40 +28,55 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
 
-
-
-
 flutter:
   uses-material-design: true
 
   fonts:
-    - family: MakeThingsSans
-      fonts:
-        - asset: fonts/Make-Things-Sans.ttf
+#    - family: MakeThingsSans
+#      fonts:
+#        - asset: fonts/Make-Things-Sans.ttf
+#
+#    - family: SFProRounded
+#      fonts:
+#        - asset: fonts/SF-Pro-Rounded-Bold.ttf
+#          weight: 700
+#
+#    - family: NotoSansGujarati
+#      fonts:
+#        - asset: fonts/Noto_Sans_Gujarati/NotoSansGujarati-VariableFont_wdth,wght.ttf
+#
+#    - family: NotoSansDevanagari
+#      fonts:
+#        - asset: fonts/Noto_Sans_Devanagari/NotoSansDevanagari-VariableFont_wdth,wght.ttf
+#
+#    - family: RobotoSlabBlack
+#      fonts:
+#        - asset: fonts/Roboto-Slab-Black.ttf
+#          weight: 700
+#
+#    - family: ArialMTStditalic
+#      fonts:
+#        - asset: fonts/Arial-MT-Std-italic.ttf
+#          weight: 700
 
-    - family: SFProRounded
+    - family: Poppins
       fonts:
-        - asset: fonts/SF-Pro-Rounded-Bold.ttf
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
-    - family: NotoSansGujarati
-      fonts:
-        - asset: fonts/Noto_Sans_Gujarati/NotoSansGujarati-VariableFont_wdth,wght.ttf
-
-    - family: NotoSansDevanagari
-      fonts:
-        - asset: fonts/Noto_Sans_Devanagari/NotoSansDevanagari-VariableFont_wdth,wght.ttf
-
-    - family: RobotoSlabBlack
-      fonts:
-        - asset: fonts/Roboto-Slab-Black.ttf
-          weight: 700
-    - family: ArialMTStditalic
-      fonts:
-        - asset: fonts/Arial-MT-Std-italic.ttf
-          weight: 700
   assets:
     - assets/images/profile.jpg
     - assets/images/background_image.png
     - assets/images/gift_box.png
     - assets/images/appointment.png
+    - assets/json/tick.json
+    - assets/sounds/Successful.mp3
+    - assets/animations/44938.lottie
+    - assets/animations/animation 1.lottie
+    - assets/animations/FINAL ANIMATION 1.lottie

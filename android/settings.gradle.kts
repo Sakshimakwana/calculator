@@ -4,7 +4,9 @@ pluginManagement {
             val properties = java.util.Properties()
             file("local.properties").inputStream().use { properties.load(it) }
             val flutterSdkPath = properties.getProperty("flutter.sdk")
-            require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
+            require(flutterSdkPath != null) {
+                "flutter.sdk not set in local.properties"
+            }
             flutterSdkPath
         }
 
@@ -14,6 +16,20 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+    }
+}
+
+// ADD THIS
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+
+    repositories {
+        google()
+        mavenCentral()
+
+        maven {
+            url = uri("https://jitpack.io")
+        }
     }
 }
 
