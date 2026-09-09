@@ -1,7 +1,6 @@
 import 'package:app_matic_tech_flutter_app/Product_Catalogue_T11/theme/product_cataloge_typography.dart';
 import 'package:app_matic_tech_flutter_app/Product_Catalogue_T11/theme/product_catalogue_colors.dart';
 import 'package:flutter/material.dart';
-
 import 'models/product_catalogue_model.dart';
 
 class ProductDetailsScreen extends StatefulWidget {

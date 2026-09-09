@@ -29,7 +29,6 @@ class CategoriesScreen extends StatelessWidget {
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: categories.length,
-
         gridDelegate:
         const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 220,

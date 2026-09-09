@@ -2,7 +2,7 @@ import 'contact_model.dart';
 
 final List<ContactModel> contacts = [
   ContactModel(
-    name: 'Sakshi Makwana',
+    name: 'Priyanka Mathur',
     phone: '98765 43210',
     imageUrl: 'https://i.pravatar.cc/150?img=47',
   ),

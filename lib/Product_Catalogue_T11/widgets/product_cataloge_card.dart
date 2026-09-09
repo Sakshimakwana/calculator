@@ -68,9 +68,6 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
 
-                // --------------------------------------------------
-                // FAVORITE BUTTON
-                // --------------------------------------------------
 
                 Positioned(
                   top: 8,

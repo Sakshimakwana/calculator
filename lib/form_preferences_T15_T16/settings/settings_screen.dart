@@ -61,12 +61,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (context) {
           final theme = Theme.of(context);
           final isDark = theme.brightness == Brightness.dark;
-
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
-
             appBar: const SettingsHeader(),
-
             body: SafeArea(
               top: false,
               child: Container(
@@ -297,11 +294,9 @@ class _BottomNavigationBar extends StatelessWidget {
       bool selected,
       ) {
     final theme = Theme.of(context);
-
     final color = selected
         ? AppColors.pink
         : theme.textTheme.bodyMedium?.color;
-
     return SizedBox(
       height: 60,
       child: Column(

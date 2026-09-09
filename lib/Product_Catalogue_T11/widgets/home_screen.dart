@@ -189,9 +189,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       body: Column(
         children: [
-          // --------------------------------------------------
-          // PRODUCT TITLE
-          // --------------------------------------------------
 
           if (!isSearching)
             const Padding(
@@ -199,12 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 1, 1, 1, 1,
               ),
 
-
-
             ),
-          // ======================================================
-          // CATEGORIES HEADER
-          // ======================================================
 
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -244,9 +236,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-// ======================================================
-// HORIZONTAL CATEGORIES
-// ======================================================
 
           SizedBox(
             height: 105,
@@ -333,10 +322,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 return ProductCard(
                   product: product,
 
-                  // ------------------------------------------------
-                  // ❤️ FAVORITE
-                  // ------------------------------------------------
-
                   onFavoriteTap: () {
                     setState(() {
                       product.isFavorite =
@@ -353,10 +338,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }
                   },
-
-                  // ------------------------------------------------
-                  // 📱 PRODUCT DETAILS
-                  // ------------------------------------------------
 
                   onTap: () {
                     Navigator.push(
@@ -492,9 +473,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
   }
 
-  // ----------------------------------------------------------
-  // CART SCREEN
-  // ----------------------------------------------------------
 
   Widget _cartScreen() {
     final cartProducts =
