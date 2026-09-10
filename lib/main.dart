@@ -1,3 +1,5 @@
+import 'package:app_matic_tech_flutter_app/modern_store_home_T24/modern_store_home_app.dart';
+import 'package:app_matic_tech_flutter_app/modern_store_home_T24/modern_store_home_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -85,10 +87,12 @@ class _MyAppState extends State<MyApp> {
       // ROUTER
       // ========================================================
 
-      routerConfig: responsiveDashboardT22Router(
-        isDarkMode: isDarkMode,
-        onThemeChanged: changeTheme,
-      ),
+
+      routerConfig: ModernStoreHomeRoutes.router,
+      // routerConfig: responsiveDashboardT22Router(
+      //   isDarkMode: isDarkMode,
+      //   onThemeChanged: changeTheme,
+      // ),
 
       // ========================================================
       // LOCALIZATION
