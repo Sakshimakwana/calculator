@@ -10,19 +10,20 @@ class ResponsiveDashboardT22TasksOverview
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-        ResponsiveDashboardT22Colors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color:
-          ResponsiveDashboardT22Colors.border,
+          color: theme.colorScheme.outline,
         ),
       ),
-      child: const Row(
+      child: Row(
         children: [
+          // Progress Circle
           SizedBox(
             width: 78,
             height: 78,
@@ -32,52 +33,52 @@ class ResponsiveDashboardT22TasksOverview
                 CircularProgressIndicator(
                   value: .72,
                   strokeWidth: 9,
-                  color:
-                  ResponsiveDashboardT22Colors
-                      .primary,
+                  color: theme.colorScheme.primary,
                   backgroundColor:
-                  ResponsiveDashboardT22Colors
-                      .primarySoft,
+                  theme.colorScheme.primary.withValues(
+                    alpha: 0.12,
+                  ),
                 ),
+
                 Text(
                   '72%',
-                  style: TextStyle(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
-                    color:
-                    ResponsiveDashboardT22Colors
-                        .text,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 16),
+
+          const SizedBox(width: 16),
+
+          // Task Information
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Tasks Overview',
-                  style: TextStyle(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color:
-                    ResponsiveDashboardT22Colors
-                        .text,
                   ),
                 ),
-                SizedBox(height: 10),
-                _Legend(
+
+                const SizedBox(height: 10),
+
+                const _Legend(
                   'Completed',
                   Color(0xFF2864E8),
                 ),
-                _Legend(
+
+                const _Legend(
                   'In Progress',
                   Color(0xFF20B978),
                 ),
-                _Legend(
+
+                const _Legend(
                   'Pending',
                   Color(0xFFD946A8),
                 ),
@@ -91,13 +92,18 @@ class ResponsiveDashboardT22TasksOverview
 }
 
 class _Legend extends StatelessWidget {
-  const _Legend(this.label, this.color);
+  const _Legend(
+      this.label,
+      this.color,
+      );
 
   final String label;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
       child: Row(
@@ -110,14 +116,16 @@ class _Legend extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
+
           const SizedBox(width: 7),
+
           Text(
             label,
-            style: const TextStyle(
+            style: theme.textTheme.bodySmall?.copyWith(
               fontSize: 10,
-              color:
-              ResponsiveDashboardT22Colors
-                  .mutedText,
+              color: theme.colorScheme.onSurface.withValues(
+                alpha: 0.65,
+              ),
             ),
           ),
         ],

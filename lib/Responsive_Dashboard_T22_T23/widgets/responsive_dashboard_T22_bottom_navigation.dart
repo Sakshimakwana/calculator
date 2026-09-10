@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../theme/responsive_dashboard_T22_colors.dart';
-
 class ResponsiveDashboardT22BottomNavigation
     extends StatelessWidget {
   const ResponsiveDashboardT22BottomNavigation({
@@ -11,16 +9,16 @@ class ResponsiveDashboardT22BottomNavigation
 
   @override
   Widget build(BuildContext context) {
-    final path =
-        GoRouterState.of(context).uri.path;
+    final theme = Theme.of(context);
+
+    final path = GoRouterState.of(context).uri.path;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: ResponsiveDashboardT22Colors.surface,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color:
-            ResponsiveDashboardT22Colors.border,
+            color: theme.colorScheme.outline,
           ),
         ),
       ),
@@ -28,8 +26,7 @@ class ResponsiveDashboardT22BottomNavigation
         vertical: 8,
       ),
       child: Row(
-        mainAxisAlignment:
-        MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _Item(
             icon: Icons.home_rounded,
@@ -82,9 +79,13 @@ class _Item extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final color = selected
-        ? ResponsiveDashboardT22Colors.primary
-        : ResponsiveDashboardT22Colors.mutedText;
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withValues(
+      alpha: 0.60,
+    );
 
     return InkWell(
       onTap: () {
@@ -104,10 +105,12 @@ class _Item extends StatelessWidget {
               size: 20,
               color: color,
             ),
+
             const SizedBox(height: 3),
+
             Text(
               label,
-              style: TextStyle(
+              style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 9,
                 color: color,
               ),

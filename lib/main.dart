@@ -1,40 +1,98 @@
-import 'package:app_matic_tech_flutter_app/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'package:app_matic_tech_flutter_app/shoppingflow_T20/routes/shoppingflow_T20_routes.dart';
+import 'Responsive_Dashboard_T22_T23/Services_T23/Theme_T23_theme_service.dart';
+import 'Responsive_Dashboard_T22_T23/routes/responsive_dashboard_T22_routes.dart';
 
-import 'Responsive_Dashboard_T22/routes/responsive_dashboard_T22_routes.dart';
-import 'Responsive_Dashboard_T22/theme/responsive_dashboard_T22_colors.dart';
+
+import 'Responsive_Dashboard_T22_T23/theme_T23/Theme_T23_app_theme.dart';
 import 'form_preferences_T15_T16/settings/localization/app_localizations.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load saved theme
+  final bool savedDarkMode =
+  await ThemeService.loadTheme();
+
+  runApp(
+    MyApp(
+      initialDarkMode: savedDarkMode,
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  final bool initialDarkMode;
+
+  const MyApp({
+    super.key,
+    required this.initialDarkMode,
+  });
 
   @override
-  // Widget build(BuildContext context) {
-  //   return const MaterialApp(
-  //     debugShowCheckedModeBanner: false,
-  //     home: SplashScreen(), // Old SplashScreen
-  //   );
-  // }
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late bool isDarkMode;
+
+  @override
+  void initState() {
+    super.initState();
+
+    isDarkMode = widget.initialDarkMode;
+  }
+
+  // ============================================================
+  // THEME CHANGE LOGIC
+  // ============================================================
+
+  Future<void> changeTheme(bool value) async {
+    setState(() {
+      isDarkMode = value;
+    });
+
+    await ThemeService.saveTheme(value);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor:
-        ResponsiveDashboardT22Colors.background,
-        fontFamily: 'Lato',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: ResponsiveDashboardT22Colors.primary,
-        ),
+
+      // ========================================================
+      // LIGHT THEME
+      // ========================================================
+
+      theme: AppTheme.lightTheme,
+
+      // ========================================================
+      // DARK THEME
+      // ========================================================
+
+      darkTheme: AppTheme.darkTheme,
+
+      // ========================================================
+      // CURRENT THEME
+      // ========================================================
+
+      themeMode: isDarkMode
+          ? ThemeMode.dark
+          : ThemeMode.light,
+
+      // ========================================================
+      // ROUTER
+      // ========================================================
+
+      routerConfig: responsiveDashboardT22Router(
+        isDarkMode: isDarkMode,
+        onThemeChanged: changeTheme,
       ),
-      routerConfig: responsiveDashboardT22Router,
+
+      // ========================================================
+      // LOCALIZATION
+      // ========================================================
 
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -48,4 +106,4 @@ class MyApp extends StatelessWidget {
       ],
     );
   }
- }
+}

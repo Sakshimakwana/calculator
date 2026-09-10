@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/responsive_dashboard_T22_colors.dart';
-import '../theme/responsive_dashboard_T22_typography.dart';
-
 class ResponsiveDashboardT22SectionCard extends StatelessWidget {
   const ResponsiveDashboardT22SectionCard({
     super.key,
@@ -17,41 +14,45 @@ class ResponsiveDashboardT22SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ResponsiveDashboardT22Colors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: ResponsiveDashboardT22Colors.border,
+          color: theme.colorScheme.outline,
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
                 child: Text(
                   title,
-                  style:
-                  ResponsiveDashboardT22Typography.section,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
+
               if (action != null)
                 Text(
                   action!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color:
-                    ResponsiveDashboardT22Colors.primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
             ],
           ),
+
           const SizedBox(height: 14),
+
           child,
         ],
       ),

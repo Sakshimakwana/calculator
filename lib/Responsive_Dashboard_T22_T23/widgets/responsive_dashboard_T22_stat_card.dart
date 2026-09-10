@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/responsive_dashboard_T22_colors.dart';
 import '../theme/responsive_dashboard_T22_typography.dart';
+import '../theme_T23/Theme_T23_app_colors.dart';
+
 
 class ResponsiveDashboardT22StatCard extends StatelessWidget {
   const ResponsiveDashboardT22StatCard({
@@ -17,20 +19,34 @@ class ResponsiveDashboardT22StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Card background
     final cardColor = switch (type) {
-      'green' => ResponsiveDashboardT22Colors.greenCard,
-      'pink' => ResponsiveDashboardT22Colors.pinkCard,
-      'orange' => ResponsiveDashboardT22Colors.orangeCard,
-      _ => ResponsiveDashboardT22Colors.blueCard,
+      'green' => isDark
+          ? ThemeT23AppColors.darkGreenCard
+          : ThemeT23AppColors.lightGreenCard,
+      'pink' => isDark
+          ? ThemeT23AppColors.darkPinkCard
+          : ThemeT23AppColors.lightPinkCard,
+      'orange' => isDark
+          ? ThemeT23AppColors.darkOrangeCard
+          : ThemeT23AppColors.lightOrangeCard,
+      _ => isDark
+          ? ThemeT23AppColors.darkBlueCard
+          : ThemeT23AppColors.lightBlueCard,
     };
 
+    // Icon color
     final iconColor = switch (type) {
-      'green' => ResponsiveDashboardT22Colors.green,
-      'pink' => ResponsiveDashboardT22Colors.pink,
-      'orange' => ResponsiveDashboardT22Colors.orange,
-      _ => ResponsiveDashboardT22Colors.primary,
+      'green' => ThemeT23AppColors.green,
+      'pink' => ThemeT23AppColors.pink,
+      'orange' => ThemeT23AppColors.orange,
+      _ => theme.colorScheme.primary,
     };
 
+    // Icon
     final icon = switch (type) {
       'green' => Icons.check_rounded,
       'pink' => Icons.mail_rounded,
@@ -43,6 +59,9 @@ class ResponsiveDashboardT22StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         children: [
@@ -51,20 +70,28 @@ class ResponsiveDashboardT22StatCard extends StatelessWidget {
             size: 19,
             color: iconColor,
           ),
+
           const SizedBox(width: 8),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   value,
-                  style:
-                  ResponsiveDashboardT22Typography.cardValue,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
+
                 Text(
                   label,
-                  style:
-                  ResponsiveDashboardT22Typography.cardLabel,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(
+                      alpha: 0.7,
+                    ),
+                  ),
                 ),
               ],
             ),

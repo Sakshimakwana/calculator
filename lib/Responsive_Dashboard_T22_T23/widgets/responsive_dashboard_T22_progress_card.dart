@@ -4,58 +4,58 @@ import '../theme/responsive_dashboard_T22_colors.dart';
 
 class ResponsiveDashboardT22ProgressCard
     extends StatelessWidget {
-  const ResponsiveDashboardT22ProgressCard({super.key});
+  const ResponsiveDashboardT22ProgressCard({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ResponsiveDashboardT22Colors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: ResponsiveDashboardT22Colors.border,
+          color: theme.colorScheme.outline,
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Project Progress',
-            style: TextStyle(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color:
-              ResponsiveDashboardT22Colors.text,
             ),
           ),
+
           const SizedBox(height: 14),
+
           Row(
-            crossAxisAlignment:
-            CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: List.generate(
               7,
                   (index) => Expanded(
                 child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 3,
                   ),
                   child: Column(
                     children: [
                       Container(
-                        height:
-                        25.0 + (index % 4) * 13,
+                        height: 25.0 + (index % 4) * 13,
                         decoration: BoxDecoration(
-                          color:
-                          ResponsiveDashboardT22Colors
-                              .primary,
+                          color: theme.colorScheme.primary,
                           borderRadius:
                           BorderRadius.circular(5),
                         ),
                       ),
+
                       const SizedBox(height: 5),
+
                       Text(
                         [
                           'M',
@@ -64,13 +64,12 @@ class ResponsiveDashboardT22ProgressCard
                           'T',
                           'F',
                           'S',
-                          'S'
+                          'S',
                         ][index],
-                        style: const TextStyle(
+                        style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 9,
-                          color:
-                          ResponsiveDashboardT22Colors
-                              .mutedText,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.65),
                         ),
                       ),
                     ],

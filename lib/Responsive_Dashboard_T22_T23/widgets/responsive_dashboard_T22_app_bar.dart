@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/responsive_dashboard_T22_colors.dart';
-import '../theme/responsive_dashboard_T22_typography.dart';
-
 class ResponsiveDashboardT22AppBar extends StatelessWidget {
   const ResponsiveDashboardT22AppBar({
     super.key,
@@ -13,37 +10,53 @@ class ResponsiveDashboardT22AppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: [
         if (showMenu)
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.menu_rounded),
-            color: ResponsiveDashboardT22Colors.text,
+            icon: const Icon(
+              Icons.menu_rounded,
+            ),
+            color: theme.colorScheme.onSurface,
           ),
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Hello, Sakshi 👋',
-                style: ResponsiveDashboardT22Typography.title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
+
               const SizedBox(height: 3),
+
               Text(
                 'Let’s make today productive!',
-                style: ResponsiveDashboardT22Typography.subtitle,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(
+                    alpha: 0.65,
+                  ),
+                ),
               ),
             ],
           ),
         ),
-        const CircleAvatar(
+
+        CircleAvatar(
           radius: 19,
           backgroundColor:
-          ResponsiveDashboardT22Colors.primarySoft,
+          theme.colorScheme.primary.withValues(
+            alpha: 0.12,
+          ),
           child: Icon(
             Icons.person_rounded,
-            color: ResponsiveDashboardT22Colors.primary,
+            color: theme.colorScheme.primary,
           ),
         ),
       ],

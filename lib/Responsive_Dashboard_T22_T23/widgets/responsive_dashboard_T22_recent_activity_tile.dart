@@ -17,6 +17,8 @@ class ResponsiveDashboardT22RecentActivityTile
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final iconColor = switch (type) {
       'green' => ResponsiveDashboardT22Colors.green,
       'pink' => ResponsiveDashboardT22Colors.pink,
@@ -40,30 +42,33 @@ class ResponsiveDashboardT22RecentActivityTile
               color: iconColor,
             ),
           ),
+
           const SizedBox(width: 10),
+
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color:
-                    ResponsiveDashboardT22Colors.text,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
+
                 const SizedBox(height: 2),
+
                 Text(
                   time,
-                  style: const TextStyle(
+                  style: theme.textTheme.bodySmall?.copyWith(
                     fontSize: 10,
-                    color:
-                    ResponsiveDashboardT22Colors.mutedText,
+                    color: theme.colorScheme.onSurface.withValues(
+                      alpha: 0.65,
+                    ),
                   ),
                 ),
               ],

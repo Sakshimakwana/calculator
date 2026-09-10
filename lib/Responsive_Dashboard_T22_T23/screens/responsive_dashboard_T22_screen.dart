@@ -27,8 +27,7 @@ class ResponsiveDashboardT22Screen
 
     return Scaffold(
       body: SafeArea(
-        child:
-        ResponsiveDashboardT22ResponsiveLayout(
+        child: ResponsiveDashboardT22ResponsiveLayout(
           phone: _PhoneLayout(
             bottomInset: bottomInset,
           ),
@@ -68,8 +67,7 @@ class _PhoneLayout extends StatelessWidget {
                     if (landscape)
                       const SizedBox(
                         width: 76,
-                        child:
-                        ResponsiveDashboardT22SideNavigation(
+                        child: ResponsiveDashboardT22SideNavigation(
                           compact: true,
                         ),
                       ),
@@ -93,8 +91,8 @@ class _PhoneLayout extends StatelessWidget {
     );
   }
 }
-class _TabletLayout
-    extends StatelessWidget {
+
+class _TabletLayout extends StatelessWidget {
   const _TabletLayout({
     required this.bottomInset,
   });
@@ -104,14 +102,14 @@ class _TabletLayout
   @override
   Widget build(BuildContext context) {
     return AnimatedPadding(
-      duration:
-      const Duration(milliseconds: 180),
+      duration: const Duration(milliseconds: 180),
       padding: EdgeInsets.only(
         bottom: bottomInset,
       ),
       child: Row(
         children: [
           const ResponsiveDashboardT22SideNavigation(),
+
           Expanded(
             child: _DashboardContent(
               compact: false,
@@ -124,8 +122,7 @@ class _TabletLayout
   }
 }
 
-class _DashboardContent
-    extends StatelessWidget {
+class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
     required this.compact,
     required this.landscape,
@@ -136,16 +133,14 @@ class _DashboardContent
 
   @override
   Widget build(BuildContext context) {
-    final width =
-        MediaQuery.sizeOf(context).width;
+    final width = MediaQuery.sizeOf(context).width;
 
     final contentPadding =
     width < 700 ? 16.0 : 28.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide =
-            constraints.maxWidth >= 900;
+        final wide = constraints.maxWidth >= 900;
 
         final statCount = compact
             ? 2
@@ -153,10 +148,8 @@ class _DashboardContent
 
         return SingleChildScrollView(
           keyboardDismissBehavior:
-          ScrollViewKeyboardDismissBehavior
-              .onDrag,
-          padding:
-          EdgeInsets.all(contentPadding),
+          ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.all(contentPadding),
           child: Column(
             crossAxisAlignment:
             CrossAxisAlignment.start,
@@ -188,8 +181,7 @@ class _DashboardContent
                   crossAxisSpacing: 10,
                   mainAxisExtent: 70,
                 ),
-                itemBuilder:
-                    (context, index) {
+                itemBuilder: (context, index) {
                   final item =
                   ResponsiveDashboardT22Data
                       .stats[index];
@@ -212,7 +204,9 @@ class _DashboardContent
                     Expanded(
                       child: _ActivityCard(),
                     ),
+
                     const SizedBox(width: 14),
+
                     Expanded(
                       child: _QuickActionsCard(),
                     ),
@@ -232,7 +226,9 @@ class _DashboardContent
                       child:
                       ResponsiveDashboardT22ProgressCard(),
                     ),
+
                     SizedBox(width: 14),
+
                     Expanded(
                       child:
                       ResponsiveDashboardT22TasksOverview(),
@@ -258,8 +254,7 @@ class _DashboardContent
   }
 }
 
-class _ActivityCard
-    extends StatelessWidget {
+class _ActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ResponsiveDashboardT22SectionCard(
@@ -282,8 +277,7 @@ class _ActivityCard
   }
 }
 
-class _QuickActionsCard
-    extends StatelessWidget {
+class _QuickActionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ResponsiveDashboardT22SectionCard(
@@ -296,36 +290,29 @@ class _QuickActionsCard
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
         childAspectRatio: 2.1,
-        children: const [
+        children: [
           ResponsiveDashboardT22QuickActionButton(
-            icon:
-            Icons.create_new_folder_rounded,
+            icon: Icons.create_new_folder_rounded,
             label: 'Create Project',
-            color:
-            ResponsiveDashboardT22Colors
-                .primary,
+            color: ResponsiveDashboardT22Colors.primary,
           ),
+
           ResponsiveDashboardT22QuickActionButton(
             icon: Icons.add_task_rounded,
             label: 'Add Task',
-            color:
-            ResponsiveDashboardT22Colors
-                .green,
+            color: ResponsiveDashboardT22Colors.green,
           ),
+
           ResponsiveDashboardT22QuickActionButton(
             icon: Icons.event_rounded,
             label: 'Schedule Meeting',
-            color:
-            ResponsiveDashboardT22Colors
-                .pink,
+            color: ResponsiveDashboardT22Colors.pink,
           ),
+
           ResponsiveDashboardT22QuickActionButton(
-            icon:
-            Icons.person_add_alt_1_rounded,
+            icon: Icons.person_add_alt_1_rounded,
             label: 'Invite Team',
-            color:
-            ResponsiveDashboardT22Colors
-                .primary,
+            color: ResponsiveDashboardT22Colors.primary,
           ),
         ],
       ),

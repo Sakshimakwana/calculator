@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/responsive_dashboard_T22_colors.dart';
-
 class ResponsiveDashboardT22QuickActionButton
     extends StatelessWidget {
   const ResponsiveDashboardT22QuickActionButton({
@@ -17,6 +15,8 @@ class ResponsiveDashboardT22QuickActionButton
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Material(
       color: color.withValues(alpha: .10),
       borderRadius: BorderRadius.circular(11),
@@ -35,15 +35,16 @@ class ResponsiveDashboardT22QuickActionButton
                 size: 19,
                 color: color,
               ),
+
               const SizedBox(height: 5),
+
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: theme.textTheme.labelSmall?.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color:
-                  ResponsiveDashboardT22Colors.text,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],

@@ -148,17 +148,16 @@ class _ResponsiveDashboardT22CalendarScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor:
-      ResponsiveDashboardT22Colors.background,
+      Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading:
         const ResponsiveDashboardT22BackButton(),
-        title: const Text(
+        title: Text(
           'Calendar',
-          style:
-          ResponsiveDashboardT22Typography.section,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         backgroundColor:
-        ResponsiveDashboardT22Colors.surface,
+        Theme.of(context).colorScheme.surface,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -184,24 +183,23 @@ class _ResponsiveDashboardT22CalendarScreenState
               const SizedBox(height: 20),
 
               Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color:
-                  ResponsiveDashboardT22Colors.surface,
-                  borderRadius:
-                  BorderRadius.circular(16),
-                  border: Border.all(
-                    color:
-                    ResponsiveDashboardT22Colors.border,
-                  ),
-                ),
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+
+                      borderRadius:
+                      BorderRadius.circular(16),
+
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
                 child: Row(
                   children: [
-                    const Icon(
+                     Icon(
                       Icons.calendar_month_rounded,
                       size: 35,
-                      color:
-                      ResponsiveDashboardT22Colors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -209,23 +207,20 @@ class _ResponsiveDashboardT22CalendarScreenState
                         crossAxisAlignment:
                         CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Selected Date',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color:
-                              ResponsiveDashboardT22Colors
-                                  .mutedText,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall,
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${selectedDate.day} '
                                 '${_monthName(selectedDate.month)} '
                                 '${selectedDate.year}',
-                            style:
-                            ResponsiveDashboardT22Typography
-                                .section,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium,
                           ),
                         ],
                       ),
@@ -298,12 +293,10 @@ class _MeetingCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-        ResponsiveDashboardT22Colors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color:
-          ResponsiveDashboardT22Colors.border,
+          color: Theme.of(context).colorScheme.outline,
         ),
       ),
       child: Row(
@@ -312,15 +305,18 @@ class _MeetingCard extends StatelessWidget {
             width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color:
-              ResponsiveDashboardT22Colors.primarySoft,
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withValues(alpha: 0.12),
               borderRadius:
               BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.event_rounded,
-              color:
-              ResponsiveDashboardT22Colors.primary,
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary,
             ),
           ),
 
@@ -333,12 +329,9 @@ class _MeetingCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color:
-                    ResponsiveDashboardT22Colors.text,
-                  ),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium,
                 ),
                 const SizedBox(height: 6),
                 Text(
