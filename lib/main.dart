@@ -8,6 +8,7 @@ import 'Responsive_Dashboard_T22_T23/routes/responsive_dashboard_T22_routes.dart
 
 
 import 'Responsive_Dashboard_T22_T23/theme_T23/Theme_T23_app_theme.dart';
+import 'animations_shopping_T25/animations_shopping_routes.dart';
 import 'form_preferences_T15_T16/settings/localization/app_localizations.dart';
 
 void main() async {
@@ -87,8 +88,8 @@ class _MyAppState extends State<MyApp> {
       // ROUTER
       // ========================================================
 
-
-      routerConfig: ModernStoreHomeRoutes.router,
+      routerConfig: animationsShoppingRouter,
+     // routerConfig: ModernStoreHomeRoutes.router,
       // routerConfig: responsiveDashboardT22Router(
       //   isDarkMode: isDarkMode,
       //   onThemeChanged: changeTheme,

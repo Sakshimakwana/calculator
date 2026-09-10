@@ -100,6 +100,18 @@ flutter:
             weight: 600
           - asset: assets/fonts/modern_store_home_inter_bold.ttf
             weight: 700
+    - family: AnimationsShopping
+      fonts:
+          - asset: assets/fonts/AnimationsShopping.ttf
+          - asset: assets/fonts/AnimationsShopping-Bold.ttf
+            weight: 700
+
+
+
+
+
+
+
   assets:
     - assets/images/profile.jpg
     - assets/images/background_image.png
@@ -113,3 +125,4 @@ flutter:
     - assets/shoppingflow_T21_onboarding_1.png
     - assets/shoppingflow_T21_onboarding_2.png
     - assets/shoppingflow_T21_onboarding_3.png
+    - assets/animations/Shopping_cart.json
