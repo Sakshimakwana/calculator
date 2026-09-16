@@ -18,79 +18,129 @@ class MilestoneApp6CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    final primaryColor = theme.colorScheme.primary;
+    final primary = theme.colorScheme.primary;
 
     return GestureDetector(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 72,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // ---------------------------------------------------------
-            // CATEGORY IMAGE
-            // ---------------------------------------------------------
-            AnimatedScale(
-              scale: selected ? 1.05 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              child: Container(
-                width: 58,
-                height: 58,
-                padding: EdgeInsets.all(
-                  selected ? 2.5 : 1.5,
+      child: AnimatedScale(
+        scale: selected ? 1.0 : 0.96,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          width: 118,
+          height: 82,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected
+                  ? primary
+                  : theme.dividerColor.withOpacity(0.18),
+              width: selected ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: selected
+                    ? primary.withOpacity(0.18)
+                    : Colors.black.withOpacity(0.06),
+                blurRadius: selected ? 14 : 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(19),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ======================================================
+                // FOOD IMAGE
+                // ======================================================
+
+                MilestoneApp6Image(
+                  url: category.image,
+                  width: double.infinity,
+                  height: double.infinity,
+                  borderRadius: BorderRadius.circular(19),
+                  fit: BoxFit.cover,
                 ),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: selected
-                      ? primaryColor
-                      : theme.dividerColor.withOpacity(.25),
-                ),
-                child: Container(
+
+                // ======================================================
+                // DARK GRADIENT
+                // ======================================================
+
+                DecoratedBox(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: theme.colorScheme.surface,
-                  ),
-                  padding: const EdgeInsets.all(2),
-                  child: ClipOval(
-                    child: MilestoneApp6Image(
-                      url: category.image,
-                      width: 50,
-                      height: 50,
-                      borderRadius: BorderRadius.circular(50),
-                      fit: BoxFit.cover,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.75),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 7),
+                // ======================================================
+                // CATEGORY NAME
+                // ======================================================
 
-            // ---------------------------------------------------------
-            // CATEGORY NAME
-            // ---------------------------------------------------------
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight:
-                selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected
-                    ? primaryColor
-                    : theme.textTheme.bodyMedium?.color,
-              ),
-              child: Text(
-                category.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+                Positioned(
+                  left: 10,
+                  right: 10,
+                  bottom: 9,
+                  child: Text(
+                    category.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 5,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ======================================================
+                // SELECTED INDICATOR
+                // ======================================================
+
+                if (selected)
+                  Positioned(
+                    top: 7,
+                    right: 7,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.20),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

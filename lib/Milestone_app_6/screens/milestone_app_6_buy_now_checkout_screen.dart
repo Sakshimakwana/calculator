@@ -802,14 +802,11 @@ class _MilestoneApp6CheckoutScreenState
         width: double.infinity,
         height: 56,
         child: FilledButton(
-          // Disabled until payment type is selected
-          onPressed: paymentSelected
+          onPressed: _selectedPaymentType != null
               ? _placeOrder
               : null,
-
           child: Row(
-            mainAxisAlignment:
-            MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Pay \$${amount.toStringAsFixed(0)} Now',
@@ -818,15 +815,10 @@ class _MilestoneApp6CheckoutScreenState
                   fontWeight: FontWeight.w800,
                 ),
               ),
-
-
-              if (paymentSelected) ...[
-                const SizedBox(width: 10),
-
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                ),
-              ],
+              const SizedBox(width: 10),
+              const Icon(
+                Icons.arrow_forward_rounded,
+              ),
             ],
           ),
         ),
@@ -838,13 +830,50 @@ class _MilestoneApp6CheckoutScreenState
   // PLACE ORDER
   // ================================================================
 
-  void _placeOrder() {
-    showDialog(
+// ================================================================
+// PLACE ORDER
+// ================================================================
+
+  Future<void> _placeOrder() async {
+    if (_selectedPaymentType == null) {
+      return;
+    }
+
+    final paymentType =
+    _selectedPaymentType == 'minimum'
+        ? 'Minimum Payment'
+        : 'Full Payment';
+
+    // ================================================================
+    // SAVE ORDER
+    // ================================================================
+
+    widget.state.addOrder(
+      food: widget.food,
+      size: widget.size,
+      unitPrice: widget.unitPrice,
+      quantity: widget.quantity,
+      paymentType: paymentType,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    // ================================================================
+    // CONFIRMATION DIALOG
+    // ================================================================
+
+    await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text(
-            'Order Confirmed',
+            'Order Confirmed!',
             style: TextStyle(
               fontWeight: FontWeight.w800,
             ),
@@ -855,15 +884,46 @@ class _MilestoneApp6CheckoutScreenState
           actions: [
             FilledButton(
               onPressed: () {
-                Navigator.pop(dialogContext);
-
-                context.go('/home');
+                Navigator.of(dialogContext).pop();
               },
-              child: const Text('Continue'),
+              child: const Text(
+                'Confirmed',
+              ),
             ),
           ],
         );
       },
     );
+
+    // ================================================================
+    // SNACKBAR
+    // ================================================================
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Your order confirmed successfully!',
+                ),
+              ),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
   }
 }

@@ -22,112 +22,33 @@ class MilestoneApp6HomeScreen extends StatefulWidget {
       _MilestoneApp6HomeScreenState();
 }
 
-class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
-  int categoryIndex = 0;
+class _MilestoneApp6HomeScreenState
+    extends State<MilestoneApp6HomeScreen> {
+  // ==============================================================
+  // CATEGORY STATE
+  // ==============================================================
 
-  final TextEditingController _searchController = TextEditingController();
+  String _selectedCategory = 'All';
+
+  // ==============================================================
+  // SEARCH
+  // ==============================================================
+
+  final TextEditingController _searchController =
+  TextEditingController();
+
+  // ==============================================================
+  // SPEECH SEARCH
+  // ==============================================================
 
   final stt.SpeechToText _speech = stt.SpeechToText();
 
   bool _isListening = false;
   bool _speechAvailable = false;
 
-  final Set<String> _favoriteRestaurants = <String>{};
-
-  bool _isRestaurantFavorite(String name) {
-    return _favoriteRestaurants.contains(name);
-  }
-
-  void _toggleRestaurantFavorite(String name) {
-    setState(() {
-      if (_favoriteRestaurants.contains(name)) {
-        _favoriteRestaurants.remove(name);
-      } else {
-        _favoriteRestaurants.add(name);
-      }
-    });
-  }
-  Widget _restaurantItem({
-    required String name,
-    required String image,
-    required String rating,
-    required String time,
-  }) {
-    final isFavorite = _isRestaurantFavorite(name);
-
-    return SizedBox(
-      width: 250,
-      child: Stack(
-        children: [
-          // Restaurant card
-          Positioned.fill(
-            child: MilestoneApp6RestaurantCard(
-              name: name,
-              image: image,
-              rating: rating,
-              time: time,
-            ),
-          ),
-
-          // Favorite button - bottom right
-          Positioned(
-            right: 8,
-            top: 8,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  _toggleRestaurantFavorite(name);
-                },
-                borderRadius: BorderRadius.circular(30),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surface
-                        .withOpacity(0.95),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    transitionBuilder: (child, animation) {
-                      return ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      );
-                    },
-                    child: Icon(
-                      isFavorite
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      key: ValueKey(isFavorite),
-                      size: 15,
-                      color: isFavorite
-                          ? Colors.red
-                          : Theme.of(context)
-                          .iconTheme
-                          .color
-                          ?.withOpacity(0.75),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ==============================================================
+  // INIT
+  // ==============================================================
 
   @override
   void initState() {
@@ -135,6 +56,10 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
     _initializeSpeech();
   }
+
+  // ==============================================================
+  // SPEECH INITIALIZATION
+  // ==============================================================
 
   Future<void> _initializeSpeech() async {
     final available = await _speech.initialize(
@@ -163,6 +88,10 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     });
   }
 
+  // ==============================================================
+  // MICROPHONE
+  // ==============================================================
+
   Future<void> _toggleListening() async {
     if (!_speechAvailable) {
       await _initializeSpeech();
@@ -182,6 +111,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
       }
     }
 
+
     if (_isListening) {
       await _speech.stop();
 
@@ -193,6 +123,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
       return;
     }
+
 
     setState(() {
       _isListening = true;
@@ -207,71 +138,233 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
         setState(() {
           _searchController.text = result.recognizedWords;
 
-          _searchController.selection = TextSelection.fromPosition(
-            TextPosition(
-              offset: _searchController.text.length,
-            ),
-          );
+          _searchController.selection =
+              TextSelection.fromPosition(
+                TextPosition(
+                  offset: _searchController.text.length,
+                ),
+              );
         });
       },
     );
   }
 
-  @override
-  void dispose() {
-    _speech.stop();
-    _searchController.dispose();
+  // ==============================================================
+  // CATEGORY SELECTION
+  // ==============================================================
 
-    super.dispose();
+  void _selectCategory(String category) {
+    setState(() {
+      _selectedCategory = category;
+    });
   }
+
+
+  List<MilestoneApp6Food> get _filteredFoods {
+    Iterable<MilestoneApp6Food> result =
+        milestoneApp6Foods;
+
+    // ------------------------------------------------------------
+    // CATEGORY FILTER
+    // ------------------------------------------------------------
+
+    if (_selectedCategory != 'All') {
+      result = result.where(
+            (food) =>
+        food.category.toLowerCase() ==
+            _selectedCategory.toLowerCase(),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // SEARCH FILTER
+    // ------------------------------------------------------------
+
+    final query =
+    _searchController.text.trim().toLowerCase();
+
+    if (query.isNotEmpty) {
+      result = result.where(
+            (food) {
+          final name = food.name.toLowerCase();
+          final category = food.category.toLowerCase();
+          final restaurant = food.restaurant.toLowerCase();
+
+          return name.contains(query) ||
+              category.contains(query) ||
+              restaurant.contains(query);
+        },
+      );
+    }
+
+    return result.toList();
+  }
+
+  // ==============================================================
+  // CLEAR SEARCH
+  // ==============================================================
+
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+    });
+  }
+
+  // ==============================================================
+  // RESTAURANT ITEM
+  // ==============================================================
+
+  Widget _restaurantItem({
+    required String name,
+    required String image,
+    required String rating,
+    required String time,
+  }) {
+    return AnimatedBuilder(
+      animation: widget.state,
+      builder: (context, child) {
+        final theme = Theme.of(context);
+
+        final isFavorite =
+        widget.state.isRestaurantSaved(name);
+
+        return SizedBox(
+          width: 250,
+          child: Stack(
+            children: [
+              // ====================================================
+              // RESTAURANT CARD
+              // ====================================================
+
+              Positioned.fill(
+                child: MilestoneApp6RestaurantCard(
+                  name: name,
+                  image: image,
+                  rating: rating,
+                  time: time,
+                ),
+              ),
+
+              // ====================================================
+              // FAVORITE BUTTON
+              // ====================================================
+
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      widget.state.toggleRestaurantSaved(
+                        name,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(30),
+                    child: AnimatedContainer(
+                      duration:
+                      const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: theme
+                            .colorScheme
+                            .surface
+                            .withOpacity(0.95),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                            Colors.black.withOpacity(0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: AnimatedSwitcher(
+                        duration:
+                        const Duration(milliseconds: 180),
+                        transitionBuilder:
+                            (child, animation) {
+                          return ScaleTransition(
+                            scale: animation,
+                            child: child,
+                          );
+                        },
+                        child: Icon(
+                          isFavorite
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          key: ValueKey(isFavorite),
+                          size: 15,
+                          color: isFavorite
+                              ? Colors.red
+                              : theme
+                              .iconTheme
+                              .color
+                              ?.withOpacity(0.75),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    final selectedCategory = categoryIndex == 0
-        ? null
-        : milestoneApp6Categories[categoryIndex - 1].name;
+    final screenWidth =
+        MediaQuery.sizeOf(context).width;
 
-    final foods = selectedCategory == null
-        ? milestoneApp6Foods
-        : milestoneApp6Foods
-            .where(
-              (food) => food.category == selectedCategory,
-            )
-            .toList();
-
-    final screenWidth = MediaQuery.sizeOf(context).width;
     final isTablet = screenWidth >= 700;
+
+    final foods = _filteredFoods;
 
     return CustomScrollView(
       slivers: [
-// AppBar scrolls away
         SliverAppBar(
           pinned: false,
           floating: false,
           snap: false,
-          expandedHeight: 135,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          expandedHeight: 110,
+
+          backgroundColor:
+          Theme.of(context).scaffoldBackgroundColor,
+
           surfaceTintColor: Colors.transparent,
+
           title: const Text(
             'Foodie',
             style: TextStyle(
-
               fontWeight: FontWeight.w700,
             ),
-          ),centerTitle: true,
+          ),
+
+          centerTitle: true,
 
           flexibleSpace: FlexibleSpaceBar(
             background: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   20,
-                  5,
+                  2,
                   20,
-                  5,
+                  3,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+                  mainAxisAlignment:
+                  MainAxisAlignment.end,
+
                   children: [
                     const Text(
                       'Hi, Sakshi',
@@ -280,7 +373,9 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 3),
+
+                    const SizedBox(height: 2),
+
                     Text(
                       'What would you like to eat today?',
                       style: TextStyle(
@@ -297,127 +392,47 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
         SliverPersistentHeader(
           pinned: true,
-          delegate: MilestoneApp6SearchHeaderDelegate(
-            child: _buildSearchBar(context),
-            topSafeArea: MediaQuery.paddingOf(context).top,
+          delegate:
+          MilestoneApp6HomeStickyHeaderDelegate(
+            minHeight:
+            MediaQuery.paddingOf(context).top + 151,
+            maxHeight:
+            MediaQuery.paddingOf(context).top + 151,
+            child: Container(
+              color:
+              Theme.of(context).scaffoldBackgroundColor,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height:
+                    55 +
+                        MediaQuery.paddingOf(context).top,
+                    child: SafeArea(
+                      bottom: true,
+                      child: _buildSearchBar(context),
+                    ),
+                  ),
+
+                  SizedBox(
+                    height: 94,
+                    child: _buildCategoryRow(),
+                  ),
+
+                  Container(
+                    height: 1,
+                    color: Theme.of(context)
+                        .dividerColor
+                        .withOpacity(.25),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
+
 
         SliverToBoxAdapter(
           child: _banner(context),
-        ),
-
-        SliverToBoxAdapter(
-          child: _sectionTitle(
-            context,
-            'Categories',
-            () {
-              context.go('/categories');
-            },
-          ),
-        ),
-
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 88,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-              ),
-              scrollDirection: Axis.horizontal,
-              itemCount: milestoneApp6Categories.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-
-                if (index == 0) {
-                  final isSelected = categoryIndex == 0;
-
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        categoryIndex = 0;
-                      });
-                    },
-                    child: SizedBox(
-                      width: 72,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AnimatedScale(
-                            scale: isSelected ? 1.05 : 1.0,
-                            duration: const Duration(milliseconds: 200),
-                            child: Container(
-                              width: 58,
-                              height: 58,
-                              padding: EdgeInsets.all(
-                                isSelected ? 2.5 : 1.5,
-                              ),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isSelected
-                                    ? MilestoneApp6Colors.orange
-                                    : Theme.of(context)
-                                    .dividerColor
-                                    .withOpacity(.25),
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surface,
-                                ),
-                                child: const CircleAvatar(
-                                  backgroundColor:
-                                  MilestoneApp6Colors.orange,
-                                  child: Icon(
-                                    Icons.restaurant_menu_rounded,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 7),
-
-                          Text(
-                            'All',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: isSelected
-                                  ? MilestoneApp6Colors.orange
-                                  : Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.color,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                final category = milestoneApp6Categories[index - 1];
-
-                return MilestoneApp6CategoryChip(
-                  category: category,
-                  selected: categoryIndex == index,
-                  onTap: () {
-                    setState(() {
-                      categoryIndex = index;
-                    });
-                  },
-                );
-              },
-            ),
-          ),
         ),
 
         SliverToBoxAdapter(
@@ -430,14 +445,15 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
           ),
         ),
 
+
         SliverToBoxAdapter(
           child: SizedBox(
             height: 115,
             child: ListView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-              ),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               children: [
                 _restaurantItem(
                   name: 'The Italian Bistro',
@@ -521,64 +537,190 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
           ),
         ),
 
+
         SliverToBoxAdapter(
           child: _sectionTitle(
             context,
-            selectedCategory ?? 'Popular Food',
-            () {
+            _selectedCategory == 'All'
+                ? 'Popular Food'
+                : _selectedCategory,
+                () {
               context.go('/categories');
             },
           ),
         ),
 
-
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            24,
+        if (foods.isEmpty)
+          SliverToBoxAdapter(
+            child: _buildEmptyFoodState(context),
           ),
-          sliver: SliverGrid(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final food = foods[index];
 
-                return AnimatedBuilder(
-                  animation: widget.state,
-                  builder: (context, child) {
-                    return MilestoneApp6FoodCard(
-                      food: food,
-                      state: widget.state,
-                      onTap: () {
-                        context.push('/food/${food.id}');
-                      },
-                    );
-                  },
-                );
-              },
-              childCount: foods.length,
+
+        if (foods.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              24,
             ),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isTablet ? 4 : 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
+            sliver: SliverGrid(
+              delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                  final food = foods[index];
 
-
-              mainAxisExtent: isTablet ? 300 : 245,
+                  return AnimatedBuilder(
+                    animation: widget.state,
+                    builder: (
+                        context,
+                        child,
+                        ) {
+                      return MilestoneApp6FoodCard(
+                        food: food,
+                        state: widget.state,
+                        onTap: () {
+                          context.push(
+                            '/food/${food.id}',
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+                childCount: foods.length,
+              ),
+              gridDelegate:
+              SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount:
+                isTablet ? 4 : 2,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                mainAxisExtent:
+                isTablet ? 300 : 245,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
 
+  Widget _buildCategoryRow() {
+    // Create "All" using the SAME category model
+    // as every other category.
+    final allCategory = MilestoneApp6Category(
+      'All',
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500',
+    );
+
+    final categories = [
+      allCategory,
+      ...milestoneApp6Categories,
+    ];
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 6,
+      ),
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      itemCount: categories.length,
+      separatorBuilder: (_, __) {
+        return const SizedBox(width: 10);
+      },
+      itemBuilder: (context, index) {
+        final category = categories[index];
+
+        final isSelected =
+            _selectedCategory == category.name;
+
+        return MilestoneApp6CategoryChip(
+          category: category,
+          selected: isSelected,
+          onTap: () {
+            _selectCategory(category.name);
+          },
+        );
+      },
+    );
+  }
+
+
+  Widget _buildEmptyFoodState(
+      BuildContext context,
+      ) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 30,
+        vertical: 50,
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: theme
+                  .colorScheme
+                  .primary
+                  .withOpacity(.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.search_off_rounded,
+              size: 36,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            'No food found',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            _searchController.text.isNotEmpty
+                ? 'Try another search or category.'
+                : 'No items are available in this category.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.hintColor,
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          if (_searchController.text.isNotEmpty)
+            OutlinedButton.icon(
+              onPressed: _clearSearch,
+              icon: const Icon(
+                Icons.clear_rounded,
+              ),
+              label: const Text(
+                'Clear Search',
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _banner(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
+    final width =
+        MediaQuery.sizeOf(context).width;
 
     final isTablet = width >= 700;
 
-    final bannerHeight = isTablet ? 150.0 : 140.0;
+    final bannerHeight =
+    isTablet ? 150.0 : 140.0;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -591,19 +733,20 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
         height: bannerHeight,
         width: double.infinity,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius:
+          BorderRadius.circular(20),
           child: Stack(
             fit: StackFit.expand,
             children: [
-// ============================================================
-// BACKGROUND
-// ============================================================
 
               Container(
-                decoration: const BoxDecoration(
+                decoration:
+                const BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+                    begin:
+                    Alignment.centerLeft,
+                    end:
+                    Alignment.centerRight,
                     colors: [
                       MilestoneApp6Colors.orangeDark,
                       Color(0xFF9E260D),
@@ -612,33 +755,38 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                 ),
               ),
 
-// ============================================================
-// FOOD IMAGE
-// ============================================================
+              // ====================================================
+              // FOOD IMAGE
+              // ====================================================
 
               Positioned(
                 top: 0,
                 right: 0,
                 bottom: 0,
-                width: isTablet ? width * 0.48 : width * 0.52,
+                width: isTablet
+                    ? width * 0.48
+                    : width * 0.52,
                 child: MilestoneApp6Image(
                   url:
-                      'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000',
+                  'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000',
                   fit: BoxFit.cover,
                 ),
               ),
 
-// ============================================================
-// IMAGE GRADIENT OVERLAY
-// ============================================================
+              // ====================================================
+              // IMAGE GRADIENT
+              // ====================================================
 
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
-                    decoration: BoxDecoration(
+                    decoration:
+                    BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+                        begin:
+                        Alignment.centerLeft,
+                        end:
+                        Alignment.centerRight,
                         stops: const [
                           0.0,
                           0.38,
@@ -646,9 +794,14 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                           1.0,
                         ],
                         colors: [
-                          MilestoneApp6Colors.orangeDark,
-                          MilestoneApp6Colors.orangeDark.withOpacity(0.98),
-                          MilestoneApp6Colors.orangeDark.withOpacity(0.35),
+                          MilestoneApp6Colors
+                              .orangeDark,
+                          MilestoneApp6Colors
+                              .orangeDark
+                              .withOpacity(.98),
+                          MilestoneApp6Colors
+                              .orangeDark
+                              .withOpacity(.35),
                           Colors.transparent,
                         ],
                       ),
@@ -657,60 +810,75 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                 ),
               ),
 
-// ============================================================
-// CONTENT
-// ============================================================
+              // ====================================================
+              // CONTENT
+              // ====================================================
 
               Positioned(
                 left: 18,
                 top: 15,
                 bottom: 15,
                 child: SizedBox(
-                  width: isTablet ? width * 0.42 : width * 0.43,
+                  width: isTablet
+                      ? width * 0.42
+                      : width * 0.43,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
                     children: [
-// ----------------------------------------------------
-// TITLE
-// ----------------------------------------------------
+                      // ==================================================
+                      // TITLE
+                      // ==================================================
 
                       const Text(
                         'Delicious Food\nDelivered to You',
                         maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                        TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 17,
                           height: 1.05,
-                          fontWeight: FontWeight.w800,
+                          fontWeight:
+                          FontWeight.w800,
                         ),
                       ),
 
                       const Spacer(),
 
-// ----------------------------------------------------
-// BUTTON
-// ----------------------------------------------------
+                      // ==================================================
+                      // BUTTON
+                      // ==================================================
 
                       GestureDetector(
                         onTap: () {
-                          context.go('/categories');
+                          context.go(
+                            '/categories',
+                          );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding:
+                          const EdgeInsets
+                              .symmetric(
                             horizontal: 13,
                             vertical: 7,
                           ),
-                          decoration: BoxDecoration(
-                            color: MilestoneApp6Colors.orange,
-                            borderRadius: BorderRadius.circular(10),
+                          decoration:
+                          BoxDecoration(
+                            color:
+                            MilestoneApp6Colors
+                                .orange,
+                            borderRadius:
+                            BorderRadius
+                                .circular(10),
                           ),
                           child: const Text(
                             'Order Now',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontWeight:
+                              FontWeight.w700,
                             ),
                           ),
                         ),
@@ -726,15 +894,15 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     );
   }
 
-// ---------------------------------------------------------------------
-// SECTION TITLE
-// ---------------------------------------------------------------------
+  // ==============================================================
+  // SECTION TITLE
+  // ==============================================================
 
   Widget _sectionTitle(
-    BuildContext context,
-    String title,
-    VoidCallback onTap,
-  ) {
+      BuildContext context,
+      String title,
+      VoidCallback onTap,
+      ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         20,
@@ -744,26 +912,41 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
       ),
       child: Row(
         children: [
+          // ========================================================
+          // TITLE
+          // ========================================================
+
           Expanded(
             child: Text(
               title,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              overflow:
+              TextOverflow.ellipsis,
               style: const TextStyle(
-                fontWeight: FontWeight.w700,
+                fontWeight:
+                FontWeight.w700,
                 fontSize: 16,
               ),
             ),
           ),
+
           const SizedBox(width: 12),
+
+          // ========================================================
+          // SEE ALL
+          // ========================================================
+
           GestureDetector(
             onTap: onTap,
             child: Text(
               'See All',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary,
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontWeight:
+                FontWeight.w600,
               ),
             ),
           ),
@@ -772,13 +955,28 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
-    final theme = Theme.of(context);
+  // ==============================================================
+  // SEARCH BAR
+  // ==============================================================
 
-    final isDark = theme.brightness == Brightness.dark;
+  Widget _buildSearchBar(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    final isDark =
+        theme.brightness ==
+            Brightness.dark;
+
+    final hasSearch =
+        _searchController.text
+            .trim()
+            .isNotEmpty;
 
     return Container(
-      color: theme.scaffoldBackgroundColor,
+      color:
+      theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(
         14,
         0,
@@ -791,25 +989,33 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
           color: isDark
               ? const Color(0xFF242424)
               : Colors.white,
-          borderRadius: BorderRadius.circular(13),
+          borderRadius:
+          BorderRadius.circular(13),
           border: Border.all(
             color: isDark
-                ? Colors.white.withOpacity(.08)
+                ? Colors.white
+                .withOpacity(.08)
                 : const Color(0xFFE5E5E5),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(.08),
+              color: Colors.black
+                  .withOpacity(.08),
               blurRadius: 12,
-              offset: const Offset(0, 3),
+              offset:
+              const Offset(0, 3),
             ),
           ],
         ),
         child: Row(
           children: [
+            // ======================================================
             // SEARCH ICON
+            // ======================================================
+
             Padding(
-              padding: const EdgeInsets.only(
+              padding:
+              const EdgeInsets.only(
                 left: 13,
                 right: 9,
               ),
@@ -818,90 +1024,160 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                 size: 23,
                 color: isDark
                     ? Colors.white70
-                    : const Color(0xFF198754),
-              ),
-            ),
-
-            // TEXT FIELD
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                textInputAction: TextInputAction.search,
-                textAlignVertical: TextAlignVertical.center,
-                onChanged: (value) {
-                  setState(() {});
-                },
-                onSubmitted: (value) {
-                  // Search action can be added here.
-                },
-                decoration: InputDecoration(
-                  hintText: _isListening
-                      ? 'Listening...'
-                      : 'Search "comfort food"',
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: isDark
-                        ? Colors.white54
-                        : const Color(0xFF777777),
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
+                    : const Color(
+                  0xFF198754,
                 ),
               ),
             ),
 
+            // ======================================================
+            // TEXT FIELD
+            // ======================================================
+
+            Expanded(
+              child: TextField(
+                controller:
+                _searchController,
+                textInputAction:
+                TextInputAction.search,
+                textAlignVertical:
+                TextAlignVertical.center,
+                onChanged: (value) {
+                  setState(() {});
+                },
+                onSubmitted: (value) {
+                  setState(() {});
+                },
+                decoration:
+                InputDecoration(
+                  hintText:
+                  _isListening
+                      ? 'Listening...'
+                      : 'Search "comfort food"',
+                  hintStyle:
+                  TextStyle(
+                    fontSize: 14,
+                    fontWeight:
+                    FontWeight.w400,
+                    color: isDark
+                        ? Colors.white54
+                        : const Color(
+                      0xFF777777,
+                    ),
+                  ),
+                  border:
+                  InputBorder.none,
+                  enabledBorder:
+                  InputBorder.none,
+                  focusedBorder:
+                  InputBorder.none,
+                  isDense: true,
+                  contentPadding:
+                  EdgeInsets.zero,
+                ),
+              ),
+            ),
+
+            // ======================================================
+            // CLEAR SEARCH
+            // ======================================================
+
+            if (hasSearch)
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _clearSearch,
+                  borderRadius:
+                  BorderRadius.circular(
+                    30,
+                  ),
+                  child: const SizedBox(
+                    width: 36,
+                    height: 42,
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+
+            // ======================================================
             // DIVIDER
+            // ======================================================
+
             Container(
               width: 1,
               height: 28,
               color: isDark
                   ? Colors.white12
-                  : const Color(0xFFE6E6E6),
+                  : const Color(
+                0xFFE6E6E6,
+              ),
             ),
 
+            // ======================================================
             // MICROPHONE
+            // ======================================================
+
             Padding(
-              padding: const EdgeInsets.only(
+              padding:
+              const EdgeInsets.only(
                 left: 4,
                 right: 4,
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _toggleListening,
-                  borderRadius: BorderRadius.circular(30),
-                  child: AnimatedContainer(
-                    duration: const Duration(
+                  onTap:
+                  _toggleListening,
+                  borderRadius:
+                  BorderRadius.circular(
+                    30,
+                  ),
+                  child:
+                  AnimatedContainer(
+                    duration:
+                    const Duration(
                       milliseconds: 200,
                     ),
                     width: 42,
                     height: 42,
-                    decoration: BoxDecoration(
+                    decoration:
+                    BoxDecoration(
                       color: _isListening
-                          ? MilestoneApp6Colors.orange
-                          .withOpacity(.12)
+                          ? MilestoneApp6Colors
+                          .orange
+                          .withOpacity(
+                        .12,
+                      )
                           : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(
+                    child:
+                    AnimatedSwitcher(
+                      duration:
+                      const Duration(
                         milliseconds: 180,
                       ),
                       child: Icon(
                         _isListening
                             ? Icons.mic
-                            : Icons.mic_none_rounded,
-                        key: ValueKey(_isListening),
+                            : Icons
+                            .mic_none_rounded,
+                        key: ValueKey(
+                          _isListening,
+                        ),
                         size: 22,
                         color: _isListening
-                            ? MilestoneApp6Colors.orange
+                            ? MilestoneApp6Colors
+                            .orange
                             : isDark
-                            ? Colors.white70
-                            : const Color(0xFF198754),
+                            ? Colors
+                            .white70
+                            : const Color(
+                          0xFF198754,
+                        ),
                       ),
                     ),
                   ),
@@ -916,23 +1192,28 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     );
   }
 }
-class MilestoneApp6SearchHeaderDelegate
-    extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  final double topSafeArea;
 
-  MilestoneApp6SearchHeaderDelegate({
+// ============================================================================
+// STICKY SEARCH + CATEGORY HEADER
+// ============================================================================
+
+class MilestoneApp6HomeStickyHeaderDelegate
+    extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  MilestoneApp6HomeStickyHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
     required this.child,
-    required this.topSafeArea,
   });
 
   @override
-  double get minExtent =>
-      55 + topSafeArea;
+  double get minExtent => minHeight;
 
   @override
-  double get maxExtent =>
-      55 + topSafeArea;
+  double get maxExtent => maxHeight;
 
   @override
   Widget build(
@@ -940,20 +1221,29 @@ class MilestoneApp6SearchHeaderDelegate
       double shrinkOffset,
       bool overlapsContent,
       ) {
-    return SafeArea(
-      top: true,
-      bottom: false,
-      child: child,
+    return ClipRect(
+      child: Material(
+        color: Theme.of(context)
+            .scaffoldBackgroundColor,
+        elevation:
+        overlapsContent ? 3 : 0,
+        shadowColor:
+        Colors.black.withOpacity(.12),
+        child: child,
+      ),
     );
   }
 
   @override
   bool shouldRebuild(
-      covariant MilestoneApp6SearchHeaderDelegate
+      covariant
+      MilestoneApp6HomeStickyHeaderDelegate
       oldDelegate,
       ) {
-    return oldDelegate.topSafeArea !=
-        topSafeArea ||
-        oldDelegate.child != child;
+    return minHeight !=
+        oldDelegate.minHeight ||
+        maxHeight !=
+            oldDelegate.maxHeight ||
+        child != oldDelegate.child;
   }
 }

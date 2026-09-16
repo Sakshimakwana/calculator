@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/milestone_app_6_address_data.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
+import '../data/milestone_app_6_order.dart';
 
 class MilestoneApp6State extends ChangeNotifier {
   // ================================================================
@@ -35,10 +36,22 @@ class MilestoneApp6State extends ChangeNotifier {
   final Map<String, MilestoneApp6CartItem> _cart = {};
 
   // ================================================================
-  // FAVORITES
+  // FAVORITE PRODUCTS
   // ================================================================
 
   final Set<String> _saved = {};
+
+  // ================================================================
+  // FAVORITE RESTAURANTS
+  // ================================================================
+
+  final Set<String> _savedRestaurants = {};
+
+  // ================================================================
+  // ORDERS
+  // ================================================================
+
+  final List<MilestoneApp6Order> _orders = [];
 
   // ================================================================
   // PROMO
@@ -72,6 +85,14 @@ class MilestoneApp6State extends ChangeNotifier {
 
   Set<String> get saved {
     return Set.unmodifiable(_saved);
+  }
+
+  Set<String> get savedRestaurants {
+    return Set.unmodifiable(_savedRestaurants);
+  }
+
+  List<MilestoneApp6Order> get orders {
+    return List.unmodifiable(_orders);
   }
 
   MilestoneApp6Address? get selectedAddress {
@@ -280,7 +301,7 @@ class MilestoneApp6State extends ChangeNotifier {
   }
 
   // ================================================================
-  // DELETE COMPLETE ITEM
+  // DELETE ITEM
   // ================================================================
 
   void deleteFromCart(
@@ -365,7 +386,7 @@ class MilestoneApp6State extends ChangeNotifier {
   }
 
   // ================================================================
-  // FAVORITE
+  // FAVORITE PRODUCT
   // ================================================================
 
   void toggleSaved(
@@ -376,6 +397,88 @@ class MilestoneApp6State extends ChangeNotifier {
     } else {
       _saved.add(id);
     }
+
+    notifyListeners();
+  }
+
+  // ================================================================
+  // CHECK FAVORITE PRODUCT
+  // ================================================================
+
+  bool isSaved(
+      String id,
+      ) {
+    return _saved.contains(id);
+  }
+
+  // ================================================================
+  // FAVORITE RESTAURANT
+  // ================================================================
+
+  void toggleRestaurantSaved(
+      String restaurantName,
+      ) {
+    if (_savedRestaurants.contains(
+      restaurantName,
+    )) {
+      _savedRestaurants.remove(
+        restaurantName,
+      );
+    } else {
+      _savedRestaurants.add(
+        restaurantName,
+      );
+    }
+
+    notifyListeners();
+  }
+
+  // ================================================================
+  // CHECK FAVORITE RESTAURANT
+  // ================================================================
+
+  bool isRestaurantSaved(
+      String restaurantName,
+      ) {
+    return _savedRestaurants.contains(
+      restaurantName,
+    );
+  }
+
+  // ================================================================
+  // ADD ORDER
+  // ================================================================
+
+  void addOrder({
+    required MilestoneApp6Food food,
+    required String size,
+    required double unitPrice,
+    required int quantity,
+    required String paymentType,
+  }) {
+    final order =
+    MilestoneApp6Order(
+      id: DateTime.now()
+          .millisecondsSinceEpoch
+          .toString(),
+
+      food: food,
+
+      size: size,
+
+      unitPrice: unitPrice,
+
+      quantity: quantity,
+
+      paymentType: paymentType,
+
+      orderDate: DateTime.now(),
+    );
+
+    _orders.insert(
+      0,
+      order,
+    );
 
     notifyListeners();
   }

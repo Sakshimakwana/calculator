@@ -221,7 +221,11 @@ class _MilestoneApp6FoodDetailsScreenState
               Icons.check_circle_rounded,
               color: Colors.white,
             ),
-            const SizedBox(width: 10),
+
+            const SizedBox(
+              width: 10,
+            ),
+
             Expanded(
               child: Text(
                 '${food.name} added to cart successfully!',
@@ -230,24 +234,45 @@ class _MilestoneApp6FoodDetailsScreenState
           ],
         ),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(
+          seconds: 2,
+        ),
       ),
     );
   }
+
+  // ================================================================
+  // BUY NOW
+  // ================================================================
+  //
+  // IMPORTANT:
+  // This navigation is required.
+  //
+  // Food Details
+  //      ↓
+  //    Buy Now
+  //      ↓
+  //   Checkout
+  //
+  // Pay Now logic is NOT handled here.
+  // ================================================================
+
   void _buyNow(
       BuildContext context,
       MilestoneApp6Food food,
       double currentPrice,
       ) {
-    context.push(
-      '/checkout',
-      extra: {
-        'food': food,
+    final checkoutUrl = Uri(
+      path: '/checkout',
+      queryParameters: {
+        'foodId': food.id,
         'size': size,
-        'unitPrice': currentPrice,
-        'quantity': quantity,
+        'unitPrice': currentPrice.toString(),
+        'quantity': quantity.toString(),
       },
-    );
+    ).toString();
+
+    context.push(checkoutUrl);
   }
 
   // ================================================================
@@ -265,12 +290,25 @@ class _MilestoneApp6FoodDetailsScreenState
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            onPressed: () {
-              context.pop();
-            },
-            icon: const Icon(
-              Icons.arrow_back_rounded,
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Material(
+              color: Theme.of(context).colorScheme.surface,
+              elevation: 3,
+              shadowColor: Colors.black.withOpacity(0.20),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () {
+                  context.pop();
+                },
+                child: const Center(
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    size: 22,
+                  ),
+                ),
+              ),
             ),
           ),
           title: const Text(
@@ -315,26 +353,52 @@ class _MilestoneApp6FoodDetailsScreenState
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // ==========================================================
+          // ============================================================
           // APP BAR
-          // ==========================================================
+          // ============================================================
 
           SliverAppBar(
             pinned: true,
             expandedHeight: 330,
 
-            leading: IconButton(
-              onPressed: () {
-                context.pop();
-              },
-              icon: const Icon(
-                Icons.arrow_back_rounded,
+            backgroundColor:
+            Theme.of(context).colorScheme.surface,
+
+            leadingWidth: 64,
+
+            // ==========================================================
+            // BACK BUTTON
+            // ==========================================================
+
+            leading: Padding(
+              padding: const EdgeInsets.only(
+                left: 12,
+                top: 8,
+                bottom: 8,
+              ),
+              child: Material(
+                color: Theme.of(context).colorScheme.surface,
+                elevation: 4,
+                shadowColor: Colors.black.withOpacity(0.25),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () {
+                    context.pop();
+                  },
+                  child: const Center(
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      size: 22,
+                    ),
+                  ),
+                ),
               ),
             ),
 
-            // ========================================================
+            // ==========================================================
             // FAVORITE
-            // ========================================================
+            // ==========================================================
 
             actions: [
               AnimatedBuilder(
@@ -343,32 +407,59 @@ class _MilestoneApp6FoodDetailsScreenState
                     context,
                     child,
                     ) {
-                  final isSaved = widget.state.saved.contains(
+                  final isSaved =
+                  widget.state.saved.contains(
                     food.id,
                   );
 
-                  return IconButton(
-                    onPressed: () {
-                      widget.state.toggleSaved(
-                        food.id,
-                      );
-                    },
-                    icon: Icon(
-                      isSaved
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color: isSaved
-                          ? Colors.red
-                          : null,
+                  return Padding(
+                    padding: const EdgeInsets.only(
+                      right: 12,
+                      top: 8,
+                      bottom: 8,
+                    ),
+                    child: Material(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surface,
+                      elevation: 4,
+                      shadowColor:
+                      Colors.black.withOpacity(0.25),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder:
+                        const CircleBorder(),
+                        onTap: () {
+                          widget.state.toggleSaved(
+                            food.id,
+                          );
+                        },
+                        child: Padding(
+                          padding:
+                          const EdgeInsets.all(10),
+                          child: Icon(
+                            isSaved
+                                ? Icons.favorite_rounded
+                                : Icons
+                                .favorite_border_rounded,
+                            size: 22,
+                            color: isSaved
+                                ? Colors.red
+                                : Theme.of(context)
+                                .iconTheme
+                                .color,
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 },
               ),
             ],
 
-            // ========================================================
+            // ==========================================================
             // HERO IMAGE
-            // ========================================================
+            // ==========================================================
 
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
@@ -384,19 +475,20 @@ class _MilestoneApp6FoodDetailsScreenState
             ),
           ),
 
-          // ==========================================================
+          // ============================================================
           // DETAILS
-          // ==========================================================
+          // ============================================================
 
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
                 children: [
-                  // ==================================================
+                  // ======================================================
                   // FOOD NAME
-                  // ==================================================
+                  // ======================================================
 
                   Text(
                     food.name,
@@ -410,9 +502,9 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 8,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // RESTAURANT
-                  // ==================================================
+                  // ======================================================
 
                   Text(
                     food.restaurant,
@@ -426,20 +518,23 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 14,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // RATING + CATEGORY
-                  // ==================================================
+                  // ======================================================
 
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                        const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.amber
+                              .withOpacity(0.12),
+                          borderRadius:
+                          BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
@@ -454,9 +549,11 @@ class _MilestoneApp6FoodDetailsScreenState
                             ),
 
                             Text(
-                              food.rating.toStringAsFixed(1),
+                              food.rating
+                                  .toStringAsFixed(1),
                               style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                                fontWeight:
+                                FontWeight.w700,
                               ),
                             ),
                           ],
@@ -480,9 +577,9 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 18,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // PRICE
-                  // ==================================================
+                  // ======================================================
 
                   AnimatedSwitcher(
                     duration: const Duration(
@@ -496,7 +593,8 @@ class _MilestoneApp6FoodDetailsScreenState
                       style: TextStyle(
                         fontSize: 27,
                         fontWeight: FontWeight.w900,
-                        color: theme.colorScheme.primary,
+                        color:
+                        theme.colorScheme.primary,
                       ),
                     ),
                   ),
@@ -505,9 +603,9 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 20,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // DESCRIPTION
-                  // ==================================================
+                  // ======================================================
 
                   const Text(
                     'Description',
@@ -534,9 +632,9 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 25,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // CHOOSE SIZE
-                  // ==================================================
+                  // ======================================================
 
                   const Text(
                     'Choose Size',
@@ -581,9 +679,9 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 25,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // QUANTITY
-                  // ==================================================
+                  // ======================================================
 
                   const Text(
                     'Quantity',
@@ -611,14 +709,16 @@ class _MilestoneApp6FoodDetailsScreenState
                       ),
 
                       Padding(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                        const EdgeInsets.symmetric(
                           horizontal: 20,
                         ),
                         child: Text(
                           '$quantity',
                           style: const TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                            fontWeight:
+                            FontWeight.w800,
                           ),
                         ),
                       ),
@@ -638,9 +738,9 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 30,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // TOTAL
-                  // ==================================================
+                  // ======================================================
 
                   Row(
                     children: [
@@ -665,8 +765,10 @@ class _MilestoneApp6FoodDetailsScreenState
                           ),
                           style: TextStyle(
                             fontSize: 19,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.primary,
+                            fontWeight:
+                            FontWeight.w900,
+                            color: theme
+                                .colorScheme.primary,
                           ),
                         ),
                       ),
@@ -677,15 +779,15 @@ class _MilestoneApp6FoodDetailsScreenState
                     height: 15,
                   ),
 
-                  // ==================================================
+                  // ======================================================
                   // ADD TO CART + BUY NOW
-                  // ==================================================
+                  // ======================================================
 
                   Row(
                     children: [
-                      // =================================================
+                      // ==================================================
                       // ADD TO CART
-                      // =================================================
+                      // ==================================================
 
                       Expanded(
                         child: SizedBox(
@@ -698,21 +800,28 @@ class _MilestoneApp6FoodDetailsScreenState
                                 currentPrice,
                               );
                             },
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(
+                            style:
+                            OutlinedButton.styleFrom(
+                              minimumSize:
+                              const Size(
                                 double.infinity,
                                 52,
                               ),
-                              padding: const EdgeInsets.symmetric(
+                              padding:
+                              const EdgeInsets
+                                  .symmetric(
                                 horizontal: 8,
                               ),
-                              shape: RoundedRectangleBorder(
+                              shape:
+                              RoundedRectangleBorder(
                                 borderRadius:
-                                BorderRadius.circular(14),
+                                BorderRadius
+                                    .circular(14),
                               ),
                               side: BorderSide(
-                                color:
-                                theme.colorScheme.primary,
+                                color: theme
+                                    .colorScheme
+                                    .primary,
                                 width: 1.5,
                               ),
                             ),
@@ -723,9 +832,11 @@ class _MilestoneApp6FoodDetailsScreenState
                               TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color:
-                                theme.colorScheme.primary,
+                                fontWeight:
+                                FontWeight.w800,
+                                color: theme
+                                    .colorScheme
+                                    .primary,
                               ),
                             ),
                           ),
@@ -736,9 +847,9 @@ class _MilestoneApp6FoodDetailsScreenState
                         width: 12,
                       ),
 
-                      // =================================================
+                      // ==================================================
                       // BUY NOW
-                      // =================================================
+                      // ==================================================
 
                       Expanded(
                         child: SizedBox(
