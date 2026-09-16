@@ -65,7 +65,7 @@ class InstagramStyleUiScreen extends StatelessWidget {
           ],
         ),
       ),
-           //bottomNavigationBar: const InstagramStyleUiBottomNav(),
+           bottomNavigationBar: const InstagramStyleUiBottomNav(),
     );
   }
 }

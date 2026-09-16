@@ -1,114 +1,181 @@
-import 'package:app_matic_tech_flutter_app/modern_store_home_T24/modern_store_home_app.dart';
-import 'package:app_matic_tech_flutter_app/modern_store_home_T24/modern_store_home_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'Responsive_Dashboard_T22_T23/Services_T23/Theme_T23_theme_service.dart';
-import 'Responsive_Dashboard_T22_T23/routes/responsive_dashboard_T22_routes.dart';
+import 'Milestone_app_6/routes/milestone_app_6_routes.dart';
+import 'Milestone_app_6/state/milestone_app_6_state.dart';
+import 'Milestone_app_6/theme/milestone_app_6_theme.dart';
 
 
-import 'Responsive_Dashboard_T22_T23/theme_T23/Theme_T23_app_theme.dart';
-import 'animations_shopping_T25/animations_shopping_routes.dart';
-import 'form_preferences_T15_T16/settings/localization/app_localizations.dart';
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load saved theme
-  final bool savedDarkMode =
-  await ThemeService.loadTheme();
+  final state =
+  MilestoneApp6State();
+
+  await state.load();
+
+  final routes =
+  MilestoneApp6Routes(state);
 
   runApp(
-    MyApp(
-      initialDarkMode: savedDarkMode,
+    MilestoneApp6App(
+      state: state,
+      routes: routes,
     ),
   );
 }
 
-class MyApp extends StatefulWidget {
-  final bool initialDarkMode;
+class MilestoneApp6App
+    extends StatelessWidget {
+  final MilestoneApp6State state;
+  final MilestoneApp6Routes routes;
 
-  const MyApp({
+  const MilestoneApp6App({
     super.key,
-    required this.initialDarkMode,
+    required this.state,
+    required this.routes,
   });
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late bool isDarkMode;
-
-  @override
-  void initState() {
-    super.initState();
-
-    isDarkMode = widget.initialDarkMode;
-  }
-
-  // ============================================================
-  // THEME CHANGE LOGIC
-  // ============================================================
-
-  Future<void> changeTheme(bool value) async {
-    setState(() {
-      isDarkMode = value;
-    });
-
-    await ThemeService.saveTheme(value);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
+    return AnimatedBuilder(
+      animation: state,
 
-      // ========================================================
-      // LIGHT THEME
-      // ========================================================
+      builder: (context, _) {
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
 
-      theme: AppTheme.lightTheme,
+          title: 'Foodie',
 
-      // ========================================================
-      // DARK THEME
-      // ========================================================
+          theme:
+          MilestoneApp6Theme.light,
 
-      darkTheme: AppTheme.darkTheme,
+          darkTheme:
+          MilestoneApp6Theme.dark,
 
-      // ========================================================
-      // CURRENT THEME
-      // ========================================================
+          themeMode:
+          state.themeMode,
 
-      themeMode: isDarkMode
-          ? ThemeMode.dark
-          : ThemeMode.light,
-
-      // ========================================================
-      // ROUTER
-      // ========================================================
-
-      routerConfig: animationsShoppingRouter,
-     // routerConfig: ModernStoreHomeRoutes.router,
-      // routerConfig: responsiveDashboardT22Router(
-      //   isDarkMode: isDarkMode,
-      //   onThemeChanged: changeTheme,
-      // ),
-
-      // ========================================================
-      // LOCALIZATION
-      // ========================================================
-
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-
-      supportedLocales: const [
-        Locale('en'),
-      ],
+          routerConfig:
+          routes.router,
+        );
+      },
     );
   }
 }
+
+//
+// import 'package:app_matic_tech_flutter_app/modern_store_home_T24/modern_store_home_app.dart';
+// import 'package:app_matic_tech_flutter_app/modern_store_home_T24/modern_store_home_routes.dart';
+// import 'package:app_matic_tech_flutter_app/shoppingflow_T20/routes/shoppingflow_T20_routes.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_localizations/flutter_localizations.dart';
+// import 'Responsive_Dashboard_T22_T23/Services_T23/Theme_T23_theme_service.dart';
+// import 'Responsive_Dashboard_T22_T23/routes/responsive_dashboard_T22_routes.dart';
+// import 'Responsive_Dashboard_T22_T23/theme_T23/Theme_T23_app_theme.dart';
+// import 'animations_shopping_T25/animations_shopping_routes.dart';
+// import 'form_preferences_T15_T16/settings/localization/app_localizations.dart';
+//
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//
+//   // Load saved theme
+//   final bool savedDarkMode =
+//   await ThemeService.loadTheme();
+//
+//   runApp(
+//     MyApp(
+//       initialDarkMode: savedDarkMode,
+//     ),
+//   );
+// }
+//
+// class MyApp extends StatefulWidget {
+//   final bool initialDarkMode;
+//
+//   const MyApp({
+//     super.key,
+//     required this.initialDarkMode,
+//   });
+//
+//   @override
+//   State<MyApp> createState() => _MyAppState();
+// }
+//
+// class _MyAppState extends State<MyApp> {
+//   late bool isDarkMode;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//
+//     isDarkMode = widget.initialDarkMode;
+//   }
+//
+//   // ============================================================
+//   // THEME CHANGE LOGIC
+//   // ============================================================
+//
+//   Future<void> changeTheme(bool value) async {
+//     setState(() {
+//       isDarkMode = value;
+//     });
+//
+//     await ThemeService.saveTheme(value);
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp.router(
+//       debugShowCheckedModeBanner: false,
+//
+//       // ========================================================
+//       // LIGHT THEME
+//       // ========================================================
+//
+//       theme: AppTheme.lightTheme,
+//
+//       // ========================================================
+//       // DARK THEME
+//       // ========================================================
+//
+//       darkTheme: AppTheme.darkTheme,
+//
+//       // ========================================================
+//       // CURRENT THEME
+//       // ========================================================
+//
+//       themeMode: isDarkMode
+//           ? ThemeMode.dark
+//           : ThemeMode.light,
+//
+//       // ========================================================
+//       // ROUTER
+//       // ========================================================
+//
+//
+//        // routerConfig: shoppingFlowT20Router,
+//       //routerConfig: animationsShoppingRouter,
+//      // routerConfig: ModernStoreHomeRoutes.router,
+//       routerConfig: responsiveDashboardT22Router(
+//         isDarkMode: isDarkMode,
+//         onThemeChanged: changeTheme,
+//       ),
+//
+//
+//       // ========================================================
+//       // LOCALIZATION
+//       // ========================================================
+//
+//       localizationsDelegates: const [
+//         AppLocalizations.delegate,
+//         GlobalMaterialLocalizations.delegate,
+//         GlobalWidgetsLocalizations.delegate,
+//         GlobalCupertinoLocalizations.delegate,
+//       ],
+//
+//       supportedLocales: const [
+//         Locale('en'),
+//       ],
+//     );
+//   }
+// }

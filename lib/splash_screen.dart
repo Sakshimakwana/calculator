@@ -39,35 +39,35 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Timer(
-    //   const Duration(seconds: 3),
-    //       () {
-    //     Navigator.pushReplacement(
-    //         context,
-    //         MaterialPageRoute(
-    //            builder: (context) =>//ProductFilterT18ProductScreen()
-    //           //RegistrationScreen()
-    //           //HomeScreen()
-    //             //LoginScreen()
-    //             //ProductDetailsScreen()
-    //                 //ContactListScreen()
-    //                 //DashboardScreen()
-    //                 //ProductDetailsHeaderScreen()
-    //                 //PricingPlanScreen()
-    //                 //InstagramStyleUiScreen()
-    //                 //ReusableCardGalleryScreen()
-    //                 //AboutMe()
-    //                 //ProfileCard()
-    //                 //CounterScreen()
-    //                 //MotivationalQuotes()
-    //                 //StudentData()
-    //           //ShoppingFlowProductListScreen()
-    //         //)
-    //     );
-    //   },
-    // );
-  }
+  //
+  //    Timer(
+  //      const Duration(seconds: 3),
+  //          () {
+  //       Navigator.pushReplacement(
+  //           context,
+  //           MaterialPageRoute(
+  //              builder: (context) =>//ProductFilterT18ProductScreen()
+  //   //           //RegistrationScreen()
+  //   //           //HomeScreen()
+  //   //             //LoginScreen()
+  //   //             //ProductDetailsScreen()
+  //   //                 //ContactListScreen()
+  //   //                 //DashboardScreen()
+  //   //                 //ProductDetailsHeaderScreen()
+  //   //                 //PricingPlanScreen()
+  //                   // InstagramStyleUiScreen()
+  //   //                 //ReusableCardGalleryScreen()
+  //   //                 //AboutMe()
+  //   //                 //ProfileCard()
+  //   //                 //CounterScreen()
+  //   //                 //MotivationalQuotes()
+  //   //                 //StudentData()
+  //              //ShoppingFlowProductListScreen()
+  //           // )
+  //        );
+  //      },
+  //    );
+   }
 
   @override
   Widget build(BuildContext context) {
