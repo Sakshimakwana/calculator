@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
 import 'milestone_app_6_image.dart';
+import 'package:go_router/go_router.dart';
 
 class MilestoneApp6FoodCard extends StatelessWidget {
   final MilestoneApp6Food food;
@@ -153,42 +154,56 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                         Text(
                           food.name,
                           maxLines: 1,
-                          overflow:
-                          TextOverflow.ellipsis,
-                          style: theme
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontSize: 13,
-                            fontWeight:
-                            FontWeight.w700,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
 
-                        const SizedBox(
-                          height: 2,
+                        const SizedBox(height: 3),
+
+                        GestureDetector(
+                          onTap: () {
+                            context.push(
+                              '/restaurant/${Uri.encodeComponent(food.restaurant)}',
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.restaurant_rounded,
+                                size: 12,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  food.restaurant,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+
+                        const SizedBox(height: 2),
 
                         Text(
                           food.category,
                           maxLines: 1,
-                          overflow:
-                          TextOverflow.ellipsis,
-                          style: theme
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                            fontSize: 10,
-                            color: theme
-                                .textTheme
-                                .bodySmall
-                                ?.color
-                                ?.withOpacity(
-                              0.6,
-                            ),
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 9,
+                            color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                           ),
                         ),
-
                         const Spacer(),
 
                         // =================================================

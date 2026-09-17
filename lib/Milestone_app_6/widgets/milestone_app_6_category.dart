@@ -50,7 +50,7 @@ class MilestoneApp6CategoryChip extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(19),
+            borderRadius: BorderRadius.circular(17),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -62,7 +62,7 @@ class MilestoneApp6CategoryChip extends StatelessWidget {
                   url: category.image,
                   width: double.infinity,
                   height: double.infinity,
-                  borderRadius: BorderRadius.circular(19),
+                  borderRadius: BorderRadius.circular(18),
                   fit: BoxFit.cover,
                 ),
 

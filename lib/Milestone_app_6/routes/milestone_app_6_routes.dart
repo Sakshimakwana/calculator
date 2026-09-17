@@ -146,16 +146,19 @@ class MilestoneApp6Routes {
             // ============================================================
 
             GoRoute(
-              path: '/restaurants',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
-                return _page(
-                  routeState,
-                  MilestoneApp6RestaurantsScreen(
-                    state: state,
-                  ),
+              path: '/restaurant/:name',
+              builder: (context, routeState) {
+                final name =
+                    routeState.pathParameters['name'] ?? '';
+
+                final restaurant = restaurants.firstWhere(
+                      (item) => item.name == name,
+                  orElse: () => restaurants.first,
+                );
+
+                return MilestoneApp6RestaurantInfoScreen(
+                  restaurant: restaurant,
+                  state: state,
                 );
               },
             ),

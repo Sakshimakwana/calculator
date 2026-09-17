@@ -3,8 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../state/milestone_app_6_state.dart';
 
-class MilestoneApp6BottomNav
-    extends StatelessWidget {
+class MilestoneApp6BottomNav extends StatelessWidget {
   final MilestoneApp6State state;
 
   const MilestoneApp6BottomNav({
@@ -12,11 +11,13 @@ class MilestoneApp6BottomNav
     required this.state,
   });
 
+  // ==============================================================
+  // CURRENT TAB INDEX
+  // ==============================================================
+
   int _index(BuildContext context) {
     final location =
-        GoRouterState.of(context)
-            .uri
-            .path;
+        GoRouterState.of(context).uri.path;
 
     if (location.startsWith('/categories')) {
       return 1;
@@ -33,12 +34,20 @@ class MilestoneApp6BottomNav
     return 0;
   }
 
+  // ==============================================================
+  // BUILD
+  // ==============================================================
+
   @override
   Widget build(BuildContext context) {
     final index = _index(context);
 
     return NavigationBar(
       selectedIndex: index,
+
+      // ============================================================
+      // TAB CHANGE
+      // ============================================================
 
       onDestinationSelected: (value) {
         const paths = [
@@ -51,31 +60,50 @@ class MilestoneApp6BottomNav
         context.go(paths[value]);
       },
 
+      // ============================================================
+      // DESTINATIONS
+      // ============================================================
+
       destinations: [
+        // ==========================================================
+        // HOME
+        // ==========================================================
+
         const NavigationDestination(
-          icon:
-          Icon(Icons.home_outlined),
-          selectedIcon:
-          Icon(Icons.home),
+          icon: Icon(
+            Icons.home_outlined,
+          ),
+          selectedIcon: Icon(
+            Icons.home,
+          ),
           label: 'Home',
         ),
 
+        // ==========================================================
+        // CATEGORY
+        // ==========================================================
+
         const NavigationDestination(
-          icon:
-          Icon(Icons.grid_view_outlined),
-          selectedIcon:
-          Icon(Icons.grid_view),
-          label: 'Catagory',
+          icon: Icon(
+            Icons.grid_view_outlined,
+          ),
+          selectedIcon: Icon(
+            Icons.grid_view,
+          ),
+          label: 'Category',
         ),
+
+        // ==========================================================
+        // CART
+        // ==========================================================
 
         NavigationDestination(
           icon: Badge(
             isLabelVisible:
             state.cartCount > 0,
-
-            label:
-            Text('${state.cartCount}'),
-
+            label: Text(
+              '${state.cartCount}',
+            ),
             child: const Icon(
               Icons.shopping_cart_outlined,
             ),
@@ -84,10 +112,9 @@ class MilestoneApp6BottomNav
           selectedIcon: Badge(
             isLabelVisible:
             state.cartCount > 0,
-
-            label:
-            Text('${state.cartCount}'),
-
+            label: Text(
+              '${state.cartCount}',
+            ),
             child: const Icon(
               Icons.shopping_cart,
             ),
@@ -96,11 +123,17 @@ class MilestoneApp6BottomNav
           label: 'Cart',
         ),
 
+        // ==========================================================
+        // PROFILE
+        // ==========================================================
+
         const NavigationDestination(
-          icon:
-          Icon(Icons.person_outline),
-          selectedIcon:
-          Icon(Icons.person),
+          icon: Icon(
+            Icons.person_outline,
+          ),
+          selectedIcon: Icon(
+            Icons.person,
+          ),
           label: 'Profile',
         ),
       ],

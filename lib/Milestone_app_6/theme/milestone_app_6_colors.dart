@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class MilestoneApp6Colors {
   static const orange = Color(0xFFF4511E);
   static const orangeDark = Color(0xFFD83A0E);
-
+  static const green = Color(0xFF0B3D2E);
   static const cream = Color(0xFFFFF8F2);
   static const surface = Color(0xFFFFFFFF);
 
