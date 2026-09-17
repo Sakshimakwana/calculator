@@ -17,6 +17,10 @@ class MilestoneApp6Restaurant {
 }
 
 const restaurants = <MilestoneApp6Restaurant>[
+  // ==========================================================
+  // EXISTING RESTAURANTS
+  // ==========================================================
+
   MilestoneApp6Restaurant(
     name: 'The Italian Bistro',
     image:
@@ -94,6 +98,367 @@ const restaurants = <MilestoneApp6Restaurant>[
     rating: '4.6',
     time: '25-35 min',
     cuisine: 'Asian • Noodles • Rice',
+    price: '₹₹',
+  ),
+
+  // ==========================================================
+  // MORE RESTAURANTS
+  // ==========================================================
+
+  MilestoneApp6Restaurant(
+    name: 'Spice Garden',
+    image:
+    'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=700',
+    rating: '4.5',
+    time: '20-30 min',
+    cuisine: 'North Indian • Punjabi • Veg',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Taco Fiesta',
+    image:
+    'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=700',
+    rating: '4.4',
+    time: '15-25 min',
+    cuisine: 'Mexican • Tacos • Wraps',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Sweet Cravings',
+    image:
+    'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=700',
+    rating: '4.6',
+    time: '15-25 min',
+    cuisine: 'Desserts • Cakes • Bakery',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Royal Thali',
+    image:
+    'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=700',
+    rating: '4.7',
+    time: '25-35 min',
+    cuisine: 'Indian • Gujarati • Thali',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Wok Express',
+    image:
+    'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=700',
+    rating: '4.5',
+    time: '20-30 min',
+    cuisine: 'Chinese • Noodles • Rice',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Cafe Mocha',
+    image:
+    'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=700',
+    rating: '4.6',
+    time: '10-20 min',
+    cuisine: 'Cafe • Coffee • Desserts',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Dosa House',
+    image:
+    'https://images.unsplash.com/photo-1630383249896-424e482df921?w=700',
+    rating: '4.5',
+    time: '20-30 min',
+    cuisine: 'South Indian • Dosa • Idli',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'The BBQ Station',
+    image:
+    'https://images.unsplash.com/photo-1544025162-d76694265947?w=700',
+    rating: '4.7',
+    time: '30-40 min',
+    cuisine: 'BBQ • Grill • Kebabs',
+    price: '₹₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Wrap & Roll',
+    image:
+    'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=700',
+    rating: '4.3',
+    time: '15-25 min',
+    cuisine: 'Wraps • Rolls • Fast Food',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Biryani House',
+    image:
+    'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=700',
+    rating: '4.6',
+    time: '25-35 min',
+    cuisine: 'Biryani • Mughlai • Indian',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'The Healthy Kitchen',
+    image:
+    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=700',
+    rating: '4.4',
+    time: '20-30 min',
+    cuisine: 'Healthy • Salads • Bowls',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Pizza Palace',
+    image:
+    'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=700',
+    rating: '4.6',
+    time: '20-30 min',
+    cuisine: 'Pizza • Italian • Fast Food',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Chai & Snacks',
+    image:
+    'https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?w=700',
+    rating: '4.3',
+    time: '10-20 min',
+    cuisine: 'Indian Snacks • Tea • Cafe',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Street Food Co.',
+    image:
+    'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=700',
+    rating: '4.5',
+    time: '15-25 min',
+    cuisine: 'Street Food • Chaat • Snacks',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Urban Eats',
+    image:
+    'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=700',
+    rating: '4.4',
+    time: '20-30 min',
+    cuisine: 'Multi Cuisine • Fast Food',
+    price: '₹₹',
+  ),
+];
+
+
+// ==================================================================
+// NEW RESTAURANTS - HOME VERTICAL SECTION
+// ==================================================================
+
+const newRestaurants = <MilestoneApp6Restaurant>[
+  MilestoneApp6Restaurant(
+    name: 'Spice Garden',
+    image:
+    'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=900',
+    rating: '4.5',
+    time: '20-30 min',
+    cuisine: 'North Indian • Punjabi • Veg',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Taco Fiesta',
+    image:
+    'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=900',
+    rating: '4.4',
+    time: '15-25 min',
+    cuisine: 'Mexican • Tacos • Wraps',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Sweet Cravings',
+    image:
+    'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=900',
+    rating: '4.6',
+    time: '15-25 min',
+    cuisine: 'Desserts • Cakes • Bakery',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Royal Thali',
+    image:
+    'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=900',
+    rating: '4.7',
+    time: '25-35 min',
+    cuisine: 'Indian • Gujarati • Thali',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Wok Express',
+    image:
+    'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=900',
+    rating: '4.5',
+    time: '20-30 min',
+    cuisine: 'Chinese • Noodles • Rice',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Cafe Mocha',
+    image:
+    'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=900',
+    rating: '4.6',
+    time: '10-20 min',
+    cuisine: 'Cafe • Coffee • Desserts',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Dosa House',
+    image:
+    'https://images.unsplash.com/photo-1630383249896-424e482df921?w=900',
+    rating: '4.5',
+    time: '20-30 min',
+    cuisine: 'South Indian • Dosa • Idli',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'The BBQ Station',
+    image:
+    'https://images.unsplash.com/photo-1544025162-d76694265947?w=900',
+    rating: '4.7',
+    time: '30-40 min',
+    cuisine: 'BBQ • Grill • Kebabs',
+    price: '₹₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Wrap & Roll',
+    image:
+    'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=900',
+    rating: '4.3',
+    time: '15-25 min',
+    cuisine: 'Wraps • Rolls • Fast Food',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Biryani House',
+    image:
+    'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=900',
+    rating: '4.6',
+    time: '25-35 min',
+    cuisine: 'Biryani • Mughlai • Indian',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'The Healthy Kitchen',
+    image:
+    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900',
+    rating: '4.4',
+    time: '20-30 min',
+    cuisine: 'Healthy • Salads • Bowls',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Pizza Palace',
+    image:
+    'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=900',
+    rating: '4.6',
+    time: '20-30 min',
+    cuisine: 'Pizza • Italian • Fast Food',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Chai & Snacks',
+    image:
+    'https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?w=900',
+    rating: '4.3',
+    time: '10-20 min',
+    cuisine: 'Indian Snacks • Tea • Cafe',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Street Food Co.',
+    image:
+    'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=900',
+    rating: '4.5',
+    time: '15-25 min',
+    cuisine: 'Street Food • Chaat • Snacks',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Urban Eats',
+    image:
+    'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=900',
+    rating: '4.4',
+    time: '20-30 min',
+    cuisine: 'Multi Cuisine • Fast Food',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Maharaja Kitchen',
+    image:
+    'https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?w=900',
+    rating: '4.6',
+    time: '25-35 min',
+    cuisine: 'Indian • Mughlai • Punjabi',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Bombay Street',
+    image:
+    'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=900',
+    rating: '4.5',
+    time: '15-25 min',
+    cuisine: 'Street Food • Chaat • Indian',
+    price: '₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Cheese & Crust',
+    image:
+    'https://images.unsplash.com/photo-1579751626657-72bc17010498?w=900',
+    rating: '4.7',
+    time: '20-30 min',
+    cuisine: 'Pizza • Italian • Cheese',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Noodle Nation',
+    image:
+    'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=900',
+    rating: '4.5',
+    time: '20-30 min',
+    cuisine: 'Asian • Noodles • Chinese',
+    price: '₹₹',
+  ),
+
+  MilestoneApp6Restaurant(
+    name: 'Dessert Story',
+    image:
+    'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=900',
+    rating: '4.6',
+    time: '15-25 min',
+    cuisine: 'Desserts • Ice Cream • Cakes',
     price: '₹₹',
   ),
 ];
