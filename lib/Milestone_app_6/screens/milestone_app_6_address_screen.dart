@@ -1207,51 +1207,7 @@ class _MilestoneApp6AddressScreenState
               20,
               20,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: Icon(
-                    Icons.check_circle_outline_rounded,
-                    color: theme.colorScheme.primary,
-                  ),
-                  title: const Text(
-                    'Select address',
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _selectAddress(
-                      address.address,
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(
-                    Icons.edit_location_alt_rounded,
-                  ),
-                  title: const Text(
-                    'Edit address',
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _editAddress(address);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(
-                    Icons.delete_outline_rounded,
-                    color: theme.colorScheme.error,
-                  ),
-                  title: const Text(
-                    'Delete address',
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deleteAddress(address);
-                  },
-                ),
-              ],
-            ),
+
           ),
         );
       },
@@ -1505,8 +1461,6 @@ class MilestoneApp6AddressForm {
     required this.phone,
   });
 }
-
 // ============================================================================
 // ADDRESS EDITOR SHEET
 // ============================================================================
-

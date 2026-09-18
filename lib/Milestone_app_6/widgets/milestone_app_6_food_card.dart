@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
 import 'milestone_app_6_image.dart';
@@ -8,32 +7,61 @@ import 'milestone_app_6_image.dart';
 class MilestoneApp6FoodCard extends StatelessWidget {
   final MilestoneApp6Food food;
   final MilestoneApp6State state;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool restaurantIsOpen;
 
   const MilestoneApp6FoodCard({
     super.key,
     required this.food,
     required this.state,
-    required this.onTap,
+    this.onTap,
+    this.restaurantIsOpen = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isSaved = state.saved.contains(food.id);
+
+    final bool isSaved = state.saved.contains(food.id);
+
+    // Restaurant status
+    final bool restaurantClosed = !restaurantIsOpen;
+
+    // Food availability
+    final bool foodAvailable = food.isAvailable;
+
+    // Final order availability
+    final bool canAddToCart = restaurantIsOpen && foodAvailable;
+
+    // Availability text
+    final String availabilityText = restaurantClosed
+        ? 'Restaurant Closed'
+        : foodAvailable
+        ? 'Available'
+        : 'Not Available';
 
     return Hero(
       tag: 'food-${food.id}',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          // Closed restaurant => disable card navigation.
+          // Open restaurant => use custom onTap if provided,
+          // otherwise open food detail.
+          onTap: restaurantClosed
+              ? null
+              : onTap ??
+                  () {
+                context.push('/food/${food.id}');
+              },
           borderRadius: BorderRadius.circular(16),
           child: Container(
             width: double.infinity,
             height: 245,
             decoration: BoxDecoration(
-              color: theme.cardColor,
+              color: restaurantClosed
+                  ? const Color(0xFFF1F1F1)
+                  : theme.cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -57,8 +85,45 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
+                      // ======================================================
                       // IMAGE
-                      MilestoneApp6Image(
+                      // ======================================================
+
+                      restaurantClosed
+                          ? ColorFiltered(
+                        colorFilter: const ColorFilter.matrix(
+                          <double>[
+                            0.2126,
+                            0.7152,
+                            0.0722,
+                            0,
+                            0,
+                            0.2126,
+                            0.7152,
+                            0.0722,
+                            0,
+                            0,
+                            0.2126,
+                            0.7152,
+                            0.0722,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            0,
+                          ],
+                        ),
+                        child: MilestoneApp6Image(
+                          url: food.image,
+                          fit: BoxFit.cover,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16),
+                          ),
+                        ),
+                      )
+                          : MilestoneApp6Image(
                         url: food.image,
                         fit: BoxFit.cover,
                         borderRadius: const BorderRadius.vertical(
@@ -66,7 +131,21 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                         ),
                       ),
 
+                      // ======================================================
+                      // CLOSED IMAGE OVERLAY
+                      // ======================================================
+
+                      if (restaurantClosed)
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.black.withOpacity(0.20),
+                          ),
+                        ),
+
+                      // ======================================================
                       // BOTTOM GRADIENT
+                      // ======================================================
+
                       Positioned(
                         left: 0,
                         right: 0,
@@ -144,33 +223,35 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                         bottom: 7,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 3,
+                            horizontal: 7,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: food.isAvailable
-                                ? Colors.green.shade600
-                                : Colors.red.shade600,
+                            color: restaurantClosed
+                                ? const Color(0xFF757575)
+                                : foodAvailable
+                                ? const Color(0xFF00A651)
+                                : const Color(0xFFE53935),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                food.isAvailable
+                                restaurantClosed
+                                    ? Icons.store_rounded
+                                    : foodAvailable
                                     ? Icons.check_circle_rounded
                                     : Icons.cancel_rounded,
                                 color: Colors.white,
                                 size: 11,
                               ),
-                              const SizedBox(width: 3),
+                              const SizedBox(width: 4),
                               Text(
-                                food.isAvailable
-                                    ? 'Available'
-                                    : 'Unavailable',
+                                availabilityText,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 8,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -199,9 +280,9 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ----------------------------------------------------
+                        // ====================================================
                         // FOOD NAME
-                        // ----------------------------------------------------
+                        // ====================================================
 
                         SizedBox(
                           height: 16,
@@ -212,20 +293,25 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
+                              color: restaurantClosed
+                                  ? const Color(0xFF777777)
+                                  : null,
                             ),
                           ),
                         ),
 
                         const SizedBox(height: 2),
 
-                        // ----------------------------------------------------
+                        // ====================================================
                         // RESTAURANT
-                        // ----------------------------------------------------
+                        // ====================================================
 
                         SizedBox(
                           height: 15,
                           child: GestureDetector(
-                            onTap: () {
+                            onTap: restaurantClosed
+                                ? null
+                                : () {
                               context.push(
                                 '/restaurant/${Uri.encodeComponent(
                                   food.restaurant,
@@ -237,7 +323,9 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                                 Icon(
                                   Icons.restaurant_rounded,
                                   size: 11,
-                                  color: theme.colorScheme.primary,
+                                  color: restaurantClosed
+                                      ? const Color(0xFF999999)
+                                      : theme.colorScheme.primary,
                                 ),
                                 const SizedBox(width: 3),
                                 Expanded(
@@ -245,18 +333,22 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                                     food.restaurant,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodySmall
-                                        ?.copyWith(
+                                    style:
+                                    theme.textTheme.bodySmall?.copyWith(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.primary,
+                                      color: restaurantClosed
+                                          ? const Color(0xFF999999)
+                                          : theme.colorScheme.primary,
                                     ),
                                   ),
                                 ),
                                 Icon(
                                   Icons.chevron_right_rounded,
                                   size: 12,
-                                  color: theme.colorScheme.primary,
+                                  color: restaurantClosed
+                                      ? const Color(0xFF999999)
+                                      : theme.colorScheme.primary,
                                 ),
                               ],
                             ),
@@ -265,9 +357,9 @@ class MilestoneApp6FoodCard extends StatelessWidget {
 
                         const SizedBox(height: 2),
 
-                        // ----------------------------------------------------
+                        // ====================================================
                         // CATEGORY
-                        // ----------------------------------------------------
+                        // ====================================================
 
                         SizedBox(
                           height: 13,
@@ -277,7 +369,9 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 9,
-                              color: theme.textTheme.bodySmall?.color
+                              color: restaurantClosed
+                                  ? const Color(0xFF999999)
+                                  : theme.textTheme.bodySmall?.color
                                   ?.withOpacity(0.55),
                             ),
                           ),
@@ -285,9 +379,9 @@ class MilestoneApp6FoodCard extends StatelessWidget {
 
                         const SizedBox(height: 5),
 
-                        // ----------------------------------------------------
+                        // ====================================================
                         // RATING + PRICE
-                        // ----------------------------------------------------
+                        // ====================================================
 
                         SizedBox(
                           height: 20,
@@ -299,7 +393,9 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.shade600,
+                                  color: restaurantClosed
+                                      ? const Color(0xFF9E9E9E)
+                                      : Colors.green.shade600,
                                   borderRadius: BorderRadius.circular(5),
                                 ),
                                 child: Row(
@@ -328,6 +424,9 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w900,
+                                  color: restaurantClosed
+                                      ? const Color(0xFF888888)
+                                      : null,
                                 ),
                               ),
                             ],
@@ -336,15 +435,15 @@ class MilestoneApp6FoodCard extends StatelessWidget {
 
                         const SizedBox(height: 5),
 
-                        // ----------------------------------------------------
+                        // ====================================================
                         // ADD TO CART
-                        // ----------------------------------------------------
+                        // ====================================================
 
                         SizedBox(
                           height: 27,
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: food.isAvailable
+                            onPressed: canAddToCart
                                 ? () {
                               state.addToCart(food);
 
@@ -395,22 +494,27 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                               minimumSize: Size.zero,
                               tapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
-                              backgroundColor:
-                              theme.colorScheme.primary,
+                              backgroundColor: restaurantClosed
+                                  ? const Color(0xFFBDBDBD)
+                                  : theme.colorScheme.primary,
                               disabledBackgroundColor:
-                              theme.disabledColor.withOpacity(0.12),
+                              const Color(0xFFE0E0E0),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             child: Text(
-                              food.isAvailable
+                              restaurantClosed
+                                  ? 'Restaurant Closed'
+                                  : foodAvailable
                                   ? 'Add to cart'
                                   : 'Currently unavailable',
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
-                                color: food.isAvailable
+                                color: restaurantClosed
+                                    ? const Color(0xFF757575)
+                                    : foodAvailable
                                     ? Colors.white
                                     : theme.disabledColor,
                               ),

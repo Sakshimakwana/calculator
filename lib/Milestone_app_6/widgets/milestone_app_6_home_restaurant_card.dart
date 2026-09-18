@@ -8,6 +8,7 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
   final String image;
   final String rating;
   final String time;
+  final bool isOpen;
 
   const MilestoneApp6RestaurantCard({
     super.key,
@@ -15,6 +16,7 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
     required this.image,
     required this.rating,
     required this.time,
+    required this.isOpen,
   });
 
   @override
@@ -24,7 +26,6 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
     return Container(
       width: 210,
       padding: const EdgeInsets.all(5),
-
       decoration: BoxDecoration(
         color: const Color(0xFFFDFDFD),
         borderRadius: BorderRadius.circular(18),
@@ -40,17 +41,60 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
           ),
         ],
       ),
-
       child: Stack(
         children: [
-          // Restaurant information
           Row(
             children: [
-              MilestoneApp6Image(
-                url: image,
-                width: 90,
-                height: 100,
-                borderRadius: BorderRadius.circular(14),
+              // Restaurant Image + OPEN/CLOSED badge
+              Stack(
+                children: [
+                  MilestoneApp6Image(
+                    url: image,
+                    width: 90,
+                    height: 100,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.75),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: isOpen
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isOpen ? 'OPEN' : 'CLOSED',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(width: 10),
@@ -109,13 +153,42 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
                           ),
                         ],
                       ),
+
+                      const SizedBox(height: 7),
+
+                      // OPEN / CLOSED status
+                      Row(
+                        children: [
+                          Icon(
+                            isOpen
+                                ? Icons.access_time_rounded
+                                : Icons.schedule_rounded,
+                            size: 13,
+                            color: isOpen
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+
+                          const SizedBox(width: 4),
+
+                          Text(
+                            isOpen ? 'Open now' : 'Closed now',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: isOpen
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-
         ],
       ),
     );

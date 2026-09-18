@@ -7,8 +7,7 @@ import '../state/milestone_app_6_state.dart';
 import '../widgets/milestone_app_6_food_card.dart';
 import '../widgets/milestone_app_6_image.dart';
 
-class MilestoneApp6RestaurantInfoScreen
-    extends StatelessWidget {
+class MilestoneApp6RestaurantInfoScreen extends StatelessWidget {
   final MilestoneApp6Restaurant restaurant;
   final MilestoneApp6State state;
 
@@ -22,8 +21,7 @@ class MilestoneApp6RestaurantInfoScreen
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final width =
-        MediaQuery.sizeOf(context).width;
+    final width = MediaQuery.sizeOf(context).width;
 
     final isTablet = width >= 700;
 
@@ -31,14 +29,17 @@ class MilestoneApp6RestaurantInfoScreen
     // RESTAURANT FOOD
     // ================================================================
 
-    final restaurantFoods =
-    milestoneApp6Foods
+    final restaurantFoods = milestoneApp6Foods
         .where(
-          (food) =>
-      food.restaurant ==
-          restaurant.name,
+          (food) => food.restaurant == restaurant.name,
     )
         .toList();
+
+    // ================================================================
+    // RESTAURANT STATUS
+    // ================================================================
+
+    final bool restaurantIsOpen = restaurant.isOpen;
 
     return Scaffold(
       body: CustomScrollView(
@@ -48,26 +49,24 @@ class MilestoneApp6RestaurantInfoScreen
           // ==========================================================
 
           SliverAppBar(
-            expandedHeight:
-            isTablet ? 270 : 230,
+            expandedHeight: isTablet ? 300 : 270,
             pinned: true,
 
             backgroundColor:
             theme.scaffoldBackgroundColor,
 
-            surfaceTintColor:
-            Colors.transparent,
+            surfaceTintColor: Colors.transparent,
 
             // ========================================================
             // BACK BUTTON
             // ========================================================
 
             leading: Padding(
-              padding:
-              const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               child: CircleAvatar(
                 backgroundColor:
                 theme.colorScheme.surface,
+
                 child: IconButton(
                   icon: const Icon(
                     Icons.arrow_back_rounded,
@@ -80,150 +79,52 @@ class MilestoneApp6RestaurantInfoScreen
             ),
 
             // ========================================================
-            // FAVORITE
+            // NO FAVORITE BUTTON
             // ========================================================
-
-            actions: [
-              Padding(
-                padding:
-                const EdgeInsets.only(
-                  right: 12,
-                  top: 8,
-                  bottom: 8,
-                ),
-                child: AnimatedBuilder(
-                  animation: state,
-                  builder:
-                      (
-                      context,
-                      child,
-                      ) {
-                    final isFavorite =
-                    state.isRestaurantSaved(
-                      restaurant.name,
-                    );
-
-                    return Material(
-                      color:
-                      Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          state
-                              .toggleRestaurantSaved(
-                            restaurant.name,
-                          );
-                        },
-                        borderRadius:
-                        BorderRadius.circular(
-                          30,
-                        ),
-                        child:
-                        AnimatedContainer(
-                          duration:
-                          const Duration(
-                            milliseconds: 200,
-                          ),
-                          width: 42,
-                          height: 42,
-                          decoration:
-                          BoxDecoration(
-                            color: theme
-                                .colorScheme
-                                .surface,
-                            shape:
-                            BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors
-                                    .black
-                                    .withOpacity(
-                                  .10,
-                                ),
-                                blurRadius: 8,
-                                offset:
-                                const Offset(
-                                  0,
-                                  2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          child:
-                          AnimatedSwitcher(
-                            duration:
-                            const Duration(
-                              milliseconds: 180,
-                            ),
-                            transitionBuilder:
-                                (
-                                child,
-                                animation,
-                                ) {
-                              return ScaleTransition(
-                                scale: animation,
-                                child: child,
-                              );
-                            },
-                            child: Icon(
-                              isFavorite
-                                  ? Icons
-                                  .favorite_rounded
-                                  : Icons
-                                  .favorite_border_rounded,
-                              key: ValueKey(
-                                isFavorite,
-                              ),
-                              color:
-                              isFavorite
-                                  ? Colors.red
-                                  : theme.iconTheme
-                                  .color,
-                              size: 22,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+            //
+            // Restaurant favorite logic has been completely removed.
+            //
+            // ========================================================
 
             // ========================================================
             // HEADER IMAGE
             // ========================================================
 
-            flexibleSpace:
-            FlexibleSpaceBar(
+            flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
+                  // ==================================================
+                  // RESTAURANT IMAGE
+                  // ==================================================
+
                   MilestoneApp6Image(
                     url: restaurant.image,
                     fit: BoxFit.cover,
-                    borderRadius:
-                    BorderRadius.zero,
+                    borderRadius: BorderRadius.zero,
                   ),
 
                   // ==================================================
-                  // IMAGE GRADIENT
+                  // DARK GRADIENT
                   // ==================================================
 
-                  DecoratedBox(
-                    decoration:
-                    BoxDecoration(
-                      gradient:
-                      LinearGradient(
-                        begin: Alignment
-                            .topCenter,
-                        end: Alignment
-                            .bottomCenter,
-                        colors: [
-                          Colors.black
-                              .withOpacity(.05),
-                          Colors.black
-                              .withOpacity(.70),
-                        ],
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(.10),
+                            Colors.black.withOpacity(.80),
+                          ],
+                          stops: const [
+                            .25,
+                            .55,
+                            1.0,
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -235,135 +136,198 @@ class MilestoneApp6RestaurantInfoScreen
                   Positioned(
                     left: 20,
                     right: 20,
-                    bottom: 20,
+                    bottom: 22,
+
                     child: Column(
                       crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                      CrossAxisAlignment.start,
+
                       children: [
+                        // ============================================
+                        // RESTAURANT NAME
+                        // ============================================
+
                         Text(
                           restaurant.name,
+
                           maxLines: 2,
+
                           overflow:
-                          TextOverflow
-                              .ellipsis,
-                          style:
-                          const TextStyle(
+                          TextOverflow.ellipsis,
+
+                          style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
+                            fontSize: 25,
                             fontWeight:
                             FontWeight.w800,
+                            height: 1.1,
+
+                            shadows: [
+                              Shadow(
+                                color: Colors.black54,
+                                blurRadius: 5,
+                                offset:
+                                Offset(0, 2),
+                              ),
+                            ],
                           ),
                         ),
 
-                        const SizedBox(
-                          height: 6,
-                        ),
+                        const SizedBox(height: 7),
 
-                        Text(
-                          restaurant.cuisine,
-                          maxLines: 1,
-                          overflow:
-                          TextOverflow
-                              .ellipsis,
-                          style: TextStyle(
-                            color: Colors.white
-                                .withOpacity(
-                              .90,
-                            ),
-                            fontSize: 13,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 10,
-                        ),
+                        // ============================================
+                        // OPEN / CLOSED + DISTANCE
+                        // ============================================
 
                         Row(
                           children: [
-                            // ======================================
-                            // RATING
-                            // ======================================
+                            Text(
+                              restaurant.isOpen
+                                  ? 'Open'
+                                  : 'Closed',
 
-                            Container(
-                              padding:
-                              const EdgeInsets
-                                  .symmetric(
-                                horizontal: 8,
-                                vertical: 5,
-                              ),
-                              decoration:
-                              BoxDecoration(
+                              style: TextStyle(
                                 color:
-                                Colors.green,
-                                borderRadius:
-                                BorderRadius
-                                    .circular(
-                                  7,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize:
-                                MainAxisSize
-                                    .min,
-                                children: [
-                                  Text(
-                                    restaurant
-                                        .rating,
-                                    style:
-                                    const TextStyle(
-                                      color:
-                                      Colors
-                                          .white,
-                                      fontSize: 11,
-                                      fontWeight:
-                                      FontWeight
-                                          .w700,
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 3,
-                                  ),
-                                  const Icon(
-                                    Icons.star,
-                                    size: 12,
+                                restaurant.isOpen
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+
+                                fontSize: 15,
+
+                                fontWeight:
+                                FontWeight.w700,
+
+                                shadows: const [
+                                  Shadow(
                                     color:
-                                    Colors
-                                        .white,
+                                    Colors.black54,
+                                    blurRadius: 4,
                                   ),
                                 ],
                               ),
                             ),
 
-                            const SizedBox(
-                              width: 10,
-                            ),
+                            const SizedBox(width: 7),
 
-                            Text(
-                              restaurant.time,
-                              style:
-                              const TextStyle(
-                                color:
-                                Colors.white,
-                                fontSize: 12,
+                            const Text(
+                              '•',
+
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight:
+                                FontWeight.w700,
                               ),
                             ),
 
-                            const SizedBox(
-                              width: 10,
-                            ),
+                            const SizedBox(width: 7),
 
-                            Text(
-                              restaurant.price,
-                              style:
-                              const TextStyle(
-                                color:
-                                Colors.white,
-                                fontSize: 12,
+                            if (restaurant
+                                .distance
+                                .isNotEmpty)
+                              Text(
+                                restaurant.distance,
+
+                                style:
+                                const TextStyle(
+                                  color:
+                                  Colors.white,
+                                  fontSize: 14,
+                                  fontWeight:
+                                  FontWeight.w600,
+
+                                  shadows: [
+                                    Shadow(
+                                      color:
+                                      Colors.black54,
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
                           ],
                         ),
+
+                        const SizedBox(height: 7),
+
+                        // ============================================
+                        // CUISINE
+                        // ============================================
+
+                        Text(
+                          restaurant.cuisine,
+
+                          maxLines: 2,
+
+                          overflow:
+                          TextOverflow.ellipsis,
+
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight:
+                            FontWeight.w500,
+
+                            shadows: [
+                              Shadow(
+                                color: Colors.black54,
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // ============================================
+                        // ADDRESS
+                        // ============================================
+
+                        if (restaurant
+                            .address
+                            .isNotEmpty) ...[
+                          const SizedBox(height: 5),
+
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons
+                                    .location_on_rounded,
+                                color: Colors.white,
+                                size: 15,
+                              ),
+
+                              const SizedBox(width: 4),
+
+                              Expanded(
+                                child: Text(
+                                  restaurant.address,
+
+                                  maxLines: 1,
+
+                                  overflow:
+                                  TextOverflow
+                                      .ellipsis,
+
+                                  style:
+                                  const TextStyle(
+                                    color:
+                                    Colors.white,
+                                    fontSize: 12,
+                                    fontWeight:
+                                    FontWeight.w500,
+
+                                    shadows: [
+                                      Shadow(
+                                        color:
+                                        Colors.black54,
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -373,40 +337,69 @@ class MilestoneApp6RestaurantInfoScreen
           ),
 
           // ==========================================================
-          // RESTAURANT INFO
+          // RESTAURANT MENU SECTION
           // ==========================================================
 
           SliverToBoxAdapter(
             child: Padding(
-              padding:
-              const EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 20,
                 18,
                 20,
-                4,
+                8,
               ),
-              child: Row(
+
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+
                 children: [
-                  Icon(
-                    Icons
-                        .restaurant_rounded,
-                    size: 20,
-                    color:
-                    theme.colorScheme
-                        .primary,
+                  // ==================================================
+                  // RESTAURANT MENU TITLE
+                  // ==================================================
+
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.restaurant_rounded,
+                        size: 21,
+                        color:
+                        theme.colorScheme.primary,
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      Expanded(
+                        child: Text(
+                          'Restaurant Menu',
+
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight:
+                            FontWeight.w800,
+                            color: theme
+                                .colorScheme
+                                .onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(
-                    width: 8,
-                  ),
+                  const SizedBox(height: 5),
+
+                  // ==================================================
+                  // FOOD COUNT
+                  // ==================================================
 
                   Text(
                     '${restaurantFoods.length} Food Items',
-                    style:
-                    const TextStyle(
-                      fontSize: 18,
+
+                    style: TextStyle(
+                      color: theme.hintColor,
+                      fontSize: 13,
                       fontWeight:
-                      FontWeight.w700,
+                      FontWeight.w500,
                     ),
                   ),
                 ],
@@ -415,33 +408,32 @@ class MilestoneApp6RestaurantInfoScreen
           ),
 
           // ==========================================================
-          // FOOD GRID
+          // NO FOOD
           // ==========================================================
 
           if (restaurantFoods.isEmpty)
             const SliverToBoxAdapter(
               child: Padding(
-                padding:
-                EdgeInsets.all(40),
+                padding: EdgeInsets.all(40),
+
                 child: Center(
                   child: Column(
                     mainAxisSize:
                     MainAxisSize.min,
+
                     children: [
                       Icon(
-                        Icons
-                            .restaurant_outlined,
+                        Icons.restaurant_outlined,
                         size: 55,
-                        color:
-                        Colors.grey,
+                        color: Colors.grey,
                       ),
-                      SizedBox(
-                        height: 12,
-                      ),
+
+                      SizedBox(height: 12),
+
                       Text(
                         'No food items available.',
-                        style:
-                        TextStyle(
+
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight:
                           FontWeight.w600,
@@ -452,42 +444,69 @@ class MilestoneApp6RestaurantInfoScreen
                 ),
               ),
             )
+
+          // ==========================================================
+          // FOOD GRID
+          // ==========================================================
+
           else
             SliverPadding(
-              padding:
-              const EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 16,
                 12,
                 16,
                 30,
               ),
+
               sliver: SliverGrid(
                 delegate:
                 SliverChildBuilderDelegate(
                       (context, index) {
                     final food =
-                    restaurantFoods[
-                    index];
+                    restaurantFoods[index];
 
                     return AnimatedBuilder(
                       animation: state,
-                      builder:
-                          (
+
+                      builder: (
                           context,
                           child,
                           ) {
                         return MilestoneApp6FoodCard(
                           food: food,
+
                           state: state,
-                          onTap: () {
+
+                          // ==================================================
+                          // RESTAURANT STATUS
+                          // ==================================================
+                          //
+                          // CLOSED:
+                          // Food availability does NOT matter.
+                          // It will show "Restaurant Closed".
+                          //
+                          // OPEN:
+                          // Food availability controls the badge.
+                          //
+                          restaurantIsOpen:
+                          restaurantIsOpen,
+
+                          // ==================================================
+                          // FOOD NAVIGATION
+                          // ==================================================
+
+                          onTap: restaurantIsOpen
+                              ? () {
                             context.push(
                               '/food/${food.id}',
                             );
-                          },
+                          }
+                              : null,
                         );
                       },
                     );
                   },
+
                   childCount:
                   restaurantFoods.length,
                 ),
@@ -496,12 +515,13 @@ class MilestoneApp6RestaurantInfoScreen
                 SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount:
                   isTablet ? 4 : 2,
+
                   crossAxisSpacing: 12,
+
                   mainAxisSpacing: 14,
+
                   mainAxisExtent:
-                  isTablet
-                      ? 300
-                      : 245,
+                  isTablet ? 300 : 245,
                 ),
               ),
             ),

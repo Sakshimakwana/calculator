@@ -7,6 +7,9 @@ class MilestoneApp6Restaurant {
   final String price;
   final bool isOpen;
 
+  // New fields
+  final String distance;
+  final String address;
 
   const MilestoneApp6Restaurant({
     required this.name,
@@ -16,14 +19,19 @@ class MilestoneApp6Restaurant {
     required this.cuisine,
     required this.price,
     this.isOpen = true,
-
+    this.distance = '',
+    this.address = '',
   });
 }
 
+// ============================================================================
+// ALL RESTAURANTS
+// ============================================================================
+
 const restaurants = <MilestoneApp6Restaurant>[
-  // ==========================================================
+  // ========================================================================
   // EXISTING RESTAURANTS
-  // ==========================================================
+  // ========================================================================
 
   MilestoneApp6Restaurant(
     name: 'The Italian Bistro',
@@ -34,6 +42,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Italian • Pizza • Pasta',
     price: '₹₹',
     isOpen: true,
+    distance: '8 km',
+    address: 'SG Highway, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -45,6 +55,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Japanese • Sushi • Asian',
     price: '₹₹₹',
     isOpen: true,
+    distance: '12 km',
+    address: 'Vastrapur, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -56,6 +68,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Burgers • Fast Food',
     price: '₹₹',
     isOpen: true,
+    distance: '5 km',
+    address: 'Navrangpura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -67,6 +81,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Healthy • Salads • Veg',
     price: '₹₹',
     isOpen: true,
+    distance: '7 km',
+    address: 'Bodakdev, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -78,6 +94,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Italian • Pasta',
     price: '₹₹',
     isOpen: true,
+    distance: '10 km',
+    address: 'Satellite, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -89,6 +107,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Sandwiches • Veg • Cafe',
     price: '₹',
     isOpen: true,
+    distance: '4 km',
+    address: 'Prahlad Nagar, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -100,6 +120,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Breakfast • Cafe • Veg',
     price: '₹₹',
     isOpen: true,
+    distance: '6 km',
+    address: 'Thaltej, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -111,11 +133,13 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Asian • Noodles • Rice',
     price: '₹₹',
     isOpen: true,
+    distance: '9 km',
+    address: 'C G Road, Ahmedabad',
   ),
 
-  // ==========================================================
+  // ========================================================================
   // MORE RESTAURANTS
-  // ==========================================================
+  // ========================================================================
 
   MilestoneApp6Restaurant(
     name: 'Spice Garden',
@@ -126,6 +150,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'North Indian • Punjabi • Veg',
     price: '₹₹',
     isOpen: true,
+    distance: '8 km',
+    address: 'SG Highway, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -137,6 +163,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Mexican • Tacos • Wraps',
     price: '₹₹',
     isOpen: false,
+    distance: '83 km',
+    address: 'Satellite, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -148,6 +176,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Desserts • Cakes • Bakery',
     price: '₹₹',
     isOpen: true,
+    distance: '5 km',
+    address: 'Vastrapur, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -159,6 +189,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Indian • Gujarati • Thali',
     price: '₹₹',
     isOpen: true,
+    distance: '11 km',
+    address: 'Maninagar, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -170,6 +202,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Chinese • Noodles • Rice',
     price: '₹₹',
     isOpen: true,
+    distance: '7 km',
+    address: 'Navrangpura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -181,6 +215,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Cafe • Coffee • Desserts',
     price: '₹₹',
     isOpen: false,
+    distance: '14 km',
+    address: 'Bopal, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -192,6 +228,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'South Indian • Dosa • Idli',
     price: '₹',
     isOpen: true,
+    distance: '6 km',
+    address: 'Naranpura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -203,6 +241,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'BBQ • Grill • Kebabs',
     price: '₹₹₹',
     isOpen: true,
+    distance: '16 km',
+    address: 'Prahlad Nagar, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -214,6 +254,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Wraps • Rolls • Fast Food',
     price: '₹',
     isOpen: true,
+    distance: '4 km',
+    address: 'Vastrapur, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -225,6 +267,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Biryani • Mughlai • Indian',
     price: '₹₹',
     isOpen: true,
+    distance: '9 km',
+    address: 'Juhapura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -236,6 +280,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Healthy • Salads • Bowls',
     price: '₹₹',
     isOpen: true,
+    distance: '13 km',
+    address: 'Bodakdev, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -247,6 +293,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Pizza • Italian • Fast Food',
     price: '₹₹',
     isOpen: true,
+    distance: '3 km',
+    address: 'Satellite, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -258,6 +306,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Indian Snacks • Tea • Cafe',
     price: '₹',
     isOpen: true,
+    distance: '2 km',
+    address: 'Navrangpura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -269,6 +319,8 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Street Food • Chaat • Snacks',
     price: '₹',
     isOpen: false,
+    distance: '18 km',
+    address: 'Maninagar, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -280,13 +332,14 @@ const restaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Multi Cuisine • Fast Food',
     price: '₹₹',
     isOpen: true,
+    distance: '12 km',
+    address: 'Thaltej, Ahmedabad',
   ),
 ];
 
-
-// ==================================================================
+// ============================================================================
 // NEW RESTAURANTS - HOME VERTICAL SECTION
-// ==================================================================
+// ============================================================================
 
 const newRestaurants = <MilestoneApp6Restaurant>[
   MilestoneApp6Restaurant(
@@ -298,6 +351,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'North Indian • Punjabi • Veg',
     price: '₹₹',
     isOpen: true,
+    distance: '8 km',
+    address: 'SG Highway, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -309,6 +364,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Mexican • Tacos • Wraps',
     price: '₹₹',
     isOpen: false,
+    distance: '83 km',
+    address: 'Satellite, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -320,6 +377,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Desserts • Cakes • Bakery',
     price: '₹₹',
     isOpen: true,
+    distance: '5 km',
+    address: 'Vastrapur, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -331,6 +390,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Indian • Gujarati • Thali',
     price: '₹₹',
     isOpen: true,
+    distance: '11 km',
+    address: 'Maninagar, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -342,6 +403,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Chinese • Noodles • Rice',
     price: '₹₹',
     isOpen: true,
+    distance: '7 km',
+    address: 'Navrangpura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -353,6 +416,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Cafe • Coffee • Desserts',
     price: '₹₹',
     isOpen: false,
+    distance: '14 km',
+    address: 'Bopal, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -364,6 +429,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'South Indian • Dosa • Idli',
     price: '₹',
     isOpen: true,
+    distance: '6 km',
+    address: 'Naranpura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -375,6 +442,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'BBQ • Grill • Kebabs',
     price: '₹₹₹',
     isOpen: true,
+    distance: '16 km',
+    address: 'Prahlad Nagar, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -386,6 +455,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Wraps • Rolls • Fast Food',
     price: '₹',
     isOpen: true,
+    distance: '4 km',
+    address: 'Vastrapur, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -397,6 +468,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Biryani • Mughlai • Indian',
     price: '₹₹',
     isOpen: true,
+    distance: '9 km',
+    address: 'Juhapura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -408,6 +481,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Healthy • Salads • Bowls',
     price: '₹₹',
     isOpen: true,
+    distance: '13 km',
+    address: 'Bodakdev, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -419,6 +494,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Pizza • Italian • Fast Food',
     price: '₹₹',
     isOpen: true,
+    distance: '3 km',
+    address: 'Satellite, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -430,6 +507,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Indian Snacks • Tea • Cafe',
     price: '₹',
     isOpen: true,
+    distance: '2 km',
+    address: 'Navrangpura, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -441,6 +520,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Street Food • Chaat • Snacks',
     price: '₹',
     isOpen: false,
+    distance: '18 km',
+    address: 'Maninagar, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -452,6 +533,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Multi Cuisine • Fast Food',
     price: '₹₹',
     isOpen: true,
+    distance: '12 km',
+    address: 'Thaltej, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -463,6 +546,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Indian • Mughlai • Punjabi',
     price: '₹₹',
     isOpen: true,
+    distance: '10 km',
+    address: 'C G Road, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -474,6 +559,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Street Food • Chaat • Indian',
     price: '₹',
     isOpen: true,
+    distance: '15 km',
+    address: 'Gurukul Road, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -485,6 +572,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Pizza • Italian • Cheese',
     price: '₹₹',
     isOpen: true,
+    distance: '6 km',
+    address: 'Bodakdev, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -496,6 +585,8 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Asian • Noodles • Chinese',
     price: '₹₹',
     isOpen: true,
+    distance: '9 km',
+    address: 'Vastrapur, Ahmedabad',
   ),
 
   MilestoneApp6Restaurant(
@@ -507,5 +598,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     cuisine: 'Desserts • Ice Cream • Cakes',
     price: '₹₹',
     isOpen: false,
+    distance: '20 km',
+    address: 'Bopal, Ahmedabad',
   ),
 ];
