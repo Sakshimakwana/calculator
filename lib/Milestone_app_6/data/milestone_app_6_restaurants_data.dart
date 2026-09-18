@@ -5,6 +5,8 @@ class MilestoneApp6Restaurant {
   final String time;
   final String cuisine;
   final String price;
+  final bool isOpen;
+
 
   const MilestoneApp6Restaurant({
     required this.name,
@@ -13,6 +15,8 @@ class MilestoneApp6Restaurant {
     required this.time,
     required this.cuisine,
     required this.price,
+    this.isOpen = true,
+
   });
 }
 
@@ -29,6 +33,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Italian • Pizza • Pasta',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -39,6 +44,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '25-35 min',
     cuisine: 'Japanese • Sushi • Asian',
     price: '₹₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -49,6 +55,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Burgers • Fast Food',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -59,6 +66,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Healthy • Salads • Veg',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -69,6 +77,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Italian • Pasta',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -79,6 +88,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Sandwiches • Veg • Cafe',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -89,6 +99,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Breakfast • Cafe • Veg',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -99,6 +110,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '25-35 min',
     cuisine: 'Asian • Noodles • Rice',
     price: '₹₹',
+    isOpen: true,
   ),
 
   // ==========================================================
@@ -113,6 +125,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'North Indian • Punjabi • Veg',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -123,6 +136,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Mexican • Tacos • Wraps',
     price: '₹₹',
+    isOpen: false,
   ),
 
   MilestoneApp6Restaurant(
@@ -133,6 +147,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Desserts • Cakes • Bakery',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -143,6 +158,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '25-35 min',
     cuisine: 'Indian • Gujarati • Thali',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -153,6 +169,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Chinese • Noodles • Rice',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -163,6 +180,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '10-20 min',
     cuisine: 'Cafe • Coffee • Desserts',
     price: '₹₹',
+    isOpen: false,
   ),
 
   MilestoneApp6Restaurant(
@@ -173,6 +191,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'South Indian • Dosa • Idli',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -183,6 +202,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '30-40 min',
     cuisine: 'BBQ • Grill • Kebabs',
     price: '₹₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -193,6 +213,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Wraps • Rolls • Fast Food',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -203,6 +224,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '25-35 min',
     cuisine: 'Biryani • Mughlai • Indian',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -213,6 +235,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Healthy • Salads • Bowls',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -223,6 +246,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Pizza • Italian • Fast Food',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -233,6 +257,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '10-20 min',
     cuisine: 'Indian Snacks • Tea • Cafe',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -243,6 +268,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Street Food • Chaat • Snacks',
     price: '₹',
+    isOpen: false,
   ),
 
   MilestoneApp6Restaurant(
@@ -253,6 +279,7 @@ const restaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Multi Cuisine • Fast Food',
     price: '₹₹',
+    isOpen: true,
   ),
 ];
 
@@ -270,6 +297,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'North Indian • Punjabi • Veg',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -280,6 +308,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Mexican • Tacos • Wraps',
     price: '₹₹',
+    isOpen: false,
   ),
 
   MilestoneApp6Restaurant(
@@ -290,6 +319,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Desserts • Cakes • Bakery',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -300,6 +330,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '25-35 min',
     cuisine: 'Indian • Gujarati • Thali',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -310,6 +341,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Chinese • Noodles • Rice',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -320,6 +352,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '10-20 min',
     cuisine: 'Cafe • Coffee • Desserts',
     price: '₹₹',
+    isOpen: false,
   ),
 
   MilestoneApp6Restaurant(
@@ -330,6 +363,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'South Indian • Dosa • Idli',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -340,6 +374,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '30-40 min',
     cuisine: 'BBQ • Grill • Kebabs',
     price: '₹₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -350,6 +385,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Wraps • Rolls • Fast Food',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -360,6 +396,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '25-35 min',
     cuisine: 'Biryani • Mughlai • Indian',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -370,6 +407,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Healthy • Salads • Bowls',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -380,6 +418,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Pizza • Italian • Fast Food',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -390,6 +429,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '10-20 min',
     cuisine: 'Indian Snacks • Tea • Cafe',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -400,6 +440,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Street Food • Chaat • Snacks',
     price: '₹',
+    isOpen: false,
   ),
 
   MilestoneApp6Restaurant(
@@ -410,6 +451,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Multi Cuisine • Fast Food',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -420,6 +462,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '25-35 min',
     cuisine: 'Indian • Mughlai • Punjabi',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -430,6 +473,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Street Food • Chaat • Indian',
     price: '₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -440,6 +484,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Pizza • Italian • Cheese',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -450,6 +495,7 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '20-30 min',
     cuisine: 'Asian • Noodles • Chinese',
     price: '₹₹',
+    isOpen: true,
   ),
 
   MilestoneApp6Restaurant(
@@ -460,5 +506,6 @@ const newRestaurants = <MilestoneApp6Restaurant>[
     time: '15-25 min',
     cuisine: 'Desserts • Ice Cream • Cakes',
     price: '₹₹',
+    isOpen: false,
   ),
 ];

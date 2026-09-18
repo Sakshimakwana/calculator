@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/screens/milestone_app_6_address_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -145,16 +146,41 @@ class MilestoneApp6Routes {
             // RESTAURANTS
             // ============================================================
 
+// ============================================================
+// RESTAURANTS
+// ============================================================
+            GoRoute(
+              path: '/profile/address',
+              builder: (context, state) {
+                return const MilestoneApp6AddressScreen();
+              },
+            ),
             GoRoute(
               path: '/restaurant/:name',
               builder: (context, routeState) {
-                final name =
+                // --------------------------------------------------------
+                // GET RESTAURANT NAME FROM URL
+                // --------------------------------------------------------
+
+                final encodedName =
                     routeState.pathParameters['name'] ?? '';
 
+                final name = Uri.decodeComponent(encodedName);
+
+                // --------------------------------------------------------
+                // FIND SELECTED RESTAURANT
+                // --------------------------------------------------------
+
                 final restaurant = restaurants.firstWhere(
-                      (item) => item.name == name,
+                      (item) =>
+                  item.name.trim().toLowerCase() ==
+                      name.trim().toLowerCase(),
                   orElse: () => restaurants.first,
                 );
+
+                // --------------------------------------------------------
+                // OPEN RESTAURANT INFO SCREEN
+                // --------------------------------------------------------
 
                 return MilestoneApp6RestaurantInfoScreen(
                   restaurant: restaurant,

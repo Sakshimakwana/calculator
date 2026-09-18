@@ -1,9 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../state/milestone_app_6_state.dart';
@@ -28,6 +27,20 @@ class MilestoneApp6HomeScreen extends StatefulWidget {
 
 class _MilestoneApp6HomeScreenState
     extends State<MilestoneApp6HomeScreen> {
+
+  String _selectedAddress = '';
+
+  Future<void> _loadSelectedAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final address = prefs.getString('selected_address') ?? '';
+
+    if (!mounted) return;
+
+    setState(() {
+      _selectedAddress = address;
+    });
+  }
 
   // ==============================================================
 // NEW RESTAURANT - ZOMATO STYLE
@@ -364,6 +377,8 @@ class _MilestoneApp6HomeScreenState
   @override
   void initState() {
     super.initState();
+
+    _loadSelectedAddress();
 
     _searchController.addListener(_onSearchChanged);
 
@@ -1217,24 +1232,102 @@ class _MilestoneApp6HomeScreenState
           floating: false,
           snap: false,
           expandedHeight: 110,
+
           backgroundColor:
-          Theme.of(context)
-              .scaffoldBackgroundColor,
-          surfaceTintColor:
-          Colors.transparent,
+          Theme.of(context).scaffoldBackgroundColor,
+
+          surfaceTintColor: Colors.transparent,
+
           title: const Text(
             'Foodie',
             style: TextStyle(
               fontWeight: FontWeight.w700,
             ),
           ),
-          centerTitle: true,
-          flexibleSpace:
-          FlexibleSpaceBar(
+
+
+          // ============================================================
+          // RIGHT SIDE - ADDRESS
+          // ============================================================
+
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: GestureDetector(
+                onTap: () async {
+                  await context.push('/profile/address');
+
+                  _loadSelectedAddress();
+                },
+                child: Container(
+                  constraints: const BoxConstraints(
+                    maxWidth: 145,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 17,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary,
+                      ),
+
+                      const SizedBox(width: 4),
+
+                      Flexible(
+                        child: Text(
+                          _selectedAddress.isEmpty
+                              ? 'Add address'
+                              : _selectedAddress,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 2),
+
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          // ============================================================
+          // FLEXIBLE SPACE
+          // ============================================================
+
+          flexibleSpace: FlexibleSpaceBar(
             background: SafeArea(
               child: Padding(
-                padding:
-                const EdgeInsets.fromLTRB(
+                padding: const EdgeInsets.fromLTRB(
                   20,
                   0,
                   20,
@@ -1250,19 +1343,17 @@ class _MilestoneApp6HomeScreenState
                       'Hi, Sakshi',
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight:
-                        FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(
-                      height: 2,
-                    ),
+
+                    const SizedBox(height: 2),
+
                     Text(
                       'What would you like to eat today?',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Theme.of(context)
-                            .hintColor,
+                        color: Theme.of(context).hintColor,
                       ),
                     ),
                   ],
