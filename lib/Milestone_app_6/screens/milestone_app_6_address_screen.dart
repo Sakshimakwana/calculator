@@ -93,6 +93,83 @@ class _MilestoneApp6AddressScreenState
 
     super.dispose();
   }
+  // ============================================================
+// CANNOT DELETE POPUP
+// ============================================================
+
+  void _showCannotDeletePopup() {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.white,
+          elevation: 8,
+          behavior: SnackBarBehavior.floating,
+
+          margin: const EdgeInsets.only(
+            left: 24,
+            right: 24,
+            bottom: 24,
+          ),
+
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
+
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+
+          content: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // --------------------------------------------------
+              // ERROR ICON
+              // --------------------------------------------------
+
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF5252),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 19,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // --------------------------------------------------
+              // MESSAGE
+              // --------------------------------------------------
+
+              const Expanded(
+                child: Text(
+                  'You cannot delete your only saved address.',
+                  style: TextStyle(
+                    color: Color(0xFF444444),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    height: 1.25,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          duration: const Duration(
+            seconds: 3,
+          ),
+        ),
+      );
+  }
 
 // ============================================================
 // SEARCH
@@ -354,23 +431,46 @@ class _MilestoneApp6AddressScreenState
 // DELETE ADDRESS
 // ============================================================
 
+  // ============================================================
+// DELETE ADDRESS
+// ============================================================
+
   Future<void> _deleteAddress(
-    MilestoneApp6Address address,
-  ) async {
-    final shouldDelete = await _showDeleteConfirmation(address);
+      MilestoneApp6Address address,
+      ) async {
+    // ------------------------------------------------------------
+    // DO NOT DELETE THE LAST SAVED ADDRESS
+    // ------------------------------------------------------------
+
+    if (_savedAddresses.length <= 1) {
+      _showCannotDeletePopup();
+      return;
+    }
+
+    // ------------------------------------------------------------
+    // DELETE CONFIRMATION
+    // ------------------------------------------------------------
+
+    final shouldDelete =
+    await _showDeleteConfirmation(address);
 
     if (shouldDelete != true) return;
 
     setState(() {
       _savedAddresses.removeWhere(
-        (item) => item.id == address.id,
+            (item) => item.id == address.id,
       );
     });
 
     await _saveAddresses();
 
+    // ------------------------------------------------------------
+    // CLEAR SELECTED ADDRESS IF DELETED
+    // ------------------------------------------------------------
+
     if (_selectedAddress == address.address) {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs =
+      await SharedPreferences.getInstance();
 
       await prefs.remove(_selectedAddressKey);
 
@@ -385,7 +485,6 @@ class _MilestoneApp6AddressScreenState
       'Address deleted.',
     );
   }
-
 // ============================================================
 // ADDRESS EDITOR
 // ============================================================
