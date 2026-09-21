@@ -261,7 +261,7 @@ const restaurants = <MilestoneApp6Restaurant>[
   MilestoneApp6Restaurant(
     name: 'Biryani House',
     image:
-    'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=700',
+    'https://images.unsplash.com/photo-1631515242808-497c3fbd3972?auto=format&fit=crop&w=700&q=80',
     rating: '4.6',
     time: '25-35 min',
     cuisine: 'Biryani • Mughlai • Indian',

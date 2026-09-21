@@ -1,7 +1,9 @@
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/screens/milestone_app_6_address_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import '../screens/milestone_app_6_login_screen.dart';
+import '../screens/milestone_app_6_signup_screen.dart';
+import '../state/milestone_app_6_auth_store.dart';
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 
@@ -22,40 +24,78 @@ class MilestoneApp6Routes {
   final MilestoneApp6State state;
 
   late final GoRouter router;
-
   MilestoneApp6Routes(this.state) {
+    final auth = MilestoneApp6AuthStore.instance;
+
     router = GoRouter(
       // ================================================================
       // INITIAL LOCATION
       // ================================================================
 
       initialLocation: state.onboardingDone
-          ? '/home'
+          ? '/login'
           : '/onboarding',
 
       // ================================================================
       // REFRESH ROUTER WHEN STATE CHANGES
       // ================================================================
 
-      refreshListenable: state,
+      refreshListenable: Listenable.merge([
+        state,
+        auth,
+      ]),
 
       // ================================================================
       // REDIRECT
       // ================================================================
 
       redirect: (context, routeState) {
-        final bool isOnboarding =
-            routeState.uri.path == '/onboarding';
+        final path = routeState.uri.path;
 
-        // User has not completed onboarding.
-        // Keep user on onboarding screen.
-        if (!state.onboardingDone && !isOnboarding) {
-          return '/onboarding';
+        final isOnboarding = path == '/onboarding';
+        final isLogin = path == '/login';
+        final isSignup = path == '/signup';
+
+        final isAuthRoute = isLogin || isSignup;
+
+        // ============================================================
+        // ONBOARDING NOT COMPLETED
+        // ============================================================
+
+        if (!state.onboardingDone) {
+          if (!isOnboarding) {
+            return '/onboarding';
+          }
+
+          return null;
         }
 
-        // User already completed onboarding.
-        // Do not allow opening onboarding again.
-        if (state.onboardingDone && isOnboarding) {
+        // ============================================================
+        // ONBOARDING COMPLETED
+        // ============================================================
+
+        if (isOnboarding) {
+          if (auth.isLoggedIn) {
+            return '/home';
+          }
+
+          return '/login';
+        }
+
+        // ============================================================
+        // USER NOT LOGGED IN
+        // ============================================================
+
+        if (!auth.isLoggedIn && !isAuthRoute) {
+          return '/login';
+        }
+
+        // ============================================================
+        // USER ALREADY LOGGED IN
+        // DON'T SHOW LOGIN/SIGNUP AGAIN
+        // ============================================================
+
+        if (auth.isLoggedIn && isAuthRoute) {
           return '/home';
         }
 
@@ -82,6 +122,41 @@ class MilestoneApp6Routes {
               MilestoneApp6OnboardingScreen(
                 state: state,
               ),
+            );
+          },
+        ),
+
+
+        // ================================================================
+// LOGIN
+// ================================================================
+
+        GoRoute(
+          path: '/login',
+          pageBuilder: (
+              context,
+              routeState,
+              ) {
+            return _page(
+              routeState,
+              const MilestoneApp6LoginScreen(),
+            );
+          },
+        ),
+
+// ================================================================
+// SIGN UP
+// ================================================================
+
+        GoRoute(
+          path: '/signup',
+          pageBuilder: (
+              context,
+              routeState,
+              ) {
+            return _page(
+              routeState,
+              const MilestoneApp6SignupScreen(),
             );
           },
         ),
@@ -484,7 +559,9 @@ class MilestoneApp6Routes {
           },
         ),
       ],
+
     );
+
   }
 
   // ================================================================
