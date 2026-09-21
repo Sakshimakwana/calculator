@@ -217,29 +217,17 @@ class _MilestoneApp6CartScreenState
   // DELIVERY ADDRESS
   // ================================================================
 
-  Widget _deliveryAddress(
-      BuildContext context,
-      ) {
-    final theme =
-    Theme.of(context);
-
-    final address =
-        state.selectedAddress;
+  Widget _deliveryAddress(BuildContext context) {
+    final theme = Theme.of(context);
+    final address = state.selectedAddress;
 
     return Container(
-      padding:
-      const EdgeInsets.all(16),
-      decoration:
-      BoxDecoration(
-        color:
-        theme.colorScheme.surface,
-        borderRadius:
-        BorderRadius.circular(
-          20,
-        ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor
-              .withOpacity(0.25),
+          color: theme.dividerColor.withOpacity(.25),
         ),
       ),
       child: Column(
@@ -249,53 +237,35 @@ class _MilestoneApp6CartScreenState
               Container(
                 width: 42,
                 height: 42,
-                decoration:
-                BoxDecoration(
-                  color: theme
-                      .colorScheme
-                      .primary
-                      .withOpacity(
-                    0.10,
-                  ),
-                  shape:
-                  BoxShape.circle,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary
+                      .withOpacity(.10),
+                  shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons
-                      .location_on_outlined,
-                  color: theme
-                      .colorScheme
-                      .primary,
+                  Icons.location_on_outlined,
+                  color: theme.colorScheme.primary,
                 ),
               ),
 
-              const SizedBox(
-                width: 12,
-              ),
+              const SizedBox(width: 12),
 
               const Expanded(
                 child: Column(
                   crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+                  CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Delivery Address',
-                      style:
-                      TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        fontWeight:
-                        FontWeight
-                            .w800,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    SizedBox(
-                      height: 3,
-                    ),
+                    SizedBox(height: 3),
                     Text(
                       'Where should we deliver your order?',
-                      style:
-                      TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                       ),
                     ),
@@ -305,20 +275,16 @@ class _MilestoneApp6CartScreenState
 
               TextButton(
                 onPressed: () {
-                  _showAddressDialog(
-                    context,
+                  context.push(
+                    '/profile/address',
+                    extra: state,
                   );
                 },
                 child: Text(
-                  address == null
-                      ? 'Add'
-                      : 'Change',
+                  address == null ? 'Add' : 'Change',
                   style: TextStyle(
-                    fontWeight:
-                    FontWeight.w700,
-                    color: theme
-                        .colorScheme
-                        .primary,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),
@@ -326,108 +292,81 @@ class _MilestoneApp6CartScreenState
           ),
 
           if (address != null) ...[
-            const SizedBox(
-              height: 14,
-            ),
+            const SizedBox(height: 14),
 
             Container(
-              width:
-              double.infinity,
-              padding:
-              const EdgeInsets.all(
-                13,
-              ),
-              decoration:
-              BoxDecoration(
-                color: theme
-                    .colorScheme
-                    .primary
-                    .withOpacity(
-                  0.05,
-                ),
+              width: double.infinity,
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary
+                    .withOpacity(.05),
                 borderRadius:
-                BorderRadius
-                    .circular(
-                  14,
-                ),
+                BorderRadius.circular(14),
               ),
               child: Row(
                 crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+                CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    _addressIcon(
-                      address.label,
-                    ),
+                    _addressIcon(address.label),
                     size: 19,
-                    color: theme
-                        .colorScheme
-                        .primary,
+                    color:
+                    theme.colorScheme.primary,
                   ),
 
-                  const SizedBox(
-                    width: 10,
-                  ),
+                  const SizedBox(width: 10),
 
                   Expanded(
                     child: Column(
                       crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                      CrossAxisAlignment.start,
                       children: [
                         Text(
                           address.label,
-                          style:
-                          const TextStyle(
+                          style: const TextStyle(
                             fontWeight:
-                            FontWeight
-                                .w800,
+                            FontWeight.w800,
                           ),
                         ),
 
-                        const SizedBox(
-                          height: 5,
-                        ),
+                        if (address.name
+                            .trim()
+                            .isNotEmpty) ...[
+                          const SizedBox(height: 5),
+                          Text(
+                            address.name,
+                            style:
+                            const TextStyle(
+                              fontWeight:
+                              FontWeight.w600,
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 5),
 
                         Text(
-                          address.name,
-                          style:
-                          const TextStyle(
-                            fontWeight:
-                            FontWeight
-                                .w600,
+                          address.fullAddress,
+                          style: TextStyle(
+                            color:
+                            theme.hintColor,
+                            fontSize: 12,
                           ),
                         ),
 
-                        const SizedBox(
-                          height: 3,
-                        ),
-
-                        Text(
-                          address
-                              .fullAddress,
-                          style:
-                          TextStyle(
-                            color: theme
-                                .hintColor,
-                            fontSize: 11,
+                        if (address.phone
+                            .trim()
+                            .isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            address.phone,
+                            style: TextStyle(
+                              color:
+                              theme.hintColor,
+                              fontSize: 11,
+                            ),
                           ),
-                        ),
-
-                        const SizedBox(
-                          height: 3,
-                        ),
-
-                        Text(
-                          address.phone,
-                          style:
-                          TextStyle(
-                            color: theme
-                                .hintColor,
-                            fontSize: 11,
-                          ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -460,43 +399,6 @@ class _MilestoneApp6CartScreenState
     }
   }
 
-  // ================================================================
-  // ADDRESS DIALOG
-  // ================================================================
-
-  Future<void> _showAddressDialog(
-      BuildContext context,
-      ) async {
-    final address =
-    await showDialog<
-        MilestoneApp6Address>(
-      context: context,
-      builder: (
-          dialogContext,
-          ) {
-        return _MilestoneApp6AddressDialog(
-          initialAddress:
-          state.selectedAddress,
-        );
-      },
-    );
-
-    if (!mounted ||
-        address == null) {
-      return;
-    }
-
-    state.setAddress(address);
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Delivery address saved successfully.',
-        ),
-      ),
-    );
-  }
 
   // ================================================================
   // CART ITEM
@@ -1359,28 +1261,36 @@ class _MilestoneApp6CartScreenState
           Expanded(
             child:
             MilestoneApp6Button(
-              label:
-              'Proceed to Checkout',
+              label: 'Proceed to Checkout',
               onPressed: () {
-                if (state
-                    .selectedAddress ==
-                    null) {
-                  ScaffoldMessenger
-                      .of(
-                    context,
-                  ).showSnackBar(
+                if (state.selectedAddress == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text(
-                        'Please add a delivery address first.',
-                      ),
+                      content: Text('Please add a delivery address first.'),
+                      behavior: SnackBarBehavior.floating,
                     ),
                   );
-
                   return;
                 }
 
-                _showCheckoutDialog(
-                  context,
+                if (state.cart.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Your cart is empty.'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+
+                final firstItem = state.cart.values.first;
+
+                context.push(
+                  '/checkout'
+                      '?foodId=${Uri.encodeComponent(firstItem.food.id)}'
+                      '&size=${Uri.encodeComponent(firstItem.size)}'
+                      '&unitPrice=${firstItem.unitPrice}'
+                      '&quantity=${firstItem.quantity}',
                 );
               },
             ),
@@ -1551,443 +1461,5 @@ class _MilestoneApp6CartScreenState
         ),
       ),
     );
-  }
-}
-
-// =====================================================================
-// ADDRESS DIALOG
-// =====================================================================
-
-class _MilestoneApp6AddressDialog
-    extends StatefulWidget {
-  final MilestoneApp6Address?
-  initialAddress;
-
-  const _MilestoneApp6AddressDialog({
-    this.initialAddress,
-  });
-
-  @override
-  State<_MilestoneApp6AddressDialog>
-  createState() =>
-      _MilestoneApp6AddressDialogState();
-}
-
-class _MilestoneApp6AddressDialogState
-    extends State<
-        _MilestoneApp6AddressDialog> {
-  late final TextEditingController
-  _nameController;
-
-  late final TextEditingController
-  _phoneController;
-
-  late final TextEditingController
-  _addressController;
-
-  late final TextEditingController
-  _cityController;
-
-  late final TextEditingController
-  _pincodeController;
-
-  String _selectedType = 'Home';
-
-  @override
-  void initState() {
-    super.initState();
-
-    final address =
-        widget.initialAddress;
-
-    _selectedType =
-        address?.label ?? 'Home';
-
-    _nameController =
-        TextEditingController(
-          text: address?.name ?? '',
-        );
-
-    _phoneController =
-        TextEditingController(
-          text: address?.phone ?? '',
-        );
-
-    _addressController =
-        TextEditingController(
-          text: address?.address ?? '',
-        );
-
-    _cityController =
-        TextEditingController(
-          text: address?.city ?? '',
-        );
-
-    _pincodeController =
-        TextEditingController(
-          text: address?.pincode ?? '',
-        );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
-    _pincodeController.dispose();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final theme =
-    Theme.of(context);
-
-    return AlertDialog(
-      shape:
-      RoundedRectangleBorder(
-        borderRadius:
-        BorderRadius.circular(
-          20,
-        ),
-      ),
-      title: const Text(
-        'Delivery Address',
-        style: TextStyle(
-          fontWeight:
-          FontWeight.w800,
-        ),
-      ),
-      content:
-      SingleChildScrollView(
-        child: Column(
-          mainAxisSize:
-          MainAxisSize.min,
-          children: [
-            Align(
-              alignment:
-              Alignment.centerLeft,
-              child: Text(
-                'Save as',
-                style: TextStyle(
-                  color:
-                  theme.hintColor,
-                  fontSize: 12,
-                  fontWeight:
-                  FontWeight.w600,
-                ),
-              ),
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            Row(
-              children: [
-                _addressTypeButton(
-                  context,
-                  'Home',
-                  Icons
-                      .home_outlined,
-                ),
-                const SizedBox(
-                  width: 8,
-                ),
-                _addressTypeButton(
-                  context,
-                  'Work',
-                  Icons
-                      .business_outlined,
-                ),
-                const SizedBox(
-                  width: 8,
-                ),
-                _addressTypeButton(
-                  context,
-                  'Other',
-                  Icons
-                      .location_on_outlined,
-                ),
-              ],
-            ),
-
-            const SizedBox(
-              height: 16,
-            ),
-
-            _addressField(
-              controller:
-              _nameController,
-              label: 'Full Name',
-              icon: Icons
-                  .person_outline,
-            ),
-
-            const SizedBox(
-              height: 10,
-            ),
-
-            _addressField(
-              controller:
-              _phoneController,
-              label: 'Phone Number',
-              icon: Icons
-                  .phone_outlined,
-              keyboardType:
-              TextInputType.phone,
-            ),
-
-            const SizedBox(
-              height: 10,
-            ),
-
-            _addressField(
-              controller:
-              _addressController,
-              label:
-              'House / Street / Area',
-              icon: Icons
-                  .home_work_outlined,
-              maxLines: 2,
-            ),
-
-            const SizedBox(
-              height: 10,
-            ),
-
-            _addressField(
-              controller:
-              _cityController,
-              label: 'City',
-              icon: Icons
-                  .location_city_outlined,
-            ),
-
-            const SizedBox(
-              height: 10,
-            ),
-
-            _addressField(
-              controller:
-              _pincodeController,
-              label: 'Pincode',
-              icon: Icons
-                  .pin_drop_outlined,
-              keyboardType:
-              TextInputType.number,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context)
-                .pop();
-          },
-          child:
-          const Text('Cancel'),
-        ),
-
-        FilledButton(
-          onPressed:
-          _saveAddress,
-          child: const Text(
-            'Save Address',
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ================================================================
-  // ADDRESS TYPE
-  // ================================================================
-
-  Widget _addressTypeButton(
-      BuildContext context,
-      String label,
-      IconData icon,
-      ) {
-    final theme =
-    Theme.of(context);
-
-    final isSelected =
-        _selectedType == label;
-
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedType =
-                label;
-          });
-        },
-        borderRadius:
-        BorderRadius.circular(
-          10,
-        ),
-        child:
-        AnimatedContainer(
-          duration:
-          const Duration(
-            milliseconds: 180,
-          ),
-          padding:
-          const EdgeInsets
-              .symmetric(
-            vertical: 9,
-          ),
-          decoration:
-          BoxDecoration(
-            color: isSelected
-                ? theme
-                .colorScheme
-                .primary
-                .withOpacity(0.10)
-                : theme
-                .colorScheme
-                .surface,
-            borderRadius:
-            BorderRadius.circular(
-              10,
-            ),
-            border: Border.all(
-              color: isSelected
-                  ? theme
-                  .colorScheme
-                  .primary
-                  : theme.dividerColor
-                  .withOpacity(
-                0.30,
-              ),
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected
-                    ? theme
-                    .colorScheme
-                    .primary
-                    : theme
-                    .iconTheme
-                    .color,
-              ),
-
-              const SizedBox(
-                height: 4,
-              ),
-
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight:
-                  FontWeight.w700,
-                  color: isSelected
-                      ? theme
-                      .colorScheme
-                      .primary
-                      : null,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ================================================================
-  // ADDRESS FIELD
-  // ================================================================
-
-  Widget _addressField({
-    required TextEditingController
-    controller,
-    required String label,
-    required IconData icon,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType:
-      keyboardType,
-      maxLines: maxLines,
-      decoration:
-      InputDecoration(
-        labelText: label,
-        prefixIcon:
-        Icon(icon),
-        border:
-        OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(
-            12,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ================================================================
-  // SAVE ADDRESS
-  // ================================================================
-
-  void _saveAddress() {
-    if (_nameController.text
-        .trim()
-        .isEmpty ||
-        _phoneController.text
-            .trim()
-            .isEmpty ||
-        _addressController.text
-            .trim()
-            .isEmpty ||
-        _cityController.text
-            .trim()
-            .isEmpty ||
-        _pincodeController.text
-            .trim()
-            .isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please fill all address fields.',
-          ),
-        ),
-      );
-
-      return;
-    }
-
-    final address =
-    MilestoneApp6Address(
-      label: _selectedType,
-      name:
-      _nameController.text.trim(),
-      phone:
-      _phoneController.text.trim(),
-      address:
-      _addressController.text.trim(),
-      city:
-      _cityController.text.trim(),
-      pincode:
-      _pincodeController.text.trim(),
-    );
-
-    Navigator.of(context)
-        .pop(address);
   }
 }

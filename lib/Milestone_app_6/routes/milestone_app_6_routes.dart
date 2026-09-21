@@ -226,8 +226,10 @@ class MilestoneApp6Routes {
 // ============================================================
             GoRoute(
               path: '/profile/address',
-              builder: (context, state) {
-                return const MilestoneApp6AddressScreen();
+              builder: (context, routeState) {
+                return MilestoneApp6AddressScreen(
+                  state: state,
+                );
               },
             ),
             GoRoute(
@@ -372,44 +374,44 @@ class MilestoneApp6Routes {
         // Bottom navigation is hidden on Food Details.
         // ================================================================
 
-        GoRoute(
-          path: '/food/:id',
-          pageBuilder: (
-              context,
-              routeState,
-              ) {
-            final String? foodId =
-            routeState.pathParameters['id'];
-
-            // ------------------------------------------------------------
-            // Validate food ID
-            // ------------------------------------------------------------
-
-            if (foodId == null || foodId.isEmpty) {
-              return const NoTransitionPage(
-                child: Scaffold(
-                  body: Center(
-                    child: Text(
-                      'Food information is missing.',
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            // ------------------------------------------------------------
-            // Food Details Screen
-            // ------------------------------------------------------------
-
-            return _page(
-              routeState,
-              MilestoneApp6FoodDetailsScreen(
-                state: state,
-                id: foodId,
-              ),
-            );
-          },
-        ),
+        // GoRoute(
+        //   path: '/food/:id',
+        //   pageBuilder: (
+        //       context,
+        //       routeState,
+        //       ) {
+        //     final String? foodId =
+        //     routeState.pathParameters['id'];
+        //
+        //     // ------------------------------------------------------------
+        //     // Validate food ID
+        //     // ------------------------------------------------------------
+        //
+        //     if (foodId == null || foodId.isEmpty) {
+        //       return const NoTransitionPage(
+        //         child: Scaffold(
+        //           body: Center(
+        //             child: Text(
+        //               'Food information is missing.',
+        //             ),
+        //           ),
+        //         ),
+        //       );
+        //     }
+        //
+        //     // ------------------------------------------------------------
+        //     // Food Details Screen
+        //     // ------------------------------------------------------------
+        //
+        //     return _page(
+        //       routeState,
+        //       MilestoneApp6FoodDetailsScreen(
+        //         state: state,
+        //         id: foodId,
+        //       ),
+        //     );
+        //   },
+        // ),
 
         // ================================================================
         // BUY NOW CHECKOUT

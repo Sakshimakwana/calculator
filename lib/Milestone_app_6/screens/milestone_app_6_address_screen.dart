@@ -1,13 +1,21 @@
 import 'dart:convert';
+
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/address_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/milestone_app_6_address_data.dart';
+import '../state/milestone_app_6_state.dart';
+
 class MilestoneApp6AddressScreen extends StatefulWidget {
+  final MilestoneApp6State state;
+
   const MilestoneApp6AddressScreen({
     super.key,
+    required this.state,
   });
 
   @override
@@ -17,22 +25,23 @@ class MilestoneApp6AddressScreen extends StatefulWidget {
 
 class _MilestoneApp6AddressScreenState
     extends State<MilestoneApp6AddressScreen> {
-// ============================================================
-// STORAGE KEYS
-// ============================================================
+  // ============================================================
+  // STORAGE KEYS
+  // ============================================================
 
   static const String _addressesKey = 'saved_addresses';
   static const String _selectedAddressKey = 'selected_address';
 
-// ============================================================
-// CONTROLLERS
-// ============================================================
+  // ============================================================
+  // CONTROLLERS
+  // ============================================================
 
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController =
+  TextEditingController();
 
-// ============================================================
-// STATE
-// ============================================================
+  // ============================================================
+  // STATE
+  // ============================================================
 
   List<MilestoneApp6Address> _savedAddresses = [];
 
@@ -42,9 +51,9 @@ class _MilestoneApp6AddressScreenState
 
   String _searchQuery = '';
 
-// ============================================================
-// NEARBY LOCATIONS
-// ============================================================
+  // ============================================================
+  // NEARBY LOCATIONS
+  // ============================================================
 
   final List<MilestoneApp6NearbyLocation> _nearbyLocations = [
     MilestoneApp6NearbyLocation(
@@ -54,13 +63,14 @@ class _MilestoneApp6AddressScreenState
     ),
     MilestoneApp6NearbyLocation(
       name: 'Swarnim Business HUB',
-      address: 'Visat-Tapovan Highway, Motera, Ahmedabad, Gujarat',
+      address:
+      'Visat-Tapovan Highway, Motera, Ahmedabad, Gujarat',
       distance: '161 m',
     ),
     MilestoneApp6NearbyLocation(
       name: 'Hotel Avens INN',
       address:
-          'Amrakunj Avis, Above Gwalbhog Banquet, Near Tapovan Circle Visat, Ahmedabad',
+      'Amrakunj Avis, Above Gwalbhog Banquet, Near Tapovan Circle Visat, Ahmedabad',
       distance: '225 m',
     ),
     MilestoneApp6NearbyLocation(
@@ -70,9 +80,9 @@ class _MilestoneApp6AddressScreenState
     ),
   ];
 
-// ============================================================
-// INIT
-// ============================================================
+  // ============================================================
+  // INIT
+  // ============================================================
 
   @override
   void initState() {
@@ -83,9 +93,9 @@ class _MilestoneApp6AddressScreenState
     _loadAddresses();
   }
 
-// ============================================================
-// DISPOSE
-// ============================================================
+  // ============================================================
+  // DISPOSE
+  // ============================================================
 
   @override
   void dispose() {
@@ -94,9 +104,448 @@ class _MilestoneApp6AddressScreenState
 
     super.dispose();
   }
+
   // ============================================================
-// CANNOT DELETE POPUP
-// ============================================================
+  // SEARCH
+  // ============================================================
+
+  void _onSearchChanged() {
+    if (!mounted) return;
+
+    setState(() {
+      _searchQuery =
+          _searchController.text.trim().toLowerCase();
+    });
+  }
+
+  // ============================================================
+  // LOAD SAVED ADDRESSES
+  // ============================================================
+
+  Future<void> _loadAddresses() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedJson =
+    prefs.getString(_addressesKey);
+
+    final selected =
+        prefs.getString(_selectedAddressKey) ?? '';
+
+    List<MilestoneApp6Address> addresses = [];
+
+    if (savedJson != null && savedJson.isNotEmpty) {
+      try {
+        final List<dynamic> decoded =
+        jsonDecode(savedJson);
+
+        addresses = decoded
+            .whereType<Map<String, dynamic>>()
+            .map(
+              (json) =>
+              MilestoneApp6Address.fromJson(json),
+        )
+            .toList();
+      } catch (_) {
+        addresses = [];
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _savedAddresses = addresses;
+      _selectedAddress = selected;
+    });
+
+    // ----------------------------------------------------------
+    // Restore selected address into central app state
+    // ----------------------------------------------------------
+
+    if (selected.isNotEmpty) {
+      final selectedModel =
+      _findAddressByFullAddress(selected);
+
+      if (selectedModel != null) {
+        widget.state.setAddress(selectedModel);
+      }
+    }
+  }
+
+  // ============================================================
+  // FIND ADDRESS
+  // ============================================================
+
+  MilestoneApp6Address? _findAddressByFullAddress(
+      String value,
+      ) {
+    for (final address in _savedAddresses) {
+      if (address.fullAddress == value ||
+          address.address == value) {
+        return address;
+      }
+    }
+
+    return null;
+  }
+
+  // ============================================================
+  // SAVE ALL ADDRESSES
+  // ============================================================
+
+  Future<void> _saveAddresses() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final jsonList = _savedAddresses
+        .map((address) => address.toJson())
+        .toList();
+
+    await prefs.setString(
+      _addressesKey,
+      jsonEncode(jsonList),
+    );
+  }
+
+  // ============================================================
+  // SAVE SELECTED ADDRESS
+  // ============================================================
+
+  Future<void> _saveSelectedAddress(
+      MilestoneApp6Address address,
+      ) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final selectedText = address.fullAddress.isNotEmpty
+        ? address.fullAddress
+        : address.address;
+
+    await prefs.setString(
+      _selectedAddressKey,
+      selectedText,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _selectedAddress = selectedText;
+    });
+
+    // IMPORTANT:
+    // Update central app state.
+    widget.state.setAddress(address);
+  }
+
+  // ============================================================
+  // SELECT SAVED ADDRESS
+  // ============================================================
+
+  Future<void> _selectSavedAddress(
+      MilestoneApp6Address address,
+      ) async {
+    await _saveSelectedAddress(address);
+
+    if (!mounted) return;
+
+    // Go back to Cart
+    context.pop();
+  }
+
+  // ============================================================
+  // SELECT TEXT ADDRESS
+  // ============================================================
+
+  Future<void> _selectTextAddress(
+      String addressText,
+      ) async {
+    final address = MilestoneApp6Address(
+      label: 'Current Location',
+      name: '',
+      phone: '',
+      address: addressText,
+      city: '',
+      pincode: '',
+    );
+
+    await _saveSelectedAddress(address);
+
+    if (!mounted) return;
+
+    context.pop();
+  }
+
+  // ============================================================
+  // CURRENT LOCATION
+  // ============================================================
+
+  Future<void> _useCurrentLocation() async {
+    if (_isLoadingLocation) return;
+
+    setState(() {
+      _isLoadingLocation = true;
+    });
+
+    try {
+      final serviceEnabled =
+      await Geolocator.isLocationServiceEnabled();
+
+      if (!serviceEnabled) {
+        _showMessage(
+          'Please enable location services.',
+        );
+        return;
+      }
+
+      LocationPermission permission =
+      await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission =
+        await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied) {
+        _showMessage(
+          'Location permission denied.',
+        );
+        return;
+      }
+
+      if (permission ==
+          LocationPermission.deniedForever) {
+        _showMessage(
+          'Location permission is permanently denied. Please enable it from Settings.',
+        );
+        return;
+      }
+
+      final position =
+      await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      String addressText = '';
+
+      try {
+        final placemarks =
+        await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+
+          final parts = <String>[
+            if ((place.name ?? '').trim().isNotEmpty)
+              place.name!.trim(),
+            if ((place.subLocality ?? '')
+                .trim()
+                .isNotEmpty)
+              place.subLocality!.trim(),
+            if ((place.locality ?? '')
+                .trim()
+                .isNotEmpty)
+              place.locality!.trim(),
+            if ((place.administrativeArea ?? '')
+                .trim()
+                .isNotEmpty)
+              place.administrativeArea!.trim(),
+          ];
+
+          addressText = parts.join(', ');
+        }
+      } catch (_) {}
+
+      if (addressText.isEmpty) {
+        addressText =
+        'Current Location '
+            '(${position.latitude.toStringAsFixed(5)}, '
+            '${position.longitude.toStringAsFixed(5)})';
+      }
+
+      await _selectTextAddress(addressText);
+    } catch (_) {
+      _showMessage(
+        'Unable to get your current location.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingLocation = false;
+        });
+      }
+    }
+  }
+
+  // ============================================================
+  // ADD ADDRESS
+  // ============================================================
+
+  Future<void> _addAddress() async {
+    final result =
+    await _showAddressEditor();
+
+    if (result == null) return;
+
+    final address = MilestoneApp6Address(
+      label: result.label,
+      name: '',
+      phone: result.phone,
+      address: result.address,
+      city: '',
+      pincode: '',
+    );
+
+    setState(() {
+      _savedAddresses.insert(
+        0,
+        address,
+      );
+    });
+
+    await _saveAddresses();
+
+    // IMPORTANT:
+    // Set address in central state.
+    widget.state.setAddress(address);
+
+    // Save selected address.
+    await _saveSelectedAddress(address);
+
+    if (!mounted) return;
+
+    // Return to Cart.
+    context.pop();
+  }
+
+  // ============================================================
+  // EDIT ADDRESS
+  // ============================================================
+
+  Future<void> _editAddress(
+      MilestoneApp6Address oldAddress,
+      ) async {
+    final result =
+    await _showAddressEditor(
+      existing: oldAddress,
+    );
+
+    if (result == null) return;
+
+    final index =
+    _savedAddresses.indexWhere(
+          (item) =>
+      item.address == oldAddress.address &&
+          item.phone == oldAddress.phone,
+    );
+
+    if (index == -1) return;
+
+    final updated =
+    MilestoneApp6Address(
+      label: result.label,
+      name: oldAddress.name,
+      phone: result.phone,
+      address: result.address,
+      city: oldAddress.city,
+      pincode: oldAddress.pincode,
+    );
+
+    final oldFullAddress =
+        oldAddress.fullAddress;
+
+    setState(() {
+      _savedAddresses[index] = updated;
+    });
+
+    await _saveAddresses();
+
+    // ----------------------------------------------------------
+    // If edited address was selected
+    // ----------------------------------------------------------
+
+    if (_selectedAddress == oldFullAddress ||
+        _selectedAddress == oldAddress.address) {
+      await _saveSelectedAddress(updated);
+    }
+  }
+
+  // ============================================================
+  // DELETE ADDRESS
+  // ============================================================
+
+  Future<void> _deleteAddress(
+      MilestoneApp6Address address,
+      ) async {
+    // ----------------------------------------------------------
+    // Do not delete the only saved address.
+    // ----------------------------------------------------------
+
+    if (_savedAddresses.length <= 1) {
+      _showCannotDeletePopup();
+      return;
+    }
+
+    final shouldDelete =
+    await _showDeleteConfirmation(
+      address,
+    );
+
+    if (shouldDelete != true) return;
+
+    final wasSelected =
+        _selectedAddress == address.fullAddress ||
+            _selectedAddress == address.address;
+
+    setState(() {
+      _savedAddresses.removeWhere(
+            (item) =>
+        item.address == address.address &&
+            item.phone == address.phone,
+      );
+    });
+
+    await _saveAddresses();
+
+    // ----------------------------------------------------------
+    // If selected address was deleted
+    // ----------------------------------------------------------
+
+    if (wasSelected) {
+      final prefs =
+      await SharedPreferences.getInstance();
+
+      await prefs.remove(
+        _selectedAddressKey,
+      );
+
+      if (_savedAddresses.isNotEmpty) {
+        final newAddress =
+            _savedAddresses.first;
+
+        await _saveSelectedAddress(
+          newAddress,
+        );
+      } else {
+        widget.state.clearAddress();
+
+        if (mounted) {
+          setState(() {
+            _selectedAddress = '';
+          });
+        }
+      }
+    }
+
+    _showMessage(
+      'Address deleted.',
+    );
+  }
+
+  // ============================================================
+  // CANNOT DELETE POPUP
+  // ============================================================
 
   void _showCannotDeletePopup() {
     if (!mounted) return;
@@ -108,33 +557,26 @@ class _MilestoneApp6AddressScreenState
           backgroundColor: Colors.white,
           elevation: 8,
           behavior: SnackBarBehavior.floating,
-
           margin: const EdgeInsets.only(
             left: 24,
             right: 24,
             bottom: 24,
           ),
-
           padding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 14,
           ),
-
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius:
+            BorderRadius.circular(10),
           ),
-
           content: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // --------------------------------------------------
-              // ERROR ICON
-              // --------------------------------------------------
-
               Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(
+                decoration:
+                const BoxDecoration(
                   color: Color(0xFFFF5252),
                   shape: BoxShape.circle,
                 ),
@@ -144,13 +586,7 @@ class _MilestoneApp6AddressScreenState
                   size: 19,
                 ),
               ),
-
               const SizedBox(width: 12),
-
-              // --------------------------------------------------
-              // MESSAGE
-              // --------------------------------------------------
-
               const Expanded(
                 child: Text(
                   'You cannot delete your only saved address.',
@@ -164,371 +600,61 @@ class _MilestoneApp6AddressScreenState
               ),
             ],
           ),
-
-          duration: const Duration(
-            seconds: 3,
-          ),
+          duration:
+          const Duration(seconds: 3),
         ),
       );
   }
-
-// ============================================================
-// SEARCH
-// ============================================================
-
-  void _onSearchChanged() {
-    if (!mounted) return;
-
-    setState(() {
-      _searchQuery = _searchController.text.trim().toLowerCase();
-    });
-  }
-
-// ============================================================
-// LOAD SAVED ADDRESSES
-// ============================================================
-
-  Future<void> _loadAddresses() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final savedData = prefs.getString(_addressesKey);
-
-    final selected = prefs.getString(_selectedAddressKey) ?? '';
-
-    List<MilestoneApp6Address> addresses = [];
-
-    if (savedData != null && savedData.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(savedData);
-
-        if (decoded is List) {
-          addresses = decoded
-              .map(
-                (item) => MilestoneApp6Address.fromJson(
-                  Map<String, dynamic>.from(item),
-                ),
-              )
-              .toList();
-        }
-      } catch (_) {
-        addresses = [];
-      }
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      _savedAddresses = addresses;
-      _selectedAddress = selected;
-    });
-  }
-
-// ============================================================
-// SAVE ADDRESSES
-// ============================================================
-
-  Future<void> _saveAddresses() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final data = _savedAddresses.map((address) => address.toJson()).toList();
-
-    await prefs.setString(
-      _addressesKey,
-      jsonEncode(data),
-    );
-  }
-
-// ============================================================
-// SAVE SELECTED ADDRESS
-// ============================================================
-
-  Future<void> _selectAddress(String address) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString(
-      _selectedAddressKey,
-      address,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _selectedAddress = address;
-    });
-
-    Navigator.pop(context, address);
-  }
-
-// ============================================================
-// CURRENT LOCATION
-// ============================================================
-
-  Future<void> _useCurrentLocation() async {
-    if (_isLoadingLocation) return;
-
-    setState(() {
-      _isLoadingLocation = true;
-    });
-
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-
-      if (!serviceEnabled) {
-        _showMessage(
-          'Please enable location services.',
-        );
-
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.denied) {
-        _showMessage(
-          'Location permission denied.',
-        );
-
-        return;
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        _showMessage(
-          'Location permission is permanently denied. Please enable it from Settings.',
-        );
-
-        return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
-      String addressText = '';
-
-      try {
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
-
-        if (placemarks.isNotEmpty) {
-          final place = placemarks.first;
-
-          final parts = <String>[
-            if ((place.name ?? '').trim().isNotEmpty) place.name!.trim(),
-            if ((place.subLocality ?? '').trim().isNotEmpty)
-              place.subLocality!.trim(),
-            if ((place.locality ?? '').trim().isNotEmpty)
-              place.locality!.trim(),
-            if ((place.administrativeArea ?? '').trim().isNotEmpty)
-              place.administrativeArea!.trim(),
-          ];
-
-          addressText = parts.join(', ');
-        }
-      } catch (_) {}
-
-      if (addressText.isEmpty) {
-        addressText =
-            'Current Location (${position.latitude.toStringAsFixed(5)}, '
-            '${position.longitude.toStringAsFixed(5)})';
-      }
-
-      await _selectAddress(addressText);
-    } catch (e) {
-      _showMessage(
-        'Unable to get your current location.',
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingLocation = false;
-        });
-      }
-    }
-  }
-
-// ============================================================
-// ADD ADDRESS
-// ============================================================
-
-  Future<void> _addAddress() async {
-    final result = await _showAddressEditor();
-
-    if (result == null) return;
-
-    final address = MilestoneApp6Address(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      label: result.label,
-      address: result.address,
-      phone: result.phone,
-    );
-
-    setState(() {
-      _savedAddresses.insert(0, address);
-    });
-
-    await _saveAddresses();
-
-// Automatically select newly added address.
-    await _selectAddress(address.address);
-  }
-
-// ============================================================
-// EDIT ADDRESS
-// ============================================================
-
-  Future<void> _editAddress(
-    MilestoneApp6Address oldAddress,
-  ) async {
-    final result = await _showAddressEditor(
-      existing: oldAddress,
-    );
-
-    if (result == null) return;
-
-    final index = _savedAddresses.indexWhere(
-      (item) => item.id == oldAddress.id,
-    );
-
-    if (index == -1) return;
-
-    final updated = MilestoneApp6Address(
-      id: oldAddress.id,
-      label: result.label,
-      address: result.address,
-      phone: result.phone,
-    );
-
-    setState(() {
-      _savedAddresses[index] = updated;
-    });
-
-    await _saveAddresses();
-
-    if (_selectedAddress == oldAddress.address) {
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString(
-        _selectedAddressKey,
-        updated.address,
-      );
-
-      if (mounted) {
-        setState(() {
-          _selectedAddress = updated.address;
-        });
-      }
-    }
-  }
-
-// ============================================================
-// DELETE ADDRESS
-// ============================================================
 
   // ============================================================
-// DELETE ADDRESS
-// ============================================================
+  // ADDRESS EDITOR
+  // ============================================================
 
-  Future<void> _deleteAddress(
-      MilestoneApp6Address address,
-      ) async {
-    // ------------------------------------------------------------
-    // DO NOT DELETE THE LAST SAVED ADDRESS
-    // ------------------------------------------------------------
-
-    if (_savedAddresses.length <= 1) {
-      _showCannotDeletePopup();
-      return;
-    }
-
-    // ------------------------------------------------------------
-    // DELETE CONFIRMATION
-    // ------------------------------------------------------------
-
-    final shouldDelete =
-    await _showDeleteConfirmation(address);
-
-    if (shouldDelete != true) return;
-
-    setState(() {
-      _savedAddresses.removeWhere(
-            (item) => item.id == address.id,
-      );
-    });
-
-    await _saveAddresses();
-
-    // ------------------------------------------------------------
-    // CLEAR SELECTED ADDRESS IF DELETED
-    // ------------------------------------------------------------
-
-    if (_selectedAddress == address.address) {
-      final prefs =
-      await SharedPreferences.getInstance();
-
-      await prefs.remove(_selectedAddressKey);
-
-      if (mounted) {
-        setState(() {
-          _selectedAddress = '';
-        });
-      }
-    }
-
-    _showMessage(
-      'Address deleted.',
-    );
-  }
-// ============================================================
-// ADDRESS EDITOR
-// ============================================================
-
-  Future<MilestoneApp6AddressForm?> _showAddressEditor({
+  Future<MilestoneApp6AddressForm?>
+  _showAddressEditor({
     MilestoneApp6Address? existing,
   }) async {
-    final result = await showModalBottomSheet<MilestoneApp6AddressForm>(
+    return showModalBottomSheet<
+        MilestoneApp6AddressForm>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.55),
+      backgroundColor:
+      Colors.transparent,
+      barrierColor:
+      Colors.black.withOpacity(0.55),
       elevation: 0,
       builder: (sheetContext) {
         return AddressEditorSheet(
-          initialLabel: existing?.label ?? 'Home',
-          initialAddress: existing?.address ?? '',
-          initialPhone: existing?.phone ?? '',
-          isEditing: existing != null,
+          initialLabel:
+          existing?.label ?? 'Home',
+          initialAddress:
+          existing?.address ?? '',
+          initialPhone:
+          existing?.phone ?? '',
+          isEditing:
+          existing != null,
         );
       },
     );
-
-    return result;
   }
 
-// ============================================================
-// DELETE CONFIRMATION
-// ============================================================
+  // ============================================================
+  // DELETE CONFIRMATION
+  // ============================================================
 
   Future<bool?> _showDeleteConfirmation(
-    MilestoneApp6Address address,
-  ) {
-    final theme = Theme.of(context);
+      MilestoneApp6Address address,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'Delete address?',
-          ),
+          title:
+          const Text('Delete address?'),
           content: Text(
             'Are you sure you want to delete your ${address.label} address?',
           ),
@@ -540,12 +666,16 @@ class _MilestoneApp6AddressScreenState
                   false,
                 );
               },
-              child: const Text('Cancel'),
+              child:
+              const Text('Cancel'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: Colors.white,
+              style:
+              ElevatedButton.styleFrom(
+                backgroundColor:
+                theme.colorScheme.error,
+                foregroundColor:
+                Colors.white,
               ),
               onPressed: () {
                 Navigator.pop(
@@ -553,7 +683,8 @@ class _MilestoneApp6AddressScreenState
                   true,
                 );
               },
-              child: const Text('Delete'),
+              child:
+              const Text('Delete'),
             ),
           ],
         );
@@ -561,9 +692,9 @@ class _MilestoneApp6AddressScreenState
     );
   }
 
-// ============================================================
-// MESSAGE
-// ============================================================
+  // ============================================================
+  // MESSAGE
+  // ============================================================
 
   void _showMessage(String message) {
     if (!mounted) return;
@@ -573,117 +704,131 @@ class _MilestoneApp6AddressScreenState
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          behavior: SnackBarBehavior.floating,
+          behavior:
+          SnackBarBehavior.floating,
         ),
       );
   }
 
-// ============================================================
-// SEARCHED SAVED ADDRESSES
-// ============================================================
+  // ============================================================
+  // FILTERED SAVED ADDRESSES
+  // ============================================================
 
-  List<MilestoneApp6Address> get _filteredSavedAddresses {
+  List<MilestoneApp6Address>
+  get _filteredSavedAddresses {
     if (_searchQuery.isEmpty) {
       return _savedAddresses;
     }
 
-    return _savedAddresses.where((address) {
-      return address.label.toLowerCase().contains(_searchQuery) ||
-          address.address.toLowerCase().contains(_searchQuery) ||
-          address.phone.toLowerCase().contains(_searchQuery);
-    }).toList();
+    return _savedAddresses.where(
+          (address) {
+        return address.label
+            .toLowerCase()
+            .contains(_searchQuery) ||
+            address.address
+                .toLowerCase()
+                .contains(_searchQuery) ||
+            address.phone
+                .toLowerCase()
+                .contains(_searchQuery);
+      },
+    ).toList();
   }
 
-// ============================================================
-// SEARCHED NEARBY LOCATIONS
-// ============================================================
+  // ============================================================
+  // FILTERED NEARBY LOCATIONS
+  // ============================================================
 
-  List<MilestoneApp6NearbyLocation> get _filteredNearbyLocations {
+  List<MilestoneApp6NearbyLocation>
+  get _filteredNearbyLocations {
     if (_searchQuery.isEmpty) {
       return _nearbyLocations;
     }
 
-    return _nearbyLocations.where((location) {
-      return location.name.toLowerCase().contains(_searchQuery) ||
-          location.address.toLowerCase().contains(_searchQuery);
-    }).toList();
+    return _nearbyLocations.where(
+          (location) {
+        return location.name
+            .toLowerCase()
+            .contains(_searchQuery) ||
+            location.address
+                .toLowerCase()
+                .contains(_searchQuery);
+      },
+    ).toList();
   }
 
-// ============================================================
-// BUILD
-// ============================================================
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final theme =
+    Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor:
+      theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor:
+        theme.scaffoldBackgroundColor,
+        surfaceTintColor:
+        Colors.transparent,
         leading: IconButton(
           icon: const Icon(
             Icons.keyboard_arrow_down_rounded,
             size: 30,
           ),
           onPressed: () {
-            Navigator.pop(context);
+            context.pop();
           },
         ),
         title: const Text(
           'Select a location',
           style: TextStyle(
             fontSize: 21,
-            fontWeight: FontWeight.w800,
+            fontWeight:
+            FontWeight.w800,
           ),
         ),
         titleSpacing: 0,
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
+          padding:
+          const EdgeInsets.fromLTRB(
             14,
             4,
             14,
             30,
           ),
           children: [
-// ==========================================================
-// SEARCH BAR
-// ==========================================================
-
             _buildSearchBar(theme),
 
             const SizedBox(height: 20),
-
-// ==========================================================
-// CURRENT LOCATION + ADD ADDRESS
-// ==========================================================
 
             _buildLocationActions(theme),
 
             const SizedBox(height: 22),
 
-// ==========================================================
-// SAVED ADDRESSES
-// ==========================================================
-
-            if (_filteredSavedAddresses.isNotEmpty) ...[
+            if (_filteredSavedAddresses
+                .isNotEmpty) ...[
               _buildSectionTitle(
                 'SAVED ADDRESSES',
                 theme,
               ),
               const SizedBox(height: 12),
               ..._filteredSavedAddresses.map(
-                (address) {
+                    (address) {
                   return Padding(
-                    padding: const EdgeInsets.only(
+                    padding:
+                    const EdgeInsets.only(
                       bottom: 10,
                     ),
-                    child: _buildSavedAddressCard(
+                    child:
+                    _buildSavedAddressCard(
                       address,
                       theme,
                     ),
@@ -693,25 +838,22 @@ class _MilestoneApp6AddressScreenState
               const SizedBox(height: 20),
             ],
 
-// ==========================================================
-// NEARBY LOCATIONS
-// ==========================================================
-
-            if (_filteredNearbyLocations.isNotEmpty) ...[
+            if (_filteredNearbyLocations
+                .isNotEmpty) ...[
               _buildSectionTitle(
                 'NEARBY LOCATIONS',
                 theme,
               ),
               const SizedBox(height: 12),
-              _buildNearbyLocationList(theme),
+              _buildNearbyLocationList(
+                theme,
+              ),
             ],
 
-// ==========================================================
-// EMPTY SEARCH
-// ==========================================================
-
-            if (_filteredSavedAddresses.isEmpty &&
-                _filteredNearbyLocations.isEmpty)
+            if (_filteredSavedAddresses
+                .isEmpty &&
+                _filteredNearbyLocations
+                    .isEmpty)
               _buildNoResults(theme),
           ],
         ),
@@ -719,41 +861,57 @@ class _MilestoneApp6AddressScreenState
     );
   }
 
-// ============================================================
-// SEARCH BAR UI
-// ============================================================
+  // ============================================================
+  // SEARCH BAR
+  // ============================================================
 
-  Widget _buildSearchBar(ThemeData theme) {
+  Widget _buildSearchBar(
+      ThemeData theme,
+      ) {
     return Container(
       height: 53,
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
+        color:
+        theme.brightness ==
+            Brightness.dark
             ? const Color(0xFF302F35)
             : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius:
+        BorderRadius.circular(14),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
+          color: theme.dividerColor
+              .withOpacity(0.25),
         ),
-        boxShadow: theme.brightness == Brightness.dark
+        boxShadow:
+        theme.brightness ==
+            Brightness.dark
             ? null
             : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          BoxShadow(
+            color: Colors.black
+                .withOpacity(0.04),
+            blurRadius: 8,
+            offset:
+            const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
-        controller: _searchController,
-        textInputAction: TextInputAction.search,
+        controller:
+        _searchController,
+        textInputAction:
+        TextInputAction.search,
         style: const TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight:
+          FontWeight.w500,
         ),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: 'Search for area, street name...',
+        decoration:
+        InputDecoration(
+          border:
+          InputBorder.none,
+          hintText:
+          'Search for area, street name...',
           hintStyle: TextStyle(
             fontSize: 15,
             color: theme.hintColor,
@@ -761,11 +919,16 @@ class _MilestoneApp6AddressScreenState
           prefixIcon: Icon(
             Icons.search_rounded,
             size: 28,
-            color: theme.brightness == Brightness.dark
+            color:
+            theme.brightness ==
+                Brightness.dark
                 ? Colors.white
-                : theme.colorScheme.primary,
+                : theme
+                .colorScheme
+                .primary,
           ),
-          contentPadding: const EdgeInsets.symmetric(
+          contentPadding:
+          const EdgeInsets.symmetric(
             vertical: 15,
           ),
         ),
@@ -773,33 +936,37 @@ class _MilestoneApp6AddressScreenState
     );
   }
 
-// ============================================================
-// LOCATION ACTIONS
-// ============================================================
+  // ============================================================
+  // LOCATION ACTIONS
+  // ============================================================
 
   Widget _buildLocationActions(
-    ThemeData theme,
-  ) {
-    final primary = theme.colorScheme.primary;
+      ThemeData theme,
+      ) {
+    final primary =
+        theme.colorScheme.primary;
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
+      decoration:
+      BoxDecoration(
+        color:
+        theme.brightness ==
+            Brightness.dark
             ? const Color(0xFF202025)
             : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius:
+        BorderRadius.circular(16),
       ),
-      clipBehavior: Clip.antiAlias,
+      clipBehavior:
+      Clip.antiAlias,
       child: Column(
         children: [
-// ========================================================
-// CURRENT LOCATION
-// ========================================================
-
           InkWell(
-            onTap: _useCurrentLocation,
+            onTap:
+            _useCurrentLocation,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
+              padding:
+              const EdgeInsets.symmetric(
                 horizontal: 18,
                 vertical: 15,
               ),
@@ -808,40 +975,58 @@ class _MilestoneApp6AddressScreenState
                   Container(
                     width: 38,
                     height: 38,
-                    decoration: BoxDecoration(
-                      color: primary.withOpacity(0.10),
-                      shape: BoxShape.circle,
+                    decoration:
+                    BoxDecoration(
+                      color: primary
+                          .withOpacity(0.10),
+                      shape:
+                      BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.my_location_rounded,
+                      Icons
+                          .my_location_rounded,
                       color: primary,
                       size: 23,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(
+                      width: 16),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                       children: [
                         Text(
                           _isLoadingLocation
                               ? 'Getting current location...'
                               : 'Use current location',
-                          style: TextStyle(
+                          style:
+                          TextStyle(
                             color: primary,
                             fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                            fontWeight:
+                            FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(
+                            height: 4),
                         Text(
                           'Use your device location',
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
+                          style:
+                          TextStyle(
                             fontSize: 13,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.65),
+                            color: theme
+                                .textTheme
+                                .bodyMedium
+                                ?.color
+                                ?.withOpacity(
+                              0.65,
+                            ),
                           ),
                         ),
                       ],
@@ -851,34 +1036,33 @@ class _MilestoneApp6AddressScreenState
                     const SizedBox(
                       width: 19,
                       height: 19,
-                      child: CircularProgressIndicator(
+                      child:
+                      CircularProgressIndicator(
                         strokeWidth: 2,
                       ),
                     )
                   else
                     Icon(
-                      Icons.chevron_right_rounded,
-                      color: theme.hintColor,
+                      Icons
+                          .chevron_right_rounded,
+                      color:
+                      theme.hintColor,
                     ),
                 ],
               ),
             ),
           ),
-
           Divider(
             height: 1,
             thickness: 1,
-            color: theme.dividerColor.withOpacity(0.25),
+            color: theme.dividerColor
+                .withOpacity(0.25),
           ),
-
-// ========================================================
-// ADD ADDRESS
-// ========================================================
-
           InkWell(
             onTap: _addAddress,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
+              padding:
+              const EdgeInsets.symmetric(
                 horizontal: 18,
                 vertical: 15,
               ),
@@ -889,20 +1073,25 @@ class _MilestoneApp6AddressScreenState
                     color: primary,
                     size: 25,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(
+                      width: 16),
                   Expanded(
                     child: Text(
                       'Add Address',
-                      style: TextStyle(
+                      style:
+                      TextStyle(
                         color: primary,
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight:
+                        FontWeight.w700,
                       ),
                     ),
                   ),
                   Icon(
-                    Icons.chevron_right_rounded,
-                    color: theme.hintColor,
+                    Icons
+                        .chevron_right_rounded,
+                    color:
+                    theme.hintColor,
                   ),
                 ],
               ),
@@ -913,197 +1102,284 @@ class _MilestoneApp6AddressScreenState
     );
   }
 
-// ============================================================
-// SECTION TITLE
-// ============================================================
+  // ============================================================
+  // SECTION TITLE
+  // ============================================================
 
   Widget _buildSectionTitle(
-    String title,
-    ThemeData theme,
-  ) {
+      String title,
+      ThemeData theme,
+      ) {
     return Text(
       title,
       style: TextStyle(
         fontSize: 13,
         letterSpacing: 1.5,
-        fontWeight: FontWeight.w600,
-        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.75),
+        fontWeight:
+        FontWeight.w600,
+        color: theme
+            .textTheme
+            .bodyMedium
+            ?.color
+            ?.withOpacity(0.75),
       ),
     );
   }
 
-// ============================================================
-// SAVED ADDRESS CARD
-// ============================================================
+  // ============================================================
+  // SAVED ADDRESS CARD
+  // ============================================================
 
   Widget _buildSavedAddressCard(
-    MilestoneApp6Address address,
-    ThemeData theme,
-  ) {
-    final isSelected = _selectedAddress == address.address;
+      MilestoneApp6Address address,
+      ThemeData theme,
+      ) {
+    final selected =
+        _selectedAddress ==
+            address.fullAddress ||
+            _selectedAddress ==
+                address.address;
 
     return Material(
-      color: theme.brightness == Brightness.dark
+      color:
+      theme.brightness ==
+          Brightness.dark
           ? const Color(0xFF202025)
           : Colors.white,
-      borderRadius: BorderRadius.circular(17),
+      borderRadius:
+      BorderRadius.circular(17),
       child: InkWell(
-        borderRadius: BorderRadius.circular(17),
+        borderRadius:
+        BorderRadius.circular(17),
         onTap: () {
-          _selectAddress(address.address);
+          _selectSavedAddress(
+            address,
+          );
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding:
+          const EdgeInsets.fromLTRB(
             16,
             16,
             8,
             14,
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
                 children: [
-// --------------------------------------------------
-// ICON
-// --------------------------------------------------
-
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
+                    decoration:
+                    BoxDecoration(
+                      color: theme
+                          .colorScheme
+                          .primary
+                          .withOpacity(
+                        0.08,
+                      ),
+                      borderRadius:
+                      BorderRadius
+                          .circular(
+                        10,
+                      ),
                     ),
                     child: Icon(
                       _getAddressIcon(
                         address.label,
                       ),
-                      color: theme.colorScheme.primary,
+                      color: theme
+                          .colorScheme
+                          .primary,
                       size: 23,
                     ),
                   ),
-
-                  const SizedBox(width: 13),
-
-// --------------------------------------------------
-// ADDRESS DETAILS
-// --------------------------------------------------
-
+                  const SizedBox(
+                      width: 13),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                       children: [
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                address.label,
+                                address
+                                    .label,
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
+                                overflow:
+                                TextOverflow
+                                    .ellipsis,
+                                style:
+                                const TextStyle(
+                                  fontSize:
+                                  15,
+                                  fontWeight:
+                                  FontWeight
+                                      .w700,
                                 ),
                               ),
                             ),
-                            if (isSelected)
+                            if (selected)
                               Container(
-                                margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 4,
+                                margin:
+                                const EdgeInsets
+                                    .only(
+                                  right: 8,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withOpacity(
+                                padding:
+                                const EdgeInsets
+                                    .symmetric(
+                                  horizontal:
+                                  7,
+                                  vertical:
+                                  4,
+                                ),
+                                decoration:
+                                BoxDecoration(
+                                  color: theme
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(
                                     0.10,
                                   ),
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius:
+                                  BorderRadius
+                                      .circular(
+                                    6,
+                                  ),
                                 ),
-                                child: Text(
+                                child:
+                                Text(
                                   'Selected',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.primary,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
+                                  style:
+                                  TextStyle(
+                                    color: theme
+                                        .colorScheme
+                                        .primary,
+                                    fontSize:
+                                    9,
+                                    fontWeight:
+                                    FontWeight
+                                        .w700,
                                   ),
                                 ),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(
+                            height: 5),
                         Text(
                           address.address,
                           maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
+                          style:
+                          TextStyle(
                             fontSize: 13,
                             height: 1.35,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.80),
+                            color: theme
+                                .textTheme
+                                .bodyMedium
+                                ?.color
+                                ?.withOpacity(
+                              0.80,
+                            ),
                           ),
                         ),
-                        if (address.phone.isNotEmpty) ...[
-                          const SizedBox(height: 5),
+                        if (address
+                            .phone
+                            .isNotEmpty) ...[
+                          const SizedBox(
+                              height: 5),
                           Text(
                             'Phone number: ${address.phone}',
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.65),
+                            overflow:
+                            TextOverflow
+                                .ellipsis,
+                            style:
+                            TextStyle(
+                              fontSize:
+                              11,
+                              color: theme
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color
+                                  ?.withOpacity(
+                                0.65,
+                              ),
                             ),
                           ),
                         ],
                       ],
                     ),
                   ),
-
-// --------------------------------------------------
-// MORE
-// --------------------------------------------------
-
                   PopupMenuButton<String>(
                     icon: Icon(
-                      Icons.more_horiz_rounded,
-                      color: theme.hintColor,
+                      Icons
+                          .more_horiz_rounded,
+                      color:
+                      theme.hintColor,
                     ),
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _editAddress(address);
+                    onSelected:
+                        (value) {
+                      if (value ==
+                          'edit') {
+                        _editAddress(
+                          address,
+                        );
                       }
 
-                      if (value == 'delete') {
-                        _deleteAddress(address);
+                      if (value ==
+                          'delete') {
+                        _deleteAddress(
+                          address,
+                        );
                       }
                     },
-                    itemBuilder: (context) {
+                    itemBuilder:
+                        (context) {
                       return const [
                         PopupMenuItem(
                           value: 'edit',
                           child: Row(
                             children: [
                               Icon(
-                                Icons.edit_rounded,
+                                Icons
+                                    .edit_rounded,
                                 size: 19,
                               ),
-                              SizedBox(width: 10),
+                              SizedBox(
+                                  width:
+                                  10),
                               Text('Edit'),
                             ],
                           ),
                         ),
                         PopupMenuItem(
-                          value: 'delete',
+                          value:
+                          'delete',
                           child: Row(
                             children: [
                               Icon(
-                                Icons.delete_outline_rounded,
+                                Icons
+                                    .delete_outline_rounded,
                                 size: 19,
                               ),
-                              SizedBox(width: 10),
-                              Text('Delete'),
+                              SizedBox(
+                                  width:
+                                  10),
+                              Text(
+                                  'Delete'),
                             ],
                           ),
                         ),
@@ -1112,39 +1388,29 @@ class _MilestoneApp6AddressScreenState
                   ),
                 ],
               ),
-
-              const SizedBox(height: 10),
-
-// ======================================================
-// QUICK ACTIONS
-// ======================================================
-
+              const SizedBox(
+                  height: 10),
               Row(
                 children: [
                   _buildSmallActionButton(
-                    icon: Icons.more_horiz_rounded,
+                    icon: Icons
+                        .navigation_rounded,
                     onTap: () {
-                      _showAddressOptions(
+                      _selectSavedAddress(
                         address,
                       );
                     },
                     theme: theme,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(
+                      width: 8),
                   _buildSmallActionButton(
-                    icon: Icons.navigation_rounded,
+                    icon: Icons
+                        .edit_location_alt_rounded,
                     onTap: () {
-                      _selectAddress(
-                        address.address,
+                      _editAddress(
+                        address,
                       );
-                    },
-                    theme: theme,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildSmallActionButton(
-                    icon: Icons.edit_location_alt_rounded,
-                    onTap: () {
-                      _editAddress(address);
                     },
                     theme: theme,
                   ),
@@ -1157,9 +1423,9 @@ class _MilestoneApp6AddressScreenState
     );
   }
 
-// ============================================================
-// SMALL ACTION BUTTON
-// ============================================================
+  // ============================================================
+  // SMALL ACTION BUTTON
+  // ============================================================
 
   Widget _buildSmallActionButton({
     required IconData icon,
@@ -1167,111 +1433,113 @@ class _MilestoneApp6AddressScreenState
     required ThemeData theme,
   }) {
     return Material(
-      color: theme.brightness == Brightness.dark
+      color:
+      theme.brightness ==
+          Brightness.dark
           ? const Color(0xFF27272D)
           : const Color(0xFFF8F8F8),
-      shape: const CircleBorder(),
+      shape:
+      const CircleBorder(),
       child: InkWell(
-        customBorder: const CircleBorder(),
+        customBorder:
+        const CircleBorder(),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding:
+          const EdgeInsets.all(8),
           child: Icon(
             icon,
             size: 15,
-            color: theme.colorScheme.primary,
+            color: theme
+                .colorScheme
+                .primary,
           ),
         ),
       ),
     );
   }
 
-// ============================================================
-// ADDRESS OPTIONS
-// ============================================================
-
-  void _showAddressOptions(
-    MilestoneApp6Address address,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        final theme = Theme.of(context);
-
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              5,
-              20,
-              20,
-            ),
-
-          ),
-        );
-      },
-    );
-  }
-
-// ============================================================
-// NEARBY LOCATIONS
-// ============================================================
+  // ============================================================
+  // NEARBY LOCATIONS
+  // ============================================================
 
   Widget _buildNearbyLocationList(
-    ThemeData theme,
-  ) {
+      ThemeData theme,
+      ) {
     return Container(
-      decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
+      decoration:
+      BoxDecoration(
+        color:
+        theme.brightness ==
+            Brightness.dark
             ? const Color(0xFF202025)
             : Colors.white,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius:
+        BorderRadius.circular(17),
       ),
-      clipBehavior: Clip.antiAlias,
+      clipBehavior:
+      Clip.antiAlias,
       child: Column(
         children: List.generate(
-          _filteredNearbyLocations.length,
-          (index) {
-            final location = _filteredNearbyLocations[index];
+          _filteredNearbyLocations
+              .length,
+              (index) {
+            final location =
+            _filteredNearbyLocations[
+            index];
 
-            final isLast = index == _filteredNearbyLocations.length - 1;
+            final isLast =
+                index ==
+                    _filteredNearbyLocations
+                        .length -
+                        1;
 
             return Column(
               children: [
                 InkWell(
                   onTap: () {
-                    _selectAddress(
+                    _selectTextAddress(
                       location.address,
                     );
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding:
+                    const EdgeInsets
+                        .symmetric(
                       horizontal: 16,
                       vertical: 14,
                     ),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                       children: [
-// ------------------------------------------------
-// LOCATION ICON + DISTANCE
-// ------------------------------------------------
-
                         SizedBox(
                           width: 42,
-                          child: Column(
+                          child:
+                          Column(
                             children: [
                               Icon(
-                                Icons.location_on_outlined,
+                                Icons
+                                    .location_on_outlined,
                                 size: 23,
-                                color: theme.iconTheme.color,
+                                color: theme
+                                    .iconTheme
+                                    .color,
                               ),
-                              const SizedBox(height: 3),
+                              const SizedBox(
+                                  height: 3),
                               Text(
-                                location.distance,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: theme.textTheme.bodySmall?.color
+                                location
+                                    .distance,
+                                style:
+                                TextStyle(
+                                  fontSize:
+                                  9,
+                                  color: theme
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
                                       ?.withOpacity(
                                     0.65,
                                   ),
@@ -1280,35 +1548,49 @@ class _MilestoneApp6AddressScreenState
                             ],
                           ),
                         ),
-
-                        const SizedBox(width: 15),
-
-// ------------------------------------------------
-// LOCATION DETAILS
-// ------------------------------------------------
-
+                        const SizedBox(
+                            width: 15),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment
+                                .start,
                             children: [
                               Text(
-                                location.name,
+                                location
+                                    .name,
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
+                                overflow:
+                                TextOverflow
+                                    .ellipsis,
+                                style:
+                                const TextStyle(
+                                  fontSize:
+                                  14,
+                                  fontWeight:
+                                  FontWeight
+                                      .w700,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(
+                                  height: 4),
                               Text(
-                                location.address,
+                                location
+                                    .address,
                                 maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  height: 1.3,
-                                  color: theme.textTheme.bodyMedium?.color
+                                overflow:
+                                TextOverflow
+                                    .ellipsis,
+                                style:
+                                TextStyle(
+                                  fontSize:
+                                  13,
+                                  height:
+                                  1.3,
+                                  color: theme
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
                                       ?.withOpacity(
                                     0.75,
                                   ),
@@ -1325,7 +1607,11 @@ class _MilestoneApp6AddressScreenState
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: theme.dividerColor.withOpacity(0.20),
+                    color: theme
+                        .dividerColor
+                        .withOpacity(
+                      0.20,
+                    ),
                   ),
               ],
             );
@@ -1335,119 +1621,80 @@ class _MilestoneApp6AddressScreenState
     );
   }
 
-// ============================================================
-// EMPTY SEARCH
-// ============================================================
+  // ============================================================
+  // EMPTY SEARCH
+  // ============================================================
 
   Widget _buildNoResults(
-    ThemeData theme,
-  ) {
+      ThemeData theme,
+      ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
+      padding:
+      const EdgeInsets.symmetric(
         vertical: 60,
       ),
       child: Column(
         children: [
           Icon(
-            Icons.location_searching_rounded,
+            Icons
+                .location_searching_rounded,
             size: 55,
-            color: theme.disabledColor,
+            color:
+            theme.disabledColor,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(
+              height: 15),
           Text(
             'No locations found',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+            style: theme
+                .textTheme
+                .titleMedium
+                ?.copyWith(
+              fontWeight:
+              FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(
+              height: 6),
           Text(
             'Try searching another area or street.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall,
+            textAlign:
+            TextAlign.center,
+            style:
+            theme.textTheme.bodySmall,
           ),
         ],
       ),
     );
   }
 
-// ============================================================
-// ADDRESS ICON
-// ============================================================
+  // ============================================================
+  // ADDRESS ICON
+  // ============================================================
 
-  IconData _getAddressIcon(String label) {
+  IconData _getAddressIcon(
+      String label,
+      ) {
     switch (label.toLowerCase()) {
       case 'home':
         return Icons.home_rounded;
 
       case 'work':
-        return Icons.business_center_rounded;
+        return Icons
+            .business_center_rounded;
 
       case 'office':
         return Icons.business_rounded;
 
       default:
-        return Icons.location_on_rounded;
+        return Icons
+            .location_on_rounded;
     }
   }
 }
 
 // ============================================================================
-// ADDRESS MODEL
-// ============================================================================
-
-class MilestoneApp6Address {
-  final String id;
-  final String label;
-  final String address;
-  final String phone;
-
-  const MilestoneApp6Address({
-    required this.id,
-    required this.label,
-    required this.address,
-    required this.phone,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'label': label,
-      'address': address,
-      'phone': phone,
-    };
-  }
-
-  factory MilestoneApp6Address.fromJson(
-    Map<String, dynamic> json,
-  ) {
-    return MilestoneApp6Address(
-      id: json['id']?.toString() ?? '',
-      label: json['label']?.toString() ?? 'Home',
-      address: json['address']?.toString() ?? '',
-      phone: json['phone']?.toString() ?? '',
-    );
-  }
-}
-
-// ============================================================================
-// NEARBY LOCATION MODEL
-// ============================================================================
-
-class MilestoneApp6NearbyLocation {
-  final String name;
-  final String address;
-  final String distance;
-
-  const MilestoneApp6NearbyLocation({
-    required this.name,
-    required this.address,
-    required this.distance,
-  });
-}
-
-// ============================================================================
-// ADDRESS FORM MODEL
+// ADDRESS FORM RESULT
 // ============================================================================
 
 class MilestoneApp6AddressForm {
@@ -1461,6 +1708,3 @@ class MilestoneApp6AddressForm {
     required this.phone,
   });
 }
-// ============================================================================
-// ADDRESS EDITOR SHEET
-// ============================================================================

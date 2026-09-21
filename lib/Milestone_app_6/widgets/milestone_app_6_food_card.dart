@@ -90,14 +90,14 @@ class MilestoneApp6FoodCard extends StatelessWidget {
           // Open restaurant:
           // Use custom onTap if provided.
           // Otherwise open food detail.
-          onTap: restaurantClosed
-              ? null
-              : onTap ??
-                  () {
-                context.push(
-                  '/food/${food.id}',
-                );
-              },
+          // onTap: restaurantClosed
+          //     ? null
+          //     : onTap ??
+          //         () {
+          //       context.push(
+          //         '/food/${food.id}',
+          //       );
+          //     },
 
           borderRadius:
           BorderRadius.circular(16),
