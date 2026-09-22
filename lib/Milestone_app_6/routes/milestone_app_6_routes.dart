@@ -285,7 +285,7 @@ class MilestoneApp6Routes {
                 final extra = routeState.extra;
 
                 if (extra is! Map<String, dynamic>) {
-                  return const NoTransitionPage(
+                  return const NoTransitionPage<void>(
                     child: Scaffold(
                       body: Center(
                         child: Text(
@@ -299,7 +299,7 @@ class MilestoneApp6Routes {
                 final restaurant = extra['restaurant'];
 
                 if (restaurant is! MilestoneApp6Restaurant) {
-                  return const NoTransitionPage(
+                  return const NoTransitionPage<void>(
                     child: Scaffold(
                       body: Center(
                         child: Text(
@@ -385,37 +385,56 @@ class MilestoneApp6Routes {
         // Outside ShellRoute
         // Bottom navigation is hidden.
         // ================================================================
-        //
-        // GoRoute(
-        //   path: '/food/:id',
-        //   pageBuilder: (
-        //       context,
-        //       routeState,
-        //       ) {
-        //     final foodId =
-        //     routeState.pathParameters['id'];
-        //
-        //     if (foodId == null || foodId.isEmpty) {
-        //       return const NoTransitionPage(
-        //         child: Scaffold(
-        //           body: Center(
-        //             child: Text(
-        //               'Food information is missing.',
-        //             ),
-        //           ),
-        //         ),
-        //       );
-        //     }
-        //
-        //     return _page(
-        //       routeState,
-        //       MilestoneApp6FoodDetailsScreen(
-        //         state: state,
-        //         id: foodId,
-        //       ),
-        //     );
-        //   },
-        // ),
+
+        GoRoute(
+          path: '/food/:id',
+          pageBuilder: (
+              context,
+              routeState,
+              ) {
+            final foodId =
+            routeState.pathParameters['id'];
+
+            if (foodId == null || foodId.isEmpty) {
+              return const NoTransitionPage<void>(
+                child: Scaffold(
+                  body: Center(
+                    child: Text(
+                      'Food information is missing.',
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return _page(
+              routeState,
+              MilestoneApp6FoodDetailsScreen(
+                state: state,
+                id: foodId,
+              ),
+            );
+          },
+        ),
+
+        // ================================================================
+        // MY ORDERS
+        // ================================================================
+
+        GoRoute(
+          path: '/my-orders',
+          pageBuilder: (
+              context,
+              routeState,
+              ) {
+            return _page(
+              routeState,
+              MilestoneApp6MyOrdersScreen(
+                state: state,
+              ),
+            );
+          },
+        ),
 
         // ================================================================
         // CHECKOUT
@@ -445,20 +464,7 @@ class MilestoneApp6Routes {
         // Pay Now
         // Confirmation dialog
         // ================================================================
-        GoRoute(
-          path: '/my-orders',
-          pageBuilder: (
-              context,
-              routeState,
-              ) {
-            return _page(
-              routeState,
-              MilestoneApp6MyOrdersScreen(
-                state: state,
-              ),
-            );
-          },
-        ),
+
         GoRoute(
           path: '/checkout',
           pageBuilder: (
@@ -509,7 +515,8 @@ class MilestoneApp6Routes {
             // ============================================================
 
             if (extra is Map<String, dynamic>) {
-              final Object? stateData = extra['state'];
+              final Object? stateData =
+              extra['state'];
 
               if (stateData is! MilestoneApp6State) {
                 return _checkoutError(
@@ -518,7 +525,8 @@ class MilestoneApp6Routes {
                 );
               }
 
-              final Object? foodData = extra['food'];
+              final Object? foodData =
+              extra['food'];
 
               if (foodData is! MilestoneApp6Food) {
                 return _checkoutError(
@@ -545,7 +553,8 @@ class MilestoneApp6Routes {
                 );
               }
 
-              final buyNowItem = MilestoneApp6CartItem(
+              final buyNowItem =
+              MilestoneApp6CartItem(
                 food: foodData,
                 size: size,
                 unitPrice: unitPrice,
@@ -619,7 +628,8 @@ class MilestoneApp6Routes {
                 );
               }
 
-              final buyNowItem = MilestoneApp6CartItem(
+              final buyNowItem =
+              MilestoneApp6CartItem(
                 food: food,
                 size: size,
                 unitPrice: unitPrice,
@@ -651,12 +661,13 @@ class MilestoneApp6Routes {
         //
         // This screen is shown AFTER successful payment.
         //
-        // Checkout sends:
+        // Checkout should send:
         //
         // context.push(
         //   '/order-details',
         //   extra: {
         //     'state': state,
+        //     'orderId': orderId,
         //     'items': orderedItems,
         //     'paymentType': paymentType,
         //     'subtotal': subtotal,
@@ -699,6 +710,16 @@ class MilestoneApp6Routes {
             }
 
             // ============================================================
+            // ORDER ID
+            //
+            // This makes sure that the Order Details screen
+            // displays the exact order that was just created.
+            // ============================================================
+
+            final String? orderId =
+            extra['orderId']?.toString();
+
+            // ============================================================
             // ITEMS
             // ============================================================
 
@@ -711,16 +732,18 @@ class MilestoneApp6Routes {
                 'Ordered items are missing.',
               );
             }
+
             final List<MilestoneApp6CartItem> items =
             itemsData
                 .whereType<MilestoneApp6CartItem>()
                 .map(
-                  (item) => MilestoneApp6CartItem(
-                food: item.food,
-                size: item.size,
-                unitPrice: item.unitPrice,
-                quantity: item.quantity,
-              ),
+                  (item) =>
+                  MilestoneApp6CartItem(
+                    food: item.food,
+                    size: item.size,
+                    unitPrice: item.unitPrice,
+                    quantity: item.quantity,
+                  ),
             )
                 .toList();
 
@@ -769,6 +792,7 @@ class MilestoneApp6Routes {
               MilestoneApp6OrderDetailsScreen(
                 state: stateData,
                 auth: auth,
+                orderId: orderId,
                 items: items,
                 paymentType: paymentType,
                 subtotal: subtotal,
@@ -784,7 +808,6 @@ class MilestoneApp6Routes {
       ],
     );
   }
-
 
   // ================================================================
   // CHECKOUT PAGE
