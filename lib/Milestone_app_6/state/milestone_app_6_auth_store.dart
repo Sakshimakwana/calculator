@@ -1,10 +1,18 @@
 import 'package:flutter/foundation.dart';
 
 class MilestoneApp6AuthStore extends ChangeNotifier {
+  // ============================================================
+  // SINGLETON
+  // ============================================================
+
   MilestoneApp6AuthStore._();
 
   static final MilestoneApp6AuthStore instance =
   MilestoneApp6AuthStore._();
+
+  // ============================================================
+  // USER DATA
+  // ============================================================
 
   String? _fullName;
   String? _email;
@@ -13,6 +21,10 @@ class MilestoneApp6AuthStore extends ChangeNotifier {
 
   bool _isLoggedIn = false;
 
+  // ============================================================
+  // GETTERS
+  // ============================================================
+
   bool get isLoggedIn => _isLoggedIn;
 
   String? get fullName => _fullName;
@@ -20,6 +32,16 @@ class MilestoneApp6AuthStore extends ChangeNotifier {
   String? get email => _email;
 
   String? get phone => _phone;
+
+  // ------------------------------------------------------------
+  // USER NAME
+  //
+  // This returns the same value as fullName.
+  // It is useful for screens such as Order Details,
+  // Profile, Checkout, etc.
+  // ------------------------------------------------------------
+
+  String get userName => _fullName ?? '';
 
   // ============================================================
   // CREATE ACCOUNT
@@ -33,9 +55,16 @@ class MilestoneApp6AuthStore extends ChangeNotifier {
     required String password,
   }) {
     _fullName = fullName.trim();
+
     _email = email.trim().toLowerCase();
+
     _phone = phone.trim();
+
     _password = password;
+
+    // ----------------------------------------------------------
+    // After creating the account, user still needs to login.
+    // ----------------------------------------------------------
 
     _isLoggedIn = false;
 
@@ -50,15 +79,30 @@ class MilestoneApp6AuthStore extends ChangeNotifier {
     required String email,
     required String password,
   }) {
-    final enteredEmail = email.trim().toLowerCase();
+    final enteredEmail =
+    email.trim().toLowerCase();
 
-    if (_email == null || _password == null) {
+    // ----------------------------------------------------------
+    // No account created
+    // ----------------------------------------------------------
+
+    if (_email == null ||
+        _password == null) {
       return false;
     }
 
-    if (enteredEmail != _email || password != _password) {
+    // ----------------------------------------------------------
+    // Check email and password
+    // ----------------------------------------------------------
+
+    if (enteredEmail != _email ||
+        password != _password) {
       return false;
     }
+
+    // ----------------------------------------------------------
+    // Login successful
+    // ----------------------------------------------------------
 
     _isLoggedIn = true;
 
@@ -73,6 +117,7 @@ class MilestoneApp6AuthStore extends ChangeNotifier {
 
   void logout() {
     _isLoggedIn = false;
+
     notifyListeners();
   }
 
@@ -82,9 +127,13 @@ class MilestoneApp6AuthStore extends ChangeNotifier {
 
   void clearAccount() {
     _fullName = null;
+
     _email = null;
+
     _phone = null;
+
     _password = null;
+
     _isLoggedIn = false;
 
     notifyListeners();

@@ -1793,64 +1793,38 @@ class _MilestoneApp6CheckoutScreenState
 
     try {
       final String paymentType =
-          _selectedPaymentType ??
-              'Full Payment';
+          _selectedPaymentType ?? 'Full Payment';
 
-      /// ----------------------------------------------------------
-      /// CREATE ORDER RECORDS
-      /// ----------------------------------------------------------
+      // ==========================================================
+      // CREATE ONE ORDER WITH ALL PRODUCTS
+      // ==========================================================
 
-      for (final item
-      in _orderedItems) {
-        state.addOrder(
-          food: item.food,
-          size: item.size,
-          unitPrice: item.unitPrice,
-          quantity: item.quantity,
-          paymentType: paymentType,
-        );
-      }
+      state.addOrder(
+        items: _orderedItems,
+        paymentType: paymentType,
+      );
 
-      /// ----------------------------------------------------------
-      /// CREATE SAFE SNAPSHOT
-      /// ----------------------------------------------------------
+      // ==========================================================
+      // SAFE SNAPSHOT
+      // ==========================================================
 
-      final List<MilestoneApp6CartItem>
-      orderItems = _orderedItems
+      final List<MilestoneApp6CartItem> orderItems =
+      _orderedItems
           .map(
-            (item) =>
-            _copyCartItem(item),
+            (item) => _copyCartItem(item),
       )
           .toList();
 
-      final double subtotalValue =
-          subtotal;
+      final double subtotalValue = subtotal;
+      final double shippingValue = shipping;
+      final double discountValue = discount;
+      final double totalValue = totalPayment;
+      final double minimumValue = minimumPayment;
+      final double paidValue = amountPaidNow;
 
-      final double shippingValue =
-          shipping;
-
-      final double discountValue =
-          discount;
-
-      final double totalValue =
-          totalPayment;
-
-      final double minimumValue =
-          minimumPayment;
-
-      final double paidValue =
-          amountPaidNow;
-
-      /// ----------------------------------------------------------
-      /// CART CHECKOUT
-      /// ----------------------------------------------------------
-      ///
-      /// Only clear cart after the order
-      /// records have been created.
-      ///
-      /// Buy Now does NOT clear the existing cart.
-      ///
-      /// ----------------------------------------------------------
+      // ==========================================================
+      // CLEAR CART ONLY AFTER ORDER IS CREATED
+      // ==========================================================
 
       if (!widget.isBuyNow) {
         state.clearCart();
@@ -1860,27 +1834,21 @@ class _MilestoneApp6CheckoutScreenState
         return;
       }
 
-      /// ----------------------------------------------------------
-      /// SUCCESS SNACKBAR
-      /// ----------------------------------------------------------
-
       ScaffoldMessenger.of(context)
           .hideCurrentSnackBar();
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Your order confirmed successfully!',
           ),
-          behavior:
-          SnackBarBehavior.floating,
+          behavior: SnackBarBehavior.floating,
         ),
       );
 
-      /// ----------------------------------------------------------
-      /// ORDER DETAILS
-      /// ----------------------------------------------------------
+      // ==========================================================
+      // ORDER DETAILS
+      // ==========================================================
 
       context.push(
         '/order-details',
@@ -1897,6 +1865,12 @@ class _MilestoneApp6CheckoutScreenState
         },
       );
     } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessingPayment = false;
+        });
+      };
+    };  {
       if (mounted) {
         setState(() {
           _isProcessingPayment = false;

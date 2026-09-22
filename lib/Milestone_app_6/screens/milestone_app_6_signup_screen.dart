@@ -457,9 +457,9 @@ class _MilestoneApp6SignupScreenState
                             },
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons.visibility_outlined
+                                  ? Icons.visibility_off_outlined
                                   : Icons
-                                  .visibility_off_outlined,
+                                  .visibility_outlined,
                             ),
                           ),
                         ),

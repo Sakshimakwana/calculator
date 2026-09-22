@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
-
+import '../screens/milestone_app_6_my_orders_screen.dart';
 import '../screens/milestone_app_6_buy_now_checkout_screen.dart';
 import '../screens/milestone_app_6_categories.dart';
 import '../screens/milestone_app_6_cart.dart';
@@ -445,7 +445,20 @@ class MilestoneApp6Routes {
         // Pay Now
         // Confirmation dialog
         // ================================================================
-
+        GoRoute(
+          path: '/my-orders',
+          pageBuilder: (
+              context,
+              routeState,
+              ) {
+            return _page(
+              routeState,
+              MilestoneApp6MyOrdersScreen(
+                state: state,
+              ),
+            );
+          },
+        ),
         GoRoute(
           path: '/checkout',
           pageBuilder: (
@@ -755,6 +768,7 @@ class MilestoneApp6Routes {
               routeState,
               MilestoneApp6OrderDetailsScreen(
                 state: stateData,
+                auth: auth,
                 items: items,
                 paymentType: paymentType,
                 subtotal: subtotal,
@@ -770,6 +784,7 @@ class MilestoneApp6Routes {
       ],
     );
   }
+
 
   // ================================================================
   // CHECKOUT PAGE

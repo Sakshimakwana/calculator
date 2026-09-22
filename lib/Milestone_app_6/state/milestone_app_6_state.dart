@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../data/milestone_app_6_restaurants_data.dart';
 import '../data/milestone_app_6_address_data.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
@@ -610,42 +610,178 @@ class MilestoneApp6State extends ChangeNotifier {
         .contains(restaurantName);
   }
 
-  // ================================================================
-  // ADD ORDER
-  // ================================================================
+  // ===============================================================
+// ORDERS
+// ===============================================================
+
+
+  /// ===============================================================
+  /// ADD ORDER
+  /// ===============================================================
+  ///
+  /// Creates ONE order containing ALL products.
+  ///
+  /// Example:
+  ///
+  /// items:
+  ///   Pizza × 1
+  ///   Pepsi × 1
+  ///   Burger × 2
+  ///
+  /// Result:
+  ///   ONE MilestoneApp6Order
+  ///
+  /// ===============================================================
 
   void addOrder({
-    required MilestoneApp6Food food,
-    required String size,
-    required double unitPrice,
-    required int quantity,
+    required List<MilestoneApp6CartItem> items,
     required String paymentType,
+    String? restaurantImage,
+    String? restaurantAddress,
   }) {
-    if (quantity <= 0) {
+    if (items.isEmpty) {
       return;
     }
 
-    final order =
-    MilestoneApp6Order(
+    final firstFood = items.first.food;
+
+    final String restaurantName =
+    firstFood.restaurant.trim().isEmpty
+        ? 'Restaurant'
+        : firstFood.restaurant.trim();
+
+    /// -------------------------------------------------------------
+    /// FIND RESTAURANT IMAGE
+    /// -------------------------------------------------------------
+
+    String resolvedRestaurantImage =
+        restaurantImage ?? '';
+
+    if (resolvedRestaurantImage.isEmpty) {
+      for (final restaurant in restaurants) {
+        if (restaurant.name.trim().toLowerCase() ==
+            restaurantName.toLowerCase()) {
+          resolvedRestaurantImage =
+              restaurant.image;
+          break;
+        }
+      }
+    }
+
+    /// If restaurant image is not found,
+    /// use first food image as safe fallback.
+    if (resolvedRestaurantImage.isEmpty) {
+      resolvedRestaurantImage = firstFood.image;
+    }
+
+    /// -------------------------------------------------------------
+    /// RESTAURANT ADDRESS
+    /// -------------------------------------------------------------
+
+    final String resolvedRestaurantAddress =
+    restaurantAddress?.trim().isNotEmpty == true
+        ? restaurantAddress!.trim()
+        : 'Ahmedabad';
+
+    /// -------------------------------------------------------------
+    /// CREATE ONE ORDER
+    /// -------------------------------------------------------------
+
+    final order = MilestoneApp6Order(
       id: DateTime.now()
-          .microsecondsSinceEpoch
+          .millisecondsSinceEpoch
           .toString(),
-      food: food,
-      size: size,
-      unitPrice: unitPrice,
-      quantity: quantity,
+      items: items,
+      restaurantName: restaurantName,
+      restaurantImage: resolvedRestaurantImage,
+      restaurantAddress: resolvedRestaurantAddress,
       paymentType: paymentType,
       orderDate: DateTime.now(),
+      status: MilestoneApp6OrderStatus.placed,
     );
 
-    _orders.insert(
-      0,
-      order,
-    );
+    _orders.insert(0, order);
 
     notifyListeners();
   }
 
+  /// ===============================================================
+  /// UPDATE ORDER STATUS
+  /// ===============================================================
+
+  void updateOrderStatus(
+      String orderId,
+      MilestoneApp6OrderStatus status,
+      ) {
+    final index = _orders.indexWhere(
+          (order) => order.id == orderId,
+    );
+
+    if (index == -1) {
+      return;
+    }
+
+    final order = _orders[index];
+
+    /// Cancelled orders cannot move
+    /// to another status.
+    if (order.isCancelled) {
+      return;
+    }
+
+    order.status = status;
+
+    notifyListeners();
+  }
+
+  /// ===============================================================
+  /// CANCEL ORDER
+  /// ===============================================================
+
+  bool cancelOrder(String orderId) {
+    final index = _orders.indexWhere(
+          (order) => order.id == orderId,
+    );
+
+    if (index == -1) {
+      return false;
+    }
+
+    final order = _orders[index];
+
+    /// Already cancelled.
+    if (order.isCancelled) {
+      return false;
+    }
+
+    /// Delivered orders cannot be cancelled.
+    if (order.isDelivered) {
+      return false;
+    }
+
+    /// Out-for-delivery orders cannot be cancelled.
+    if (order.isOutForDelivery) {
+      return false;
+    }
+
+    order.status =
+        MilestoneApp6OrderStatus.cancelled;
+
+    notifyListeners();
+
+    return true;
+  }
+
+  /// ===============================================================
+  /// MARK DELIVERED
+  /// ===============================================================
+
+  void markOrderDelivered(String orderId) {
+    updateOrderStatus(
+      orderId,
+      MilestoneApp6OrderStatus.delivered,
+    );
+  }
   // ================================================================
   // ADDRESS
   // ================================================================

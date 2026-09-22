@@ -1,35 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
+import '../data/milestone_app_6_address_data.dart';
 import '../data/milestone_app_6_cart_item.dart';
+import '../state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
-import '../widgets/milestone_app_6_button.dart';
-import '../widgets/milestone_app_6_image.dart';
 
-class MilestoneApp6OrderDetailsScreen
-    extends StatelessWidget {
+class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
   final MilestoneApp6State state;
-
-  final List<MilestoneApp6CartItem>
-  items;
-
+  final MilestoneApp6AuthStore auth;
+  final List<MilestoneApp6CartItem> items;
   final String paymentType;
-
   final double subtotal;
-
   final double shipping;
-
   final double discount;
-
   final double totalPayment;
-
   final double minimumPayment;
-
   final double amountPaidNow;
 
   const MilestoneApp6OrderDetailsScreen({
     super.key,
     required this.state,
+    required this.auth,
     required this.items,
     required this.paymentType,
     required this.subtotal,
@@ -41,76 +31,156 @@ class MilestoneApp6OrderDetailsScreen
   });
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  State<MilestoneApp6OrderDetailsScreen> createState() =>
+      _MilestoneApp6OrderDetailsScreenState();
+}
+
+class _MilestoneApp6OrderDetailsScreenState
+    extends State<MilestoneApp6OrderDetailsScreen> {
+  late final String _orderId;
+
+  bool _orderCancelled = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.state.orders.isNotEmpty) {
+      _orderId = widget.state.orders.first.id;
+    } else {
+      _orderId =
+          DateTime.now().millisecondsSinceEpoch.toString().substring(4);
+    }
+  }
+
+  String get _customerName {
+    final name = widget.auth.userName.trim();
+
+    if (name.isEmpty) {
+      return 'Customer';
+    }
+
+    return name;
+  }
+
+  MilestoneApp6Address? get _address {
+    return widget.state.selectedAddress;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F7F5),
       appBar: AppBar(
-        automaticallyImplyLeading:
-        false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: const Color(0xFFF8F7F5),
+        foregroundColor: Colors.black,
+        centerTitle: true,
         title: const Text(
           'Order Details',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight:
-            FontWeight.w800,
+            fontSize: 21,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
           ),
         ),
-        centerTitle: true,
       ),
       body: SafeArea(
-        child: ListView(
-          padding:
-          const EdgeInsets.fromLTRB(
-            16,
-            12,
-            16,
-            30,
-          ),
-          children: [
-            _successCard(context),
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding =
+            constraints.maxWidth >= 700 ? 32.0 : 18.0;
 
-            const SizedBox(
-              height: 18,
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                4,
+                horizontalPadding,
+                32,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _backButton(context),
+
+                  const SizedBox(height: 20),
+
+                  _orderHeader(context),
+
+                  const SizedBox(height: 18),
+
+                  _orderStatusCard(context),
+
+                  const SizedBox(height: 16),
+
+                  _timelineCard(context),
+
+                  const SizedBox(height: 16),
+
+                  _customerAndAddressCard(context),
+
+                  const SizedBox(height: 16),
+
+                  _orderedItemsCard(context),
+
+                  const SizedBox(height: 16),
+
+                  _billCard(context),
+
+                  const SizedBox(height: 16),
+
+                  _paymentCard(context),
+
+                  const SizedBox(height: 22),
+
+                  _homeButton(context, theme),
+
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // BACK BUTTON
+  // ---------------------------------------------------------------------------
+
+  Widget _backButton(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        Navigator.of(context).pop();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: 6,
+          horizontal: 2,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(
+              Icons.arrow_back,
+              size: 23,
+              color: Colors.black87,
             ),
-
-            _orderInformation(
-              context,
-            ),
-
-            const SizedBox(
-              height: 18,
-            ),
-
-            _itemsSection(context),
-
-            const SizedBox(
-              height: 18,
-            ),
-
-            _addressSection(context),
-
-            const SizedBox(
-              height: 18,
-            ),
-
-            _billSection(context),
-
-            const SizedBox(
-              height: 18,
-            ),
-
-            _paymentSection(context),
-
-            const SizedBox(
-              height: 24,
-            ),
-
-            MilestoneApp6Button(
-              label: 'Continue Shopping',
-              onPressed: () {
-                context.go('/home');
-              },
+            SizedBox(width: 10),
+            Text(
+              'Back to Orders',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
             ),
           ],
         ),
@@ -118,229 +188,170 @@ class MilestoneApp6OrderDetailsScreen
     );
   }
 
-  // ================================================================
-  // SUCCESS CARD
-  // ================================================================
+  // ---------------------------------------------------------------------------
+  // ORDER HEADER
+  // ---------------------------------------------------------------------------
 
-  Widget _successCard(
-      BuildContext context,
-      ) {
-    final theme =
-    Theme.of(context);
+  Widget _orderHeader(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool compact = constraints.maxWidth < 370;
 
-    return Container(
-      padding:
-      const EdgeInsets.all(22),
-      decoration:
-      BoxDecoration(
-        color: theme
-            .colorScheme
-            .primary
-            .withOpacity(.08),
-        borderRadius:
-        BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration:
-            const BoxDecoration(
-              color: Colors.green,
-              shape:
-              BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.check_rounded,
-              color: Colors.white,
-              size: 42,
-            ),
-          ),
-          const SizedBox(
-            height: 16,
-          ),
-          const Text(
-            'Order Confirmed!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight:
-              FontWeight.w900,
-            ),
-          ),
-          const SizedBox(
-            height: 7,
-          ),
-          Text(
-            'Your order has been placed successfully.',
-            textAlign:
-            TextAlign.center,
-            style: TextStyle(
-              color:
-              theme.hintColor,
-              fontSize: 13,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================================================================
-  // ORDER INFORMATION
-  // ================================================================
-
-  Widget _orderInformation(
-      BuildContext context,
-      ) {
-    final orderId =
-    DateTime.now()
-        .millisecondsSinceEpoch
-        .toString();
-
-    return _card(
-      context,
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Order Information',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight:
-              FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          _infoRow(
-            'Order ID',
-            '#${orderId.substring(orderId.length - 8)}',
-          ),
-          const SizedBox(height: 9),
-          _infoRow(
-            'Items',
-            '${items.length}',
-          ),
-          const SizedBox(height: 9),
-          _infoRow(
-            'Payment',
-            paymentType,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================================================================
-  // ITEMS
-  // ================================================================
-
-  Widget _itemsSection(
-      BuildContext context,
-      ) {
-    return _card(
-      context,
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Ordered Items',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight:
-              FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          ...items.map(
-                (item) => Padding(
-              padding:
-              const EdgeInsets.only(
-                bottom: 14,
-              ),
-              child: Row(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!compact)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  MilestoneApp6Image(
-                    url:
-                    item.food.image,
-                    width: 62,
-                    height: 62,
-                    borderRadius:
-                    BorderRadius
-                        .circular(
-                      12,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 11,
-                  ),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-                      children: [
-                        Text(
-                          item.food.name,
-                          maxLines: 2,
-                          overflow:
-                          TextOverflow
-                              .ellipsis,
-                          style:
-                          const TextStyle(
-                            fontWeight:
-                            FontWeight
-                                .w800,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Text(
-                          'Size: ${item.size}',
-                          style:
-                          TextStyle(
-                            fontSize: 11,
-                            color: Theme.of(
-                              context,
-                            )
-                                .colorScheme
-                                .primary,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 3,
-                        ),
-                        Text(
-                          'Qty: ${item.quantity}',
-                          style:
-                          TextStyle(
-                            fontSize: 11,
-                            color:
-                            Theme.of(
-                              context,
-                            ).hintColor,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: _orderTitle(),
                   ),
-                  Text(
-                    '\$${item.totalPrice.toStringAsFixed(2)}',
-                    style:
-                    const TextStyle(
-                      fontWeight:
-                      FontWeight.w900,
-                    ),
-                  ),
+                  const SizedBox(width: 12),
+                  _invoiceButton(context),
+                ],
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _orderTitle(),
+                  const SizedBox(height: 14),
+                  _invoiceButton(context),
                 ],
               ),
+
+            const SizedBox(height: 14),
+
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'Order ID: #$_orderId',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                _placedChip(),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            OutlinedButton.icon(
+              onPressed: _orderCancelled
+                  ? null
+                  : () => _showCancelOrderDialog(context),
+              icon: const Icon(
+                Icons.close,
+                size: 17,
+              ),
+              label: Text(
+                _orderCancelled ? 'Order Cancelled' : 'Cancel Order',
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                _orderCancelled ? Colors.grey : const Color(0xFFD62828),
+                side: BorderSide(
+                  color: _orderCancelled
+                      ? Colors.grey.shade300
+                      : const Color(0xFFD62828),
+                ),
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _orderTitle() {
+    return const Text(
+      'Order Details',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 27,
+        height: 1.15,
+        fontWeight: FontWeight.w800,
+        color: Colors.black,
+      ),
+    );
+  }
+
+  Widget _invoiceButton(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invoice generated successfully.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      icon: Icon(
+        Icons.download_outlined,
+        size: 18,
+        color: Colors.grey.shade500,
+      ),
+      label: Text(
+        'Generate Invoice',
+        style: TextStyle(
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 46),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+        ),
+        side: BorderSide(
+          color: Colors.grey.shade300,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+    );
+  }
+
+  Widget _placedChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF9EE),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.check_circle_outline,
+            size: 20,
+            color: Color(0xFF238B45),
+          ),
+          SizedBox(width: 7),
+          Text(
+            'Placed',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF238B45),
             ),
           ),
         ],
@@ -348,278 +359,523 @@ class MilestoneApp6OrderDetailsScreen
     );
   }
 
-  // ================================================================
-  // ADDRESS
-  // ================================================================
+  // ---------------------------------------------------------------------------
+  // STATUS CARD
+  // ---------------------------------------------------------------------------
 
-  Widget _addressSection(
-      BuildContext context,
-      ) {
-    final address =
-        state.selectedAddress;
-
+  Widget _orderStatusCard(BuildContext context) {
     return _card(
-      context,
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text(
-            'Delivery Address',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight:
-              FontWeight.w800,
+          Container(
+            height: 52,
+            width: 52,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE7EA),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_circle,
+              color: Color(0xFFEF5B6B),
+              size: 32,
             ),
           ),
-          const SizedBox(height: 12),
-          if (address == null)
-            const Text(
-              'No address available.',
-            )
-          else
-            Row(
-              crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons
-                      .location_on_outlined,
-                  color: Theme.of(
-                    context,
-                  )
-                      .colorScheme
-                      .primary,
+                Text(
+                  'Order placed successfully',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                const SizedBox(
-                  width: 10,
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
-                    children: [
-                      Text(
-                        address.label,
-                        style:
-                        const TextStyle(
-                          fontWeight:
-                          FontWeight
-                              .w800,
-                        ),
-                      ),
-                      if (address.name
-                          .trim()
-                          .isNotEmpty) ...[
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Text(
-                          address.name,
-                        ),
-                      ],
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      Text(
-                        address.fullAddress,
-                        style: TextStyle(
-                          color:
-                          Theme.of(
-                            context,
-                          ).hintColor,
-                          fontSize: 12,
-                        ),
-                      ),
-                      if (address.phone
-                          .trim()
-                          .isNotEmpty) ...[
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Text(
-                          address.phone,
-                          style:
-                          TextStyle(
-                            color:
-                            Theme.of(
-                              context,
-                            ).hintColor,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ],
+                SizedBox(height: 5),
+                Text(
+                  'Your restaurant has received your order.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black54,
+                    height: 1.35,
                   ),
                 ),
               ],
             ),
+          ),
         ],
       ),
     );
   }
 
-  // ================================================================
-  // BILL
-  // ================================================================
+  // ---------------------------------------------------------------------------
+  // TIMELINE
+  // ---------------------------------------------------------------------------
 
-  Widget _billSection(
-      BuildContext context,
-      ) {
-    return _card(
-      context,
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Bill Details',
+  Widget _timelineCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        8,
+        22,
+        8,
+        20,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: [
+              // Connecting line
+              Positioned(
+                left: 40,
+                right: 40,
+                top: 23,
+                child: Container(
+                  height: 2,
+                  color: const Color(0xFFE5E5E5),
+                ),
+              ),
+
+              // Timeline
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _timelineStep(
+                      icon: Icons.check,
+                      title: 'Order Placed',
+                      subtitle: 'Current',
+                      active: true,
+                    ),
+                  ),
+
+                  Expanded(
+                    child: _timelineStep(
+                      icon: Icons.circle,
+                      title: 'Delivery Partner',
+                      subtitle: 'Assigned',
+                      active: false,
+                    ),
+                  ),
+
+                  Expanded(
+                    child: _timelineStep(
+                      icon: Icons.circle,
+                      title: 'Out for Delivery',
+                      subtitle: '',
+                      active: false,
+                    ),
+                  ),
+
+                  Expanded(
+                    child: _timelineStep(
+                      icon: Icons.circle,
+                      title: 'Delivered',
+                      subtitle: '',
+                      active: false,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _timelineStep({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool active,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Status circle
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: active
+                ? const Color(0xFFEF6878)
+                : Colors.white,
+            border: Border.all(
+              color: active
+                  ? const Color(0xFFEF6878)
+                  : const Color(0xFFE5E5E5),
+              width: 2,
+            ),
+            boxShadow: active
+                ? [
+              BoxShadow(
+                color: const Color(0xFFEF6878)
+                    .withOpacity(0.15),
+                blurRadius: 0,
+                spreadRadius: 5,
+              ),
+            ]
+                : null,
+          ),
+          child: active
+              ? const Icon(
+            Icons.check,
+            color: Colors.white,
+            size: 25,
+          )
+              : const Icon(
+            Icons.circle,
+            color: Color(0xFFD5D9DE),
+            size: 9,
+          ),
+        ),
+
+        const SizedBox(height: 13),
+
+        // Title
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.2,
+            fontWeight:
+            active ? FontWeight.w700 : FontWeight.w500,
+            color: active
+                ? Colors.black
+                : const Color(0xFF999999),
+          ),
+        ),
+
+        // Subtitle
+        if (subtitle.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 13,
+              height: 1.2,
               fontWeight:
-              FontWeight.w800,
+              active ? FontWeight.w500 : FontWeight.w400,
+              color: active
+                  ? const Color(0xFFEF6878)
+                  : const Color(0xFF999999),
             ),
           ),
+        ],
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // CUSTOMER + ADDRESS
+  // ---------------------------------------------------------------------------
+
+  Widget _customerAndAddressCard(BuildContext context) {
+    final address = _address;
+
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+            icon: Icons.location_on_outlined,
+            title: 'Delivery Details',
+          ),
+
+          const SizedBox(height: 18),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.person_outline,
+                size: 21,
+                color: Colors.black54,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Customer',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.black45,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _customerName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.home_outlined,
+                size: 21,
+                color: Colors.black54,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      address?.label ?? 'Delivery Address',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black45,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      address == null
+                          ? 'No address selected'
+                          : address.fullAddress,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        fontWeight: FontWeight.w600,
+                        color: address == null
+                            ? Colors.grey
+                            : Colors.black87,
+                      ),
+                    ),
+                    if (address != null &&
+                        address.phone.trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        address.phone,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // ORDERED ITEMS
+  // ---------------------------------------------------------------------------
+
+  Widget _orderedItemsCard(BuildContext context) {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+            icon: Icons.shopping_bag_outlined,
+            title: 'Ordered Items',
+            trailing: '${widget.items.length} item${widget.items.length == 1 ? '' : 's'}',
+          ),
+
           const SizedBox(height: 15),
+
+          if (widget.items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 15),
+              child: Text(
+                'No order items found.',
+                style: TextStyle(
+                  color: Colors.black54,
+                ),
+              ),
+            )
+          else
+            ...widget.items.asMap().entries.map(
+                  (entry) {
+                final index = entry.key;
+                final item = entry.value;
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == widget.items.length - 1 ? 0 : 14,
+                  ),
+                  child: _orderItem(item),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _orderItem(MilestoneApp6CartItem item) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(11),
+            child: Image.network(
+              item.food.image,
+              width: 68,
+              height: 68,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) {
+                return Container(
+                  width: 68,
+                  height: 68,
+                  color: Colors.grey.shade200,
+                  child: const Icon(
+                    Icons.fastfood_outlined,
+                    color: Colors.grey,
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.food.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                Text(
+                  'Size: ${item.size}  •  Qty: ${item.quantity}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+
+                const SizedBox(height: 7),
+
+                Text(
+                  '\$${item.totalPrice.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // BILL
+  // ---------------------------------------------------------------------------
+
+  Widget _billCard(BuildContext context) {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+            icon: Icons.receipt_long_outlined,
+            title: 'Bill Summary',
+          ),
+
+          const SizedBox(height: 18),
+
           _billRow(
             'Item Total',
-            '\$${subtotal.toStringAsFixed(2)}',
+            '\$${widget.subtotal.toStringAsFixed(2)}',
           ),
+
           const SizedBox(height: 10),
+
           _billRow(
             'Delivery Fee',
-            '\$${shipping.toStringAsFixed(2)}',
+            '\$${widget.shipping.toStringAsFixed(2)}',
           ),
-          if (discount > 0) ...[
+
+          if (widget.discount > 0) ...[
             const SizedBox(height: 10),
             _billRow(
               'Discount',
-              '-\$${discount.toStringAsFixed(2)}',
-              color: Colors.green,
+              '-\$${widget.discount.toStringAsFixed(2)}',
+              valueColor: const Color(0xFF238B45),
             ),
           ],
+
           const Padding(
-            padding:
-            EdgeInsets.symmetric(
-              vertical: 14,
+            padding: EdgeInsets.symmetric(vertical: 15),
+            child: Divider(
+              height: 1,
             ),
-            child: Divider(),
           ),
+
           _billRow(
             'Total',
-            '\$${totalPayment.toStringAsFixed(2)}',
+            '\$${widget.totalPayment.toStringAsFixed(2)}',
             bold: true,
+            fontSize: 17,
           ),
         ],
       ),
-    );
-  }
-
-  // ================================================================
-  // PAYMENT
-  // ================================================================
-
-  Widget _paymentSection(
-      BuildContext context,
-      ) {
-    return _card(
-      context,
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Payment Details',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight:
-              FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          _infoRow(
-            'Payment Type',
-            paymentType,
-          ),
-          const SizedBox(height: 10),
-          _infoRow(
-            'Paid Now',
-            '\$${amountPaidNow.toStringAsFixed(2)}',
-          ),
-          if (paymentType ==
-              'Minimum Payment') ...[
-            const SizedBox(height: 10),
-            _infoRow(
-              'Remaining Amount',
-              '\$${(totalPayment - amountPaidNow).toStringAsFixed(2)}',
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // ================================================================
-  // CARD
-  // ================================================================
-
-  Widget _card(
-      BuildContext context, {
-        required Widget child,
-      }) {
-    final theme =
-    Theme.of(context);
-
-    return Container(
-      padding:
-      const EdgeInsets.all(16),
-      decoration:
-      BoxDecoration(
-        color:
-        theme.colorScheme.surface,
-        borderRadius:
-        BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.dividerColor
-              .withOpacity(.25),
-        ),
-      ),
-      child: child,
-    );
-  }
-
-  Widget _infoRow(
-      String title,
-      String value,
-      ) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style:
-          const TextStyle(
-            fontSize: 12,
-            fontWeight:
-            FontWeight.w600,
-          ),
-        ),
-        const Spacer(),
-        Flexible(
-          child: Text(
-            value,
-            textAlign:
-            TextAlign.right,
-            style:
-            const TextStyle(
-              fontSize: 12,
-              fontWeight:
-              FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -627,33 +883,307 @@ class MilestoneApp6OrderDetailsScreen
       String title,
       String value, {
         bool bold = false,
-        Color? color,
+        double fontSize = 14,
+        Color? valueColor,
       }) {
     return Row(
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize:
-            bold ? 15 : 13,
-            fontWeight: bold
-                ? FontWeight.w800
-                : FontWeight.w500,
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
+              color: bold ? Colors.black : Colors.black54,
+            ),
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 10),
         Text(
           value,
           style: TextStyle(
-            color: color,
-            fontSize:
-            bold ? 16 : 13,
-            fontWeight: bold
-                ? FontWeight.w900
-                : FontWeight.w700,
+            fontSize: fontSize,
+            fontWeight: bold ? FontWeight.w900 : FontWeight.w600,
+            color: valueColor ?? Colors.black87,
           ),
         ),
       ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // PAYMENT
+  // ---------------------------------------------------------------------------
+
+  Widget _paymentCard(BuildContext context) {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+            icon: Icons.payment_outlined,
+            title: 'Payment Details',
+          ),
+
+          const SizedBox(height: 17),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 42,
+                width: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F1F1),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.credit_card_outlined,
+                  size: 21,
+                  color: Colors.black54,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Payment Method',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.black45,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      widget.paymentType,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F9F8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_outline,
+                  size: 19,
+                  color: Color(0xFF238B45),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    widget.paymentType == 'Minimum Payment'
+                        ? 'Minimum payment received: \$${widget.amountPaidNow.toStringAsFixed(2)}'
+                        : 'Payment received: \$${widget.amountPaidNow.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF238B45),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // SECTION TITLE
+  // ---------------------------------------------------------------------------
+
+  Widget _sectionTitle({
+    required IconData icon,
+    required String title,
+    String? trailing,
+  }) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 21,
+          color: Colors.black87,
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        if (trailing != null)
+          Text(
+            trailing,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // CARD
+  // ---------------------------------------------------------------------------
+
+  Widget _card({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(17),
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(19),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // HOME BUTTON
+  // ---------------------------------------------------------------------------
+
+  Widget _homeButton(
+      BuildContext context,
+      ThemeData theme,
+      ) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.of(context).popUntil(
+                (route) => route.isFirst,
+          );
+        },
+        icon: const Icon(
+          Icons.home_outlined,
+          size: 21,
+        ),
+        label: const Text(
+          'Continue Shopping',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFEF5B6B),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // CANCEL ORDER
+  // ---------------------------------------------------------------------------
+
+  void _showCancelOrderDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: const Text(
+            'Cancel Order?',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to cancel this order?',
+            style: TextStyle(
+              height: 1.4,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            18,
+            0,
+            18,
+            15,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text(
+                'Keep Order',
+              ),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFD62828),
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+
+                setState(() {
+                  _orderCancelled = true;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Order cancelled successfully.',
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Text(
+                'Cancel Order',
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
