@@ -385,37 +385,37 @@ class MilestoneApp6Routes {
         // Outside ShellRoute
         // Bottom navigation is hidden.
         // ================================================================
-
-        GoRoute(
-          path: '/food/:id',
-          pageBuilder: (
-              context,
-              routeState,
-              ) {
-            final foodId =
-            routeState.pathParameters['id'];
-
-            if (foodId == null || foodId.isEmpty) {
-              return const NoTransitionPage(
-                child: Scaffold(
-                  body: Center(
-                    child: Text(
-                      'Food information is missing.',
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            return _page(
-              routeState,
-              MilestoneApp6FoodDetailsScreen(
-                state: state,
-                id: foodId,
-              ),
-            );
-          },
-        ),
+        //
+        // GoRoute(
+        //   path: '/food/:id',
+        //   pageBuilder: (
+        //       context,
+        //       routeState,
+        //       ) {
+        //     final foodId =
+        //     routeState.pathParameters['id'];
+        //
+        //     if (foodId == null || foodId.isEmpty) {
+        //       return const NoTransitionPage(
+        //         child: Scaffold(
+        //           body: Center(
+        //             child: Text(
+        //               'Food information is missing.',
+        //             ),
+        //           ),
+        //         ),
+        //       );
+        //     }
+        //
+        //     return _page(
+        //       routeState,
+        //       MilestoneApp6FoodDetailsScreen(
+        //         state: state,
+        //         id: foodId,
+        //       ),
+        //     );
+        //   },
+        // ),
 
         // ================================================================
         // CHECKOUT

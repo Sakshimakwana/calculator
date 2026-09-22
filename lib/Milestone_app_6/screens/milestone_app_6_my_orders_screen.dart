@@ -256,9 +256,9 @@ class _MilestoneApp6MyOrdersScreenState
       ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        30,
-        28,
-        30,
+        10,
+        20,
+        10,
         28,
       ),
       child: Row(
@@ -267,17 +267,18 @@ class _MilestoneApp6MyOrdersScreenState
           ClipOval(
             child: Image.network(
               order.restaurantImage,
-              width: 100,
-              height: 100,
+              width: 70,
+              height: 70,
               fit: BoxFit.cover,
               errorBuilder: (
                   context,
                   error,
                   stackTrace,
                   ) {
-                return Container(
-                  width: 100,
-                  height: 100,
+                return
+                  Container(
+                  width: 55,
+                  height: 55,
                   color: const Color(0xFFF0F0F0),
                   child: const Icon(
                     Icons.restaurant,
@@ -290,7 +291,7 @@ class _MilestoneApp6MyOrdersScreenState
           ),
 
           const SizedBox(
-            width: 25,
+            width: 20,
           ),
 
           Expanded(
@@ -302,20 +303,21 @@ class _MilestoneApp6MyOrdersScreenState
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
 
                 const SizedBox(
-                  height: 10,
+                  height: 5,
+                  width: 20,
                 ),
 
                 Row(
                   children: [
                     Icon(
                       Icons.location_on_outlined,
-                      size: 22,
+                      size: 20,
                       color: Colors.grey.shade600,
                     ),
 

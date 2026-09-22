@@ -148,12 +148,12 @@ class MilestoneApp6FoodCard extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: restaurantClosed
-                  ? null
-                  : onTap ??
-                      () {
-                    context.push('/food/${food.id}');
-                  },
+              // onTap: restaurantClosed
+              //     ? null
+              //     : onTap ??
+              //         () {
+              //       context.push('/food/${food.id}');
+              //     },
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 width: double.infinity,
