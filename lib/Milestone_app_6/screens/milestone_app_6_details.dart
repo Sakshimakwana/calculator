@@ -547,14 +547,7 @@ class _MilestoneApp6FoodDetailsScreenState
                               width: 4,
                             ),
 
-                            Text(
-                              food.rating
-                                  .toStringAsFixed(1),
-                              style: const TextStyle(
-                                fontWeight:
-                                FontWeight.w700,
-                              ),
-                            ),
+
                           ],
                         ),
                       ),

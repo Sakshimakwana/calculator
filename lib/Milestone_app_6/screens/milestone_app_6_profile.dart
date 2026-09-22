@@ -840,17 +840,7 @@ class MilestoneApp6ProfileScreen
                       width: 3,
                     ),
 
-                    Text(
-                      food.rating
-                          .toString(),
-                      style:
-                      const TextStyle(
-                        fontSize: 11,
-                        fontWeight:
-                        FontWeight
-                            .w600,
-                      ),
-                    ),
+
 
                     const Spacer(),
 

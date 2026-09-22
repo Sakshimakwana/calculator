@@ -82,13 +82,6 @@ class _MilestoneApp6CategoriesScreenState
     // STEP 2: RATING FILTER
     // --------------------------------------------------------------
 
-    if (selectedRating != null) {
-      filteredFoods = filteredFoods
-          .where(
-            (food) => food.rating >= selectedRating!,
-      )
-          .toList();
-    }
 
     // --------------------------------------------------------------
     // STEP 3: PRICE FILTER
@@ -126,44 +119,6 @@ class _MilestoneApp6CategoriesScreenState
     // STEP 4: SORT
     // --------------------------------------------------------------
 
-    switch (selectedSort) {
-      case 'Rating: High to Low':
-        filteredFoods.sort(
-              (a, b) => b.rating.compareTo(a.rating),
-        );
-        break;
-
-      case 'Price: Low to High':
-        filteredFoods.sort(
-              (a, b) => a.price.compareTo(b.price),
-        );
-        break;
-
-      case 'Price: High to Low':
-        filteredFoods.sort(
-              (a, b) => b.price.compareTo(a.price),
-        );
-        break;
-
-      case 'Recommended':
-      default:
-      // Recommended:
-      // Higher rating first.
-      // If ratings are same, lower price first.
-        filteredFoods.sort(
-              (a, b) {
-            final ratingComparison =
-            b.rating.compareTo(a.rating);
-
-            if (ratingComparison != 0) {
-              return ratingComparison;
-            }
-
-            return a.price.compareTo(b.price);
-          },
-        );
-        break;
-    }
 
     return filteredFoods;
   }

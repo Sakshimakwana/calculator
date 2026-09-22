@@ -1,47 +1,272 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
+import '../widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_image.dart';
 
-class MilestoneApp6CheckoutScreen extends StatefulWidget {
-  final MilestoneApp6Food food;
+/// ================================================================
+/// CHECKOUT ARGUMENTS
+/// ================================================================
+///
+/// Used when opening Checkout from Buy Now.
+///
+/// Example:
+///
+/// context.push(
+///   '/checkout',
+///   extra: MilestoneApp6CheckoutArgs(
+///     state: state,
+///     buyNowItem: MilestoneApp6CartItem(
+///       food: food,
+///       size: selectedSize,
+///       unitPrice: selectedPrice,
+///       quantity: quantity,
+///     ),
+///   ),
+/// );
+///
+/// ================================================================
+
+class MilestoneApp6CheckoutArgs {
   final MilestoneApp6State state;
-  final String size;
-  final double unitPrice;
-  final int quantity;
+  final MilestoneApp6CartItem? buyNowItem;
+
+  const MilestoneApp6CheckoutArgs({
+    required this.state,
+    this.buyNowItem,
+  });
+}
+
+/// ================================================================
+/// CHECKOUT SCREEN
+/// ================================================================
+
+class MilestoneApp6CheckoutScreen extends StatefulWidget {
+  final MilestoneApp6State state;
+
+  /// Optional Buy Now food.
+  ///
+  /// These fields are kept for compatibility with your
+  /// existing code and old route implementation.
+  final MilestoneApp6Food? buyNowFood;
+  final String? buyNowSize;
+  final double? buyNowUnitPrice;
+  final int? buyNowQuantity;
+
+  /// New recommended Buy Now item.
+  final MilestoneApp6CartItem? buyNowItem;
 
   const MilestoneApp6CheckoutScreen({
     super.key,
-    required this.food,
     required this.state,
-    required this.size,
-    required this.unitPrice,
-    required this.quantity,
+    this.buyNowFood,
+    this.buyNowSize,
+    this.buyNowUnitPrice,
+    this.buyNowQuantity,
+    this.buyNowItem,
   });
+
+  /// ==============================================================
+  /// IS BUY NOW
+  /// ==============================================================
+
+  bool get isBuyNow {
+    return buyNowItem != null || buyNowFood != null;
+  }
+
+  /// ==============================================================
+  /// CREATE BUY NOW ITEM
+  /// ==============================================================
+
+  MilestoneApp6CartItem? get resolvedBuyNowItem {
+    if (buyNowItem != null) {
+      return buyNowItem;
+    }
+
+    if (buyNowFood != null) {
+      return MilestoneApp6CartItem(
+        food: buyNowFood!,
+        size: buyNowSize ?? 'Small',
+        unitPrice:
+        buyNowUnitPrice ?? buyNowFood!.price,
+        quantity:
+        buyNowQuantity ?? 1,
+      );
+    }
+
+    return null;
+  }
 
   @override
   State<MilestoneApp6CheckoutScreen> createState() =>
       _MilestoneApp6CheckoutScreenState();
 }
 
+/// ================================================================
+/// CHECKOUT STATE
+/// ================================================================
+
 class _MilestoneApp6CheckoutScreenState
     extends State<MilestoneApp6CheckoutScreen> {
+  /// ==============================================================
+  /// STATE
+  /// ==============================================================
+
+  MilestoneApp6State get state => widget.state;
+
+  /// ==============================================================
+  /// CONTROLLERS
+  /// ==============================================================
+
   final TextEditingController _couponController =
   TextEditingController();
 
+  /// ==============================================================
+  /// COUPON
+  /// ==============================================================
+
   String? _appliedCoupon;
+
+  /// ==============================================================
+  /// PAYMENT
+  /// ==============================================================
 
   String? _selectedPaymentType;
 
-  double get subtotal {
-    return widget.unitPrice * widget.quantity;
+  /// ==============================================================
+  /// ORDER ITEMS
+  /// ==============================================================
+
+  late List<MilestoneApp6CartItem> _orderedItems;
+
+  /// ==============================================================
+  /// PROCESSING
+  /// ==============================================================
+
+  bool _isProcessingPayment = false;
+
+  /// ==============================================================
+  /// INIT
+  /// ==============================================================
+
+  @override
+  void initState() {
+    super.initState();
+
+    _createOrderItems();
   }
 
-  double get shipping {
-    return 94.0;
+  /// ==============================================================
+  /// CREATE ORDER ITEMS
+  /// ==============================================================
+
+  void _createOrderItems() {
+    /// ------------------------------------------------------------
+    /// BUY NOW
+    /// ------------------------------------------------------------
+
+    if (widget.isBuyNow) {
+      final buyNowItem =
+          widget.resolvedBuyNowItem;
+
+      if (buyNowItem == null) {
+        _orderedItems =
+        <MilestoneApp6CartItem>[];
+        return;
+      }
+
+      _orderedItems = <MilestoneApp6CartItem>[
+        _copyCartItem(buyNowItem),
+      ];
+
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// CART CHECKOUT
+    /// ------------------------------------------------------------
+
+    _orderedItems = state.cart.values
+        .map(
+          (item) => _copyCartItem(item),
+    )
+        .toList();
   }
+
+  /// ==============================================================
+  /// COPY CART ITEM
+  /// ==============================================================
+  ///
+  /// This does not depend on copyWith().
+  /// Therefore it works with your current CartItem model.
+  ///
+  /// ==============================================================
+
+  MilestoneApp6CartItem _copyCartItem(
+      MilestoneApp6CartItem item,
+      ) {
+    return MilestoneApp6CartItem(
+      food: item.food,
+      size: item.size,
+      unitPrice: item.unitPrice,
+      quantity: item.quantity,
+    );
+  }
+
+  /// ==============================================================
+  /// DISPOSE
+  /// ==============================================================
+
+  @override
+  void dispose() {
+    _couponController.dispose();
+    super.dispose();
+  }
+
+  /// ==============================================================
+  /// TOTAL ITEM COUNT
+  /// ==============================================================
+
+  int get totalItemCount {
+    return _orderedItems.fold<int>(
+      0,
+          (total, item) {
+        return total + item.quantity;
+      },
+    );
+  }
+
+  /// ==============================================================
+  /// SUBTOTAL
+  /// ==============================================================
+
+  double get subtotal {
+    return _orderedItems.fold<double>(
+      0.0,
+          (total, item) {
+        return total + item.totalPrice;
+      },
+    );
+  }
+
+  /// ==============================================================
+  /// SHIPPING
+  /// ==============================================================
+
+  double get shipping {
+    if (_orderedItems.isEmpty) {
+      return 0.0;
+    }
+
+    return 2.00;
+  }
+
+  /// ==============================================================
+  /// DISCOUNT
+  /// ==============================================================
 
   double get discount {
     if (_appliedCoupon == 'FOOD10') {
@@ -51,39 +276,67 @@ class _MilestoneApp6CheckoutScreenState
     return 0.0;
   }
 
-  double get totalPayment {
-    final total = subtotal + shipping - discount;
+  /// ==============================================================
+  /// TOTAL
+  /// ==============================================================
 
-    return total < 0 ? 0 : total;
+  double get totalPayment {
+    final double value =
+        subtotal + shipping - discount;
+
+    if (value < 0) {
+      return 0.0;
+    }
+
+    return value;
   }
+
+  /// ==============================================================
+  /// MINIMUM PAYMENT
+  /// ==============================================================
 
   double get minimumPayment {
-    final amount = totalPayment * 0.01;
+    if (totalPayment <= 0) {
+      return 0.0;
+    }
 
-    return amount < 1 ? 1 : amount;
+    final double onePercent =
+        totalPayment * 0.01;
+
+    if (onePercent < 1.0) {
+      return 1.0;
+    }
+
+    return onePercent;
   }
 
-  @override
-  void dispose() {
-    _couponController.dispose();
-    super.dispose();
+  /// ==============================================================
+  /// AMOUNT TO PAY NOW
+  /// ==============================================================
+
+  double get amountPaidNow {
+    if (_selectedPaymentType ==
+        'Minimum Payment') {
+      return minimumPayment;
+    }
+
+    return totalPayment;
   }
 
-  // ================================================================
-  // APPLY COUPON
-  // ================================================================
+  /// ==============================================================
+  /// APPLY COUPON
+  /// ==============================================================
 
   void _applyCoupon() {
-    final code =
-    _couponController.text.trim().toUpperCase();
+    final String code =
+    _couponController.text
+        .trim()
+        .toUpperCase();
 
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a coupon code.'),
-        ),
+      _showSnackBar(
+        'Please enter a coupon code.',
       );
-
       return;
     }
 
@@ -92,33 +345,71 @@ class _MilestoneApp6CheckoutScreenState
         _appliedCoupon = 'FOOD10';
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Coupon applied successfully!',
-          ),
-        ),
+      _showSnackBar(
+        'Coupon applied successfully!',
       );
-    } else {
-      setState(() {
-        _appliedCoupon = null;
-      });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid coupon code.'),
-        ),
-      );
+      return;
     }
+
+    setState(() {
+      _appliedCoupon = null;
+    });
+
+    _showSnackBar(
+      'Invalid coupon code.',
+    );
   }
 
-  // ================================================================
-  // BUILD
-  // ================================================================
+  /// ==============================================================
+  /// REMOVE COUPON
+  /// ==============================================================
+
+  void _removeCoupon() {
+    setState(() {
+      _appliedCoupon = null;
+      _couponController.clear();
+    });
+
+    _showSnackBar(
+      'Coupon removed.',
+    );
+  }
+
+  /// ==============================================================
+  /// SNACKBAR
+  /// ==============================================================
+
+  void _showSnackBar(
+      String message,
+      ) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+        .hideCurrentSnackBar();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior:
+        SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// ==============================================================
+  /// BUILD
+  /// ==============================================================
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(
+      BuildContext context,
+      ) {
+    if (_orderedItems.isEmpty) {
+      return _emptyCheckout(context);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -134,232 +425,56 @@ class _MilestoneApp6CheckoutScreenState
         title: const Text(
           'Checkout',
           style: TextStyle(
-            fontSize: 21,
-            fontWeight: FontWeight.w800,
+            fontSize: 20,
+            fontWeight:
+            FontWeight.w800,
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              widget.state.toggleSaved(
-                widget.food.id,
-              );
-            },
-            icon: AnimatedBuilder(
-              animation: widget.state,
-              builder: (context, child) {
-                final isSaved =
-                widget.state.saved.contains(
-                  widget.food.id,
-                );
-
-                return Icon(
-                  isSaved
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  color: isSaved
-                      ? Colors.red
-                      : null,
-                );
-              },
-            ),
-          ),
-        ],
       ),
-
-      // ============================================================
-      // BODY
-      // ============================================================
-
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  10,
-                  20,
-                  20,
+              child: ListView(
+                padding:
+                const EdgeInsets.fromLTRB(
+                  16,
+                  12,
+                  16,
+                  24,
                 ),
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
-                  children: [
-                    // ==================================================
-                    // ADDRESS
-                    // ==================================================
+                children: [
+                  _checkoutSteps(context),
 
-                    if (widget.state.selectedAddress != null)
-                      _addressCard(context),
+                  const SizedBox(height: 18),
 
-                    if (widget.state.selectedAddress != null)
-                      const SizedBox(height: 18),
+                  _deliveryAddress(context),
 
-                    // ==================================================
-                    // PRODUCT
-                    // ==================================================
+                  const SizedBox(height: 18),
 
-                    _productCard(context),
+                  _orderItems(context),
 
-                    const SizedBox(height: 22),
+                  const SizedBox(height: 18),
 
-                    // ==================================================
-                    // COUPON
-                    // ==================================================
+                  _couponSection(context),
 
-                    const Text(
-                      'Apply Coupon',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+                  const SizedBox(height: 18),
 
-                    const SizedBox(height: 12),
+                  _billDetails(context),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _couponController,
-                            textCapitalization:
-                            TextCapitalization.characters,
-                            decoration: InputDecoration(
-                              hintText: 'Apply coupon',
-                              contentPadding:
-                              const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 17,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius:
-                                BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                        ),
+                  const SizedBox(height: 18),
 
-                        const SizedBox(width: 12),
+                  _paymentMethod(context),
 
-                        SizedBox(
-                          height: 56,
-                          width: 120,
-                          child: FilledButton(
-                            onPressed: _applyCoupon,
-                            child: const Text(
-                              'Apply',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 18),
 
-                    if (_appliedCoupon != null) ...[
-                      const SizedBox(height: 10),
+                  _securePayment(context),
 
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle_rounded,
-                            color: Colors.green,
-                            size: 18,
-                          ),
-
-                          const SizedBox(width: 6),
-
-                          const Expanded(
-                            child: Text(
-                              'FOOD10 applied • 10% OFF',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _appliedCoupon = null;
-                                _couponController.clear();
-                              });
-                            },
-                            child: const Text(
-                              'Remove',
-                              style: TextStyle(
-                                color: Colors.red,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-
-                    const SizedBox(height: 22),
-
-                    // ==================================================
-                    // PRICE SUMMARY
-                    // ==================================================
-
-                    _priceSummary(context),
-
-                    const SizedBox(height: 28),
-
-
-                    const Text(
-                      'Payment Type',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _paymentOption(
-                      context: context,
-                      selected: _selectedPaymentType == 'minimum',
-                      title: 'Minimum Payment (1%)',
-                      subtitle:
-                      'Pay \$${minimumPayment.toStringAsFixed(0)} now, rest on delivery',
-                      amount: minimumPayment,
-                      onTap: () {
-                        setState(() {
-                          _selectedPaymentType = 'minimum';
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _paymentOption(
-                      context: context,
-                      selected: _selectedPaymentType == 'full',
-                      title: 'Full payment',
-                      subtitle:
-                      'Pay \$${totalPayment.toStringAsFixed(0)} now.',
-                      amount: totalPayment,
-                      onTap: () {
-                        setState(() {
-                          _selectedPaymentType = 'full';
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                  const SizedBox(height: 12),
+                ],
               ),
             ),
-
-            // ==========================================================
-            // PAY BUTTON
-            // ==========================================================
 
             _bottomPayBar(context),
           ],
@@ -368,22 +483,415 @@ class _MilestoneApp6CheckoutScreenState
     );
   }
 
-  // ================================================================
-  // ADDRESS CARD
-  // ================================================================
+  /// ==============================================================
+  /// CHECKOUT STEPS
+  /// ==============================================================
 
-  Widget _addressCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final address = widget.state.selectedAddress!;
+  Widget _checkoutSteps(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding:
+      const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
+        color: theme
+            .colorScheme
+            .primary
+            .withOpacity(0.06),
+        borderRadius:
+        BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          _step(
+            context,
+            '1',
+            'Address',
+            true,
+          ),
+
+          Expanded(
+            child: Container(
+              height: 1,
+              margin:
+              const EdgeInsets.symmetric(
+                horizontal: 8,
+              ),
+              color: theme
+                  .colorScheme
+                  .primary
+                  .withOpacity(0.25),
+            ),
+          ),
+
+          _step(
+            context,
+            '2',
+            'Payment',
+            true,
+          ),
+
+          Expanded(
+            child: Container(
+              height: 1,
+              margin:
+              const EdgeInsets.symmetric(
+                horizontal: 8,
+              ),
+              color: theme
+                  .dividerColor
+                  .withOpacity(0.4),
+            ),
+          ),
+
+          _step(
+            context,
+            '3',
+            'Done',
+            false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ==============================================================
+  /// STEP
+  /// ==============================================================
+
+  Widget _step(
+      BuildContext context,
+      String number,
+      String title,
+      bool active,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    return Column(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          alignment:
+          Alignment.center,
+          decoration: BoxDecoration(
+            color: active
+                ? theme
+                .colorScheme
+                .primary
+                : theme
+                .dividerColor
+                .withOpacity(0.35),
+            shape:
+            BoxShape.circle,
+          ),
+          child: Text(
+            number,
+            style: TextStyle(
+              color: active
+                  ? Colors.white
+                  : theme.hintColor,
+              fontSize: 12,
+              fontWeight:
+              FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: active
+                ? FontWeight.w800
+                : FontWeight.w500,
+            color: active
+                ? theme
+                .colorScheme
+                .primary
+                : theme.hintColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// ==============================================================
+  /// DELIVERY ADDRESS
+  /// ==============================================================
+
+  Widget _deliveryAddress(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    final address =
+        state.selectedAddress;
+
+    return Container(
+      padding:
+      const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.3),
+          color: theme
+              .dividerColor
+              .withOpacity(0.25),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons
+                    .location_on_rounded,
+                color: theme
+                    .colorScheme
+                    .primary,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Delivery Address',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight:
+                    FontWeight.w800,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.push(
+                    '/profile/address',
+                    extra: state,
+                  );
+                },
+                child: Text(
+                  address == null
+                      ? 'Add'
+                      : 'Change',
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          if (address == null)
+            _noAddress(context)
+          else
+            Container(
+              width:
+              double.infinity,
+              padding:
+              const EdgeInsets.all(13),
+              decoration:
+              BoxDecoration(
+                color: theme
+                    .colorScheme
+                    .primary
+                    .withOpacity(0.05),
+                borderRadius:
+                BorderRadius.circular(
+                  14,
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment:
+                CrossAxisAlignment
+                    .start,
+                children: [
+                  Icon(
+                    _addressIcon(
+                      address.label,
+                    ),
+                    color: theme
+                        .colorScheme
+                        .primary,
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
+                      children: [
+                        Text(
+                          address.label,
+                          style:
+                          const TextStyle(
+                            fontWeight:
+                            FontWeight
+                                .w800,
+                          ),
+                        ),
+
+                        if (address.name
+                            .trim()
+                            .isNotEmpty) ...[
+                          const SizedBox(
+                            height: 4,
+                          ),
+                          Text(
+                            address.name,
+                          ),
+                        ],
+
+                        const SizedBox(
+                          height: 4,
+                        ),
+
+                        Text(
+                          address.fullAddress,
+                          style: TextStyle(
+                            color: theme
+                                .hintColor,
+                            fontSize: 12,
+                          ),
+                        ),
+
+                        if (address.phone
+                            .trim()
+                            .isNotEmpty) ...[
+                          const SizedBox(
+                            height: 4,
+                          ),
+                          Text(
+                            address.phone,
+                            style:
+                            TextStyle(
+                              color: theme
+                                  .hintColor,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// ==============================================================
+  /// NO ADDRESS
+  /// ==============================================================
+
+  Widget _noAddress(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    return InkWell(
+      borderRadius:
+      BorderRadius.circular(14),
+      onTap: () {
+        context.push(
+          '/profile/address',
+          extra: state,
+        );
+      },
+      child: Container(
+        width:
+        double.infinity,
+        padding:
+        const EdgeInsets.all(14),
+        decoration:
+        BoxDecoration(
+          color: theme
+              .colorScheme
+              .primary
+              .withOpacity(0.05),
+          borderRadius:
+          BorderRadius.circular(14),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons
+                  .add_location_alt_outlined,
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Add a delivery address',
+                style: TextStyle(
+                  fontWeight:
+                  FontWeight.w700,
+                ),
+              ),
+            ),
+            Icon(
+              Icons
+                  .chevron_right_rounded,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// ==============================================================
+  /// ADDRESS ICON
+  /// ==============================================================
+
+  IconData _addressIcon(
+      String label,
+      ) {
+    switch (label.toLowerCase()) {
+      case 'home':
+        return Icons.home_outlined;
+
+      case 'work':
+      case 'office':
+        return Icons.business_outlined;
+
+      default:
+        return Icons
+            .location_on_outlined;
+    }
+  }
+
+  /// ==============================================================
+  /// ORDER ITEMS
+  /// ==============================================================
+
+  Widget _orderItems(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    return Container(
+      padding:
+      const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
+        border: Border.all(
+          color: theme
+              .dividerColor
+              .withOpacity(0.25),
         ),
       ),
       child: Column(
@@ -392,191 +900,161 @@ class _MilestoneApp6CheckoutScreenState
         children: [
           Row(
             children: [
-              Icon(
-                Icons.location_on_outlined,
-                color: theme.colorScheme.primary,
-              ),
-
-              const SizedBox(width: 8),
-
-              Expanded(
+              const Expanded(
                 child: Text(
-                  address.label,
-                  style: const TextStyle(
+                  'Order Items',
+                  style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight:
+                    FontWeight.w800,
                   ),
                 ),
               ),
-
-              TextButton(
-                onPressed: () {
-                  context.push('/cart');
-                },
-                child: const Text('Change'),
+              Text(
+                '$totalItemCount item${totalItemCount == 1 ? '' : 's'}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color:
+                  theme.hintColor,
+                ),
               ),
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
 
-          Text(
-            address.name,
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            address.fullAddress,
-            style: TextStyle(
-              color: theme.hintColor,
-              fontSize: 12,
-            ),
-          ),
-
-          const SizedBox(height: 3),
-
-          Text(
-            address.phone,
-            style: TextStyle(
-              color: theme.hintColor,
-              fontSize: 12,
-            ),
+          ..._orderedItems.map(
+                (item) {
+              return Padding(
+                padding:
+                const EdgeInsets.only(
+                  bottom: 12,
+                ),
+                child: _checkoutItem(
+                  context,
+                  item,
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  // ================================================================
-  // PRODUCT CARD
-  // ================================================================
+  /// ==============================================================
+  /// CHECKOUT ITEM
+  /// ==============================================================
 
-  Widget _productCard(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _checkoutItem(
+      BuildContext context,
+      MilestoneApp6CartItem item,
+      ) {
+    final theme =
+    Theme.of(context);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: theme.dividerColor.withOpacity(0.3),
+    return Row(
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+      children: [
+        MilestoneApp6Image(
+          url: item.food.image,
+          width: 68,
+          height: 68,
+          borderRadius:
+          BorderRadius.circular(13),
         ),
-      ),
-      child: Row(
-        children: [
-          // IMAGE
 
-          MilestoneApp6Image(
-            url: widget.food.image,
-            width: 130,
-            height: 130,
-            borderRadius: BorderRadius.circular(14),
+        const SizedBox(width: 11),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment
+                .start,
+            children: [
+              Text(
+                item.food.name,
+                maxLines: 2,
+                overflow:
+                TextOverflow.ellipsis,
+                style:
+                const TextStyle(
+                  fontSize: 13,
+                  fontWeight:
+                  FontWeight.w800,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              Text(
+                'Size: ${item.size}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme
+                      .colorScheme
+                      .primary,
+                  fontWeight:
+                  FontWeight.w700,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              Text(
+                'Qty: ${item.quantity}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color:
+                  theme.hintColor,
+                ),
+              ),
+            ],
           ),
+        ),
 
-          const SizedBox(width: 14),
+        const SizedBox(width: 8),
 
-          // DETAILS
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.food.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-
-                const SizedBox(height: 5),
-
-                Text(
-                  widget.food.restaurant,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.hintColor,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    Text(
-                      '\$${widget.unitPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    Text(
-                      'Size: ${widget.size}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 7),
-
-                Text(
-                  '${widget.quantity} × \$${widget.unitPrice.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: theme.hintColor,
-                    fontSize: 12,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  'Qty: ${widget.quantity}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+        Text(
+          '\$${item.totalPrice.toStringAsFixed(2)}',
+          style:
+          const TextStyle(
+            fontSize: 13,
+            fontWeight:
+            FontWeight.w900,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  // ================================================================
-  // PRICE SUMMARY
-  // ================================================================
+  /// ==============================================================
+  /// COUPON SECTION
+  /// ==============================================================
 
-  Widget _priceSummary(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _couponSection(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    final bool couponApplied =
+        _appliedCoupon != null;
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
+      padding:
+      const EdgeInsets.all(15),
+      decoration:
+      BoxDecoration(
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(18),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.3),
+          color: theme
+              .dividerColor
+              .withOpacity(0.25),
         ),
       ),
       child: Column(
@@ -584,47 +1062,178 @@ class _MilestoneApp6CheckoutScreenState
         CrossAxisAlignment.start,
         children: [
           const Text(
-            'Price Summary',
+            'Apply Coupon',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontWeight:
+              FontWeight.w800,
             ),
-          ),
-
-          const SizedBox(height: 18),
-
-          _summaryRow(
-            'Subtotal',
-            '\$${subtotal.toStringAsFixed(0)}',
           ),
 
           const SizedBox(height: 12),
 
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller:
+                  _couponController,
+                  enabled:
+                  !couponApplied,
+                  textCapitalization:
+                  TextCapitalization
+                      .characters,
+                  decoration:
+                  InputDecoration(
+                    hintText:
+                    'Enter promo code',
+                    border:
+                    OutlineInputBorder(
+                      borderRadius:
+                      BorderRadius
+                          .circular(
+                        12,
+                      ),
+                    ),
+                    contentPadding:
+                    const EdgeInsets
+                        .symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              if (couponApplied)
+                OutlinedButton(
+                  onPressed:
+                  _removeCoupon,
+                  child:
+                  const Text('Remove'),
+                )
+              else
+                FilledButton(
+                  onPressed:
+                  _applyCoupon,
+                  child:
+                  const Text('Apply'),
+                ),
+            ],
+          ),
+
+          if (couponApplied)
+            const Padding(
+              padding:
+              EdgeInsets.only(
+                top: 10,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons
+                        .check_circle_outline,
+                    size: 18,
+                    color:
+                    Colors.green,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'FOOD10 applied • 10% OFF',
+                    style: TextStyle(
+                      color:
+                      Colors.green,
+                      fontWeight:
+                      FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// ==============================================================
+  /// BILL DETAILS
+  /// ==============================================================
+
+  Widget _billDetails(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    return Container(
+      padding:
+      const EdgeInsets.all(17),
+      decoration:
+      BoxDecoration(
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
+        border: Border.all(
+          color: theme
+              .dividerColor
+              .withOpacity(0.25),
+        ),
+      ),
+      child: Column(
+        children: [
+          const Align(
+            alignment:
+            Alignment.centerLeft,
+            child: Text(
+              'Bill Details',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight:
+                FontWeight.w800,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           _summaryRow(
-            'Shipping',
-            '\$${shipping.toStringAsFixed(0)}',
+            'Item Total',
+            '\$${subtotal.toStringAsFixed(2)}',
+          ),
+
+          const SizedBox(height: 10),
+
+          _summaryRow(
+            'Delivery Fee',
+            '\$${shipping.toStringAsFixed(2)}',
           ),
 
           if (discount > 0) ...[
-            const SizedBox(height: 12),
-
+            const SizedBox(height: 10),
             _summaryRow(
               'Coupon Discount',
-              '-\$${discount.toStringAsFixed(0)}',
-              valueColor: Colors.green,
+              '-\$${discount.toStringAsFixed(2)}',
+              valueColor:
+              Colors.green,
             ),
           ],
 
-          const Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: 14,
+          Padding(
+            padding:
+            const EdgeInsets.symmetric(
+              vertical: 15,
             ),
-            child: Divider(),
+            child: Divider(
+              color:
+              theme.dividerColor,
+            ),
           ),
 
           _summaryRow(
-            'Total Payment',
-            '\$${totalPayment.toStringAsFixed(0)}',
+            'Grand Total',
+            '\$${totalPayment.toStringAsFixed(2)}',
             bold: true,
           ),
         ],
@@ -632,9 +1241,9 @@ class _MilestoneApp6CheckoutScreenState
     );
   }
 
-  // ================================================================
-  // SUMMARY ROW
-  // ================================================================
+  /// ==============================================================
+  /// SUMMARY ROW
+  /// ==============================================================
 
   Widget _summaryRow(
       String title,
@@ -647,9 +1256,11 @@ class _MilestoneApp6CheckoutScreenState
         Text(
           title,
           style: TextStyle(
-            fontSize: bold ? 17 : 14,
-            fontWeight:
-            bold ? FontWeight.w800 : FontWeight.w500,
+            fontSize:
+            bold ? 15 : 13,
+            fontWeight: bold
+                ? FontWeight.w800
+                : FontWeight.w500,
           ),
         ),
 
@@ -658,56 +1269,149 @@ class _MilestoneApp6CheckoutScreenState
         Text(
           value,
           style: TextStyle(
-            fontSize: bold ? 18 : 14,
-            fontWeight:
-            bold ? FontWeight.w900 : FontWeight.w700,
+            fontSize:
+            bold ? 16 : 13,
             color: valueColor,
+            fontWeight: bold
+                ? FontWeight.w900
+                : FontWeight.w700,
           ),
         ),
       ],
     );
   }
 
-  // ================================================================
-  // PAYMENT OPTION
-  // ================================================================
+  /// ==============================================================
+  /// PAYMENT METHOD
+  /// ==============================================================
 
-  Widget _paymentOption({
-    required BuildContext context,
-    required bool selected,
-    required String title,
-    required String subtitle,
-    required double amount,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
+  Widget _paymentMethod(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    return Container(
+      padding:
+      const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
+        border: Border.all(
+          color: theme
+              .dividerColor
+              .withOpacity(0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Payment Method',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight:
+              FontWeight.w800,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          _paymentOption(
+            context,
+            title: 'Full Payment',
+            subtitle:
+            'Pay the complete order amount',
+            icon:
+            Icons.payments_outlined,
+          ),
+
+          const SizedBox(height: 10),
+
+          _paymentOption(
+            context,
+            title: 'Minimum Payment',
+            subtitle:
+            'Pay minimum 1% now',
+            icon: Icons
+                .account_balance_wallet_outlined,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ==============================================================
+  /// PAYMENT OPTION
+  /// ==============================================================
+
+  Widget _paymentOption(
+      BuildContext context, {
+        required String title,
+        required String subtitle,
+        required IconData icon,
+      }) {
+    final theme =
+    Theme.of(context);
+
+    final bool selected =
+        _selectedPaymentType ==
+            title;
 
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+      borderRadius:
+      BorderRadius.circular(15),
+      onTap: () {
+        setState(() {
+          _selectedPaymentType =
+              title;
+        });
+      },
+      child: AnimatedContainer(
+        duration:
+        const Duration(
+          milliseconds: 180,
+        ),
+        padding:
+        const EdgeInsets.all(14),
+        decoration:
+        BoxDecoration(
+          color: selected
+              ? theme
+              .colorScheme
+              .primary
+              .withOpacity(0.08)
+              : theme
+              .colorScheme
+              .surface,
+          borderRadius:
+          BorderRadius.circular(15),
           border: Border.all(
             color: selected
-                ? theme.colorScheme.primary
-                : theme.dividerColor.withOpacity(0.3),
-            width: selected ? 1.5 : 1,
+                ? theme
+                .colorScheme
+                .primary
+                : theme
+                .dividerColor
+                .withOpacity(0.30),
+            width:
+            selected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              selected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              size: 27,
+              icon,
               color: selected
-                  ? theme.colorScheme.primary
-                  : null,
+                  ? theme
+                  .colorScheme
+                  .primary
+                  : theme
+                  .iconTheme
+                  .color,
             ),
 
             const SizedBox(width: 12),
@@ -715,48 +1419,44 @@ class _MilestoneApp6CheckoutScreenState
             Expanded(
               child: Column(
                 crossAxisAlignment:
-                CrossAxisAlignment.start,
+                CrossAxisAlignment
+                    .start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+                    style:
+                    const TextStyle(
+                      fontWeight:
+                      FontWeight.w800,
                     ),
                   ),
 
-                  const SizedBox(height: 5),
+                  const SizedBox(
+                    height: 3,
+                  ),
 
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 12,
-                      color: theme.hintColor,
+                      fontSize: 11,
+                      color:
+                      theme.hintColor,
                     ),
                   ),
-
-                  if (title.startsWith('Minimum')) ...[
-                    const SizedBox(height: 5),
-                    Text(
-                      'No refund if order is not accepted at delivery',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.hintColor,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
 
-            const SizedBox(width: 8),
-
-            Text(
-              '\$${amount.toStringAsFixed(0)}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-              ),
+            Radio<String>(
+              value: title,
+              groupValue:
+              _selectedPaymentType,
+              onChanged: (value) {
+                setState(() {
+                  _selectedPaymentType =
+                      value;
+                });
+              },
             ),
           ],
         ),
@@ -764,31 +1464,73 @@ class _MilestoneApp6CheckoutScreenState
     );
   }
 
-  // ================================================================
-  // BOTTOM PAY BAR
-  // ================================================================
+  /// ==============================================================
+  /// SECURE PAYMENT
+  /// ==============================================================
 
-  // ================================================================
-// BOTTOM PAY BAR
-// ================================================================
+  Widget _securePayment(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
-  Widget _bottomPayBar(BuildContext context) {
+    return Container(
+      padding:
+      const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme
+            .colorScheme
+            .primary
+            .withOpacity(0.07),
+        borderRadius:
+        BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons
+                .lock_outline_rounded,
+            size: 20,
+            color: theme
+                .colorScheme
+                .primary,
+          ),
+
+          const SizedBox(width: 9),
+
+          Expanded(
+            child: Text(
+              'Your payment information is secure and protected.',
+              style: TextStyle(
+                fontSize: 11,
+                color:
+                theme.hintColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ==============================================================
+  /// BOTTOM PAY BAR
+  /// ==============================================================
+
+  Widget _bottomPayBar(
+      BuildContext context,
+      ) {
     final theme = Theme.of(context);
 
-    final bool paymentSelected =
-        _selectedPaymentType != null;
-
-    final double amount =
-    _selectedPaymentType == 'minimum'
-        ? minimumPayment
-        : totalPayment;
+    final bool isMinimum =
+        _selectedPaymentType == 'Minimum Payment';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        20,
+        16,
         12,
-        20,
-        14,
+        16,
+        12,
       ),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
@@ -798,96 +1540,226 @@ class _MilestoneApp6CheckoutScreenState
           ),
         ),
       ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: FilledButton(
-          onPressed: _selectedPaymentType != null
-              ? _placeOrder
-              : null,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Pay \$${amount.toStringAsFixed(0)} Now',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                isMinimum ? 'Pay Now' : 'Total',
+                style: TextStyle(
+                  color: theme.hintColor,
+                  fontSize: 11,
                 ),
               ),
-              const SizedBox(width: 10),
-              const Icon(
-                Icons.arrow_forward_rounded,
+              const SizedBox(height: 2),
+              Text(
+                '\$${amountPaidNow.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
-        ),
+
+          const SizedBox(width: 18),
+
+          Expanded(
+            child: MilestoneApp6Button(
+              label: _isProcessingPayment
+                  ? 'Processing...'
+                  : 'Pay Now',
+              onPressed: () {
+                if (_isProcessingPayment) {
+                  return;
+                }
+
+                _payNow(context);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // ================================================================
-  // PLACE ORDER
-  // ================================================================
+  /// ==============================================================
+  /// PAY NOW VALIDATION
+  /// ==============================================================
 
-// ================================================================
-// PLACE ORDER
-// ================================================================
-
-  Future<void> _placeOrder() async {
-    if (_selectedPaymentType == null) {
+  void _payNow(
+      BuildContext context,
+      ) {
+    if (_isProcessingPayment) {
       return;
     }
 
-    final paymentType =
-    _selectedPaymentType == 'minimum'
-        ? 'Minimum Payment'
-        : 'Full Payment';
+    if (state.selectedAddress ==
+        null) {
+      _showSnackBar(
+        'Please add a delivery address first.',
+      );
 
-    // ================================================================
-    // SAVE ORDER
-    // ================================================================
+      return;
+    }
 
-    widget.state.addOrder(
-      food: widget.food,
-      size: widget.size,
-      unitPrice: widget.unitPrice,
-      quantity: widget.quantity,
-      paymentType: paymentType,
+    if (_selectedPaymentType ==
+        null) {
+      _showSnackBar(
+        'Please select a payment method.',
+      );
+
+      return;
+    }
+
+    if (_orderedItems.isEmpty) {
+      _showSnackBar(
+        'There are no items to checkout.',
+      );
+
+      return;
+    }
+
+    _showPaymentConfirmation(
+      context,
     );
+  }
 
-    if (!mounted) {
-      return;
-    }
+  /// ==============================================================
+  /// PAYMENT CONFIRMATION
+  /// ==============================================================
 
-    // ================================================================
-    // CONFIRMATION DIALOG
-    // ================================================================
-
-    await showDialog<void>(
+  Future<void> _showPaymentConfirmation(
+      BuildContext context,
+      ) async {
+    final bool? confirmed =
+    await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
+        final theme =
+        Theme.of(context);
+
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Order Confirmed!',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
+          shape:
+          RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(
+              22,
             ),
           ),
-          content: Text(
-            '${widget.food.name} has been ordered successfully.',
+
+          title: const Text(
+            'Confirm Payment',
+            style: TextStyle(
+              fontWeight:
+              FontWeight.w800,
+            ),
           ),
+
+          content: Column(
+            mainAxisSize:
+            MainAxisSize.min,
+            crossAxisAlignment:
+            CrossAxisAlignment
+                .start,
+            children: [
+              Text(
+                'Amount to pay',
+                style: TextStyle(
+                  color:
+                  theme.hintColor,
+                  fontSize: 12,
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              Text(
+                '\$${amountPaidNow.toStringAsFixed(2)}',
+                style:
+                const TextStyle(
+                  fontSize: 26,
+                  fontWeight:
+                  FontWeight.w900,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              Container(
+                width:
+                double.infinity,
+                padding:
+                const EdgeInsets.all(
+                  12,
+                ),
+                decoration:
+                BoxDecoration(
+                  color: theme
+                      .colorScheme
+                      .primary
+                      .withOpacity(0.07),
+                  borderRadius:
+                  BorderRadius.circular(
+                    12,
+                  ),
+                ),
+                child: Text(
+                  _selectedPaymentType ??
+                      'Payment',
+                  style:
+                  const TextStyle(
+                    fontWeight:
+                    FontWeight.w700,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              Text(
+                'Order total: \$${totalPayment.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color:
+                  theme.hintColor,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              const Text(
+                'Are you sure you want to continue with this payment?',
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+
           actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop(false);
+              },
+              child:
+              const Text('Cancel'),
+            ),
+
             FilledButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop();
+                Navigator.of(
+                  dialogContext,
+                ).pop(true);
               },
-              child: const Text(
-                'Confirmed',
+              child:
+              const Text(
+                'Confirm Pay',
               ),
             ),
           ],
@@ -895,35 +1767,222 @@ class _MilestoneApp6CheckoutScreenState
       },
     );
 
-    // ================================================================
-    // SNACKBAR
-    // ================================================================
-
     if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    if (confirmed != true) {
+      return;
+    }
+
+    await _completePayment();
+  }
+
+  /// ==============================================================
+  /// COMPLETE PAYMENT
+  /// ==============================================================
+
+  Future<void> _completePayment() async {
+    if (_isProcessingPayment) {
+      return;
+    }
+
+    setState(() {
+      _isProcessingPayment = true;
+    });
+
+    try {
+      final String paymentType =
+          _selectedPaymentType ??
+              'Full Payment';
+
+      /// ----------------------------------------------------------
+      /// CREATE ORDER RECORDS
+      /// ----------------------------------------------------------
+
+      for (final item
+      in _orderedItems) {
+        state.addOrder(
+          food: item.food,
+          size: item.size,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          paymentType: paymentType,
+        );
+      }
+
+      /// ----------------------------------------------------------
+      /// CREATE SAFE SNAPSHOT
+      /// ----------------------------------------------------------
+
+      final List<MilestoneApp6CartItem>
+      orderItems = _orderedItems
+          .map(
+            (item) =>
+            _copyCartItem(item),
+      )
+          .toList();
+
+      final double subtotalValue =
+          subtotal;
+
+      final double shippingValue =
+          shipping;
+
+      final double discountValue =
+          discount;
+
+      final double totalValue =
+          totalPayment;
+
+      final double minimumValue =
+          minimumPayment;
+
+      final double paidValue =
+          amountPaidNow;
+
+      /// ----------------------------------------------------------
+      /// CART CHECKOUT
+      /// ----------------------------------------------------------
+      ///
+      /// Only clear cart after the order
+      /// records have been created.
+      ///
+      /// Buy Now does NOT clear the existing cart.
+      ///
+      /// ----------------------------------------------------------
+
+      if (!widget.isBuyNow) {
+        state.clearCart();
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      /// ----------------------------------------------------------
+      /// SUCCESS SNACKBAR
+      /// ----------------------------------------------------------
+
+      ScaffoldMessenger.of(context)
+          .hideCurrentSnackBar();
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
-          content: Row(
+          content: Text(
+            'Your order confirmed successfully!',
+          ),
+          behavior:
+          SnackBarBehavior.floating,
+        ),
+      );
+
+      /// ----------------------------------------------------------
+      /// ORDER DETAILS
+      /// ----------------------------------------------------------
+
+      context.push(
+        '/order-details',
+        extra: {
+          'state': state,
+          'items': orderItems,
+          'paymentType': paymentType,
+          'subtotal': subtotalValue,
+          'shipping': shippingValue,
+          'discount': discountValue,
+          'totalPayment': totalValue,
+          'minimumPayment': minimumValue,
+          'amountPaidNow': paidValue,
+        },
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessingPayment = false;
+        });
+      }
+    }
+  }
+
+  /// ==============================================================
+  /// EMPTY CHECKOUT
+  /// ==============================================================
+
+  Widget _emptyCheckout(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Checkout',
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding:
+          const EdgeInsets.all(30),
+          child: Column(
+            mainAxisSize:
+            MainAxisSize.min,
             children: [
               Icon(
-                Icons.check_circle_rounded,
-                color: Colors.white,
+                Icons
+                    .shopping_cart_outlined,
+                size: 65,
+                color: theme
+                    .colorScheme
+                    .primary,
               ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Your order confirmed successfully!',
+
+              const SizedBox(
+                height: 18,
+              ),
+
+              const Text(
+                'No items to checkout',
+                textAlign:
+                TextAlign.center,
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight:
+                  FontWeight.w800,
+                ),
+              ),
+
+              const SizedBox(
+                height: 8,
+              ),
+
+              const Text(
+                'Add some food before continuing.',
+                textAlign:
+                TextAlign.center,
+              ),
+
+              const SizedBox(
+                height: 22,
+              ),
+
+              SizedBox(
+                width: 180,
+                child:
+                MilestoneApp6Button(
+                  label: 'Browse Food',
+                  onPressed: () {
+                    context.go(
+                      '/home',
+                    );
+                  },
                 ),
               ),
             ],
           ),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
         ),
-      );
+      ),
+    );
   }
 }

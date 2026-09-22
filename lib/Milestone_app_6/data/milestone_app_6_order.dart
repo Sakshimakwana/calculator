@@ -19,7 +19,5 @@ class MilestoneApp6Order {
     required this.orderDate,
   });
 
-  double get totalPrice {
-    return unitPrice * quantity;
-  }
+  double get totalPrice => unitPrice * quantity;
 }

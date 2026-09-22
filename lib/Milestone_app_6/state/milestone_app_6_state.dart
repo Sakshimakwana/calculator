@@ -11,9 +11,7 @@ class MilestoneApp6State extends ChangeNotifier {
   // SHARED PREFERENCES
   // ================================================================
 
-  static const String _themeKey =
-      'milestone_app_6_dark';
-
+  static const String _themeKey = 'milestone_app_6_dark';
   static const String _onboardingKey =
       'milestone_app_6_onboarding_done';
 
@@ -33,25 +31,24 @@ class MilestoneApp6State extends ChangeNotifier {
   // CART
   // ================================================================
 
-  final Map<String, MilestoneApp6CartItem> _cart = {};
+  final Map<String, MilestoneApp6CartItem> _cart =
+  <String, MilestoneApp6CartItem>{};
 
   // ================================================================
-  // FAVORITE PRODUCTS
+  // FAVORITES
   // ================================================================
 
-  final Set<String> _saved = {};
+  final Set<String> _saved = <String>{};
 
-  // ================================================================
-  // FAVORITE RESTAURANTS
-  // ================================================================
-
-  final Set<String> _savedRestaurants = {};
+  final Set<String> _savedRestaurants =
+  <String>{};
 
   // ================================================================
   // ORDERS
   // ================================================================
 
-  final List<MilestoneApp6Order> _orders = [];
+  final List<MilestoneApp6Order> _orders =
+  <MilestoneApp6Order>[];
 
   // ================================================================
   // PROMO
@@ -71,52 +68,39 @@ class MilestoneApp6State extends ChangeNotifier {
   // GETTERS
   // ================================================================
 
-  ThemeMode get themeMode {
-    return _themeMode;
-  }
+  ThemeMode get themeMode => _themeMode;
 
-  bool get onboardingDone {
-    return _onboardingDone;
-  }
+  bool get onboardingDone => _onboardingDone;
 
-  Map<String, MilestoneApp6CartItem> get cart {
-    return Map.unmodifiable(_cart);
-  }
+  Map<String, MilestoneApp6CartItem> get cart =>
+      Map.unmodifiable(_cart);
 
-  Set<String> get saved {
-    return Set.unmodifiable(_saved);
-  }
+  Set<String> get saved =>
+      Set.unmodifiable(_saved);
 
-  Set<String> get savedRestaurants {
-    return Set.unmodifiable(_savedRestaurants);
-  }
+  Set<String> get savedRestaurants =>
+      Set.unmodifiable(_savedRestaurants);
 
-  List<MilestoneApp6Order> get orders {
-    return List.unmodifiable(_orders);
-  }
+  List<MilestoneApp6Order> get orders =>
+      List.unmodifiable(_orders);
 
-  MilestoneApp6Address? get selectedAddress {
-    return _selectedAddress;
-  }
+  MilestoneApp6Address? get selectedAddress =>
+      _selectedAddress;
 
-  String? get appliedPromoCode {
-    return _appliedPromoCode;
-  }
+  String? get appliedPromoCode =>
+      _appliedPromoCode;
 
-  double get promoDiscount {
-    return _promoDiscount;
-  }
+  double get promoDiscount =>
+      _promoDiscount;
 
   // ================================================================
   // CART COUNT
   // ================================================================
 
   int get cartCount {
-    return _cart.values.fold(
+    return _cart.values.fold<int>(
       0,
-          (total, item) {
-        return total + item.quantity;
-      },
+          (total, item) => total + item.quantity,
     );
   }
 
@@ -125,11 +109,9 @@ class MilestoneApp6State extends ChangeNotifier {
   // ================================================================
 
   double get cartSubtotal {
-    return _cart.values.fold(
+    return _cart.values.fold<double>(
       0.0,
-          (total, item) {
-        return total + item.totalPrice;
-      },
+          (total, item) => total + item.totalPrice,
     );
   }
 
@@ -149,9 +131,8 @@ class MilestoneApp6State extends ChangeNotifier {
   // DISCOUNT
   // ================================================================
 
-  double get discountAmount {
-    return _promoDiscount;
-  }
+  double get discountAmount =>
+      _promoDiscount;
 
   // ================================================================
   // FINAL TOTAL
@@ -163,11 +144,11 @@ class MilestoneApp6State extends ChangeNotifier {
             deliveryCharge -
             discountAmount;
 
-    return total < 0 ? 0 : total;
+    return total < 0 ? 0.0 : total;
   }
 
   // ================================================================
-  // LOAD SETTINGS
+  // LOAD
   // ================================================================
 
   Future<void> load() async {
@@ -188,7 +169,7 @@ class MilestoneApp6State extends ChangeNotifier {
   }
 
   // ================================================================
-  // FINISH ONBOARDING
+  // ONBOARDING
   // ================================================================
 
   Future<void> finishOnboarding() async {
@@ -228,36 +209,240 @@ class MilestoneApp6State extends ChangeNotifier {
   }
 
   // ================================================================
+  // CART KEY
+  // ================================================================
+
+  String _cartKey(
+      MilestoneApp6Food food,
+      String size,
+      ) {
+    return '${food.id}_$size';
+  }
+
+  // ================================================================
   // ADD TO CART
   // ================================================================
 
   void addToCart(
       MilestoneApp6Food food, {
         String size = 'Small',
-        double? unitPrice,
+        required double unitPrice,
         int quantity = 1,
       }) {
-    final price =
-        unitPrice ?? food.price;
+    if (quantity <= 0) {
+      return;
+    }
 
-    final key =
-        '${food.id}_$size';
+    final key = _cartKey(
+      food,
+      size,
+    );
 
-    if (_cart.containsKey(key)) {
-      _cart[key]!.quantity += quantity;
+    final existing =
+    _cart[key];
+
+    if (existing != null) {
+      existing.quantity += quantity;
     } else {
       _cart[key] =
           MilestoneApp6CartItem(
             food: food,
-            size: size,
-            unitPrice: price,
             quantity: quantity,
+            size: size,
+            unitPrice: unitPrice,
           );
     }
 
     _recalculatePromo();
 
     notifyListeners();
+  }
+
+  // ================================================================
+  // ADD FOOD WITH RESTAURANT CHECK
+  // ================================================================
+
+  Future<bool> addFoodToCart({
+    required BuildContext context,
+    required MilestoneApp6Food food,
+    String size = 'Small',
+    double? unitPrice,
+    int quantity = 1,
+  }) async {
+    if (quantity <= 0) {
+      return false;
+    }
+
+    final price =
+        unitPrice ?? food.price;
+
+    // Empty cart.
+    if (_cart.isEmpty) {
+      addToCart(
+        food,
+        size: size,
+        unitPrice: price,
+        quantity: quantity,
+      );
+
+      return true;
+    }
+
+    final firstItem =
+        _cart.values.first;
+
+    final currentRestaurant =
+    firstItem.food.restaurant.trim();
+
+    final newRestaurant =
+    food.restaurant.trim();
+
+    // Same restaurant.
+    if (currentRestaurant
+        .toLowerCase() ==
+        newRestaurant.toLowerCase()) {
+      addToCart(
+        food,
+        size: size,
+        unitPrice: price,
+        quantity: quantity,
+      );
+
+      return true;
+    }
+
+    // Different restaurant.
+    final shouldReplace =
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final theme =
+        Theme.of(dialogContext);
+
+        return AlertDialog(
+          shape:
+          RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(22),
+          ),
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration:
+                BoxDecoration(
+                  color: theme
+                      .colorScheme
+                      .primary
+                      .withOpacity(.10),
+                  shape:
+                  BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons
+                      .shopping_cart_rounded,
+                  color: theme
+                      .colorScheme
+                      .primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Replace Cart?',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight:
+                    FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: TextStyle(
+                color: theme
+                    .colorScheme
+                    .onSurface,
+                fontSize: 14,
+                height: 1.5,
+              ),
+              children: [
+                const TextSpan(
+                  text:
+                  'Your cart contains items from ',
+                ),
+                TextSpan(
+                  text:
+                  currentRestaurant,
+                  style:
+                  const TextStyle(
+                    fontWeight:
+                    FontWeight.w800,
+                  ),
+                ),
+                const TextSpan(
+                  text:
+                  '.\n\nDo you want to replace them with items from ',
+                ),
+                TextSpan(
+                  text: newRestaurant,
+                  style:
+                  const TextStyle(
+                    fontWeight:
+                    FontWeight.w800,
+                  ),
+                ),
+                const TextSpan(
+                  text: '?',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop(false);
+              },
+              child: const Text(
+                'Keep Existing',
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop(true);
+              },
+              child: const Text(
+                'Replace Cart',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldReplace != true) {
+      return false;
+    }
+
+    _cart.clear();
+    clearPromo();
+
+    addToCart(
+      food,
+      size: size,
+      unitPrice: price,
+      quantity: quantity,
+    );
+
+    return true;
   }
 
   // ================================================================
@@ -269,9 +454,10 @@ class MilestoneApp6State extends ChangeNotifier {
         String size = 'Small',
       }) {
     final key =
-        '${food.id}_$size';
+    _cartKey(food, size);
 
-    final item = _cart[key];
+    final item =
+    _cart[key];
 
     if (item == null) {
       return;
@@ -301,7 +487,7 @@ class MilestoneApp6State extends ChangeNotifier {
         String size = 'Small',
       }) {
     final key =
-        '${food.id}_$size';
+    _cartKey(food, size);
 
     _cart.remove(key);
 
@@ -327,7 +513,7 @@ class MilestoneApp6State extends ChangeNotifier {
   }
 
   // ================================================================
-  // APPLY PROMO
+  // PROMO
   // ================================================================
 
   bool applyPromoCode(
@@ -340,7 +526,7 @@ class MilestoneApp6State extends ChangeNotifier {
       _appliedPromoCode = 'FOOD10';
 
       _promoDiscount =
-          cartSubtotal * 0.10;
+          cartSubtotal * .10;
 
       notifyListeners();
 
@@ -348,7 +534,6 @@ class MilestoneApp6State extends ChangeNotifier {
     }
 
     _appliedPromoCode = null;
-
     _promoDiscount = 0.0;
 
     notifyListeners();
@@ -361,9 +546,10 @@ class MilestoneApp6State extends ChangeNotifier {
   // ================================================================
 
   void _recalculatePromo() {
-    if (_appliedPromoCode == 'FOOD10') {
+    if (_appliedPromoCode ==
+        'FOOD10') {
       _promoDiscount =
-          cartSubtotal * 0.10;
+          cartSubtotal * .10;
     }
   }
 
@@ -373,7 +559,6 @@ class MilestoneApp6State extends ChangeNotifier {
 
   void clearPromo() {
     _appliedPromoCode = null;
-
     _promoDiscount = 0.0;
   }
 
@@ -393,10 +578,6 @@ class MilestoneApp6State extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ================================================================
-  // CHECK FAVORITE PRODUCT
-  // ================================================================
-
   bool isSaved(
       String id,
       ) {
@@ -410,31 +591,23 @@ class MilestoneApp6State extends ChangeNotifier {
   void toggleRestaurantSaved(
       String restaurantName,
       ) {
-    if (_savedRestaurants.contains(
-      restaurantName,
-    )) {
-      _savedRestaurants.remove(
-        restaurantName,
-      );
+    if (_savedRestaurants
+        .contains(restaurantName)) {
+      _savedRestaurants
+          .remove(restaurantName);
     } else {
-      _savedRestaurants.add(
-        restaurantName,
-      );
+      _savedRestaurants
+          .add(restaurantName);
     }
 
     notifyListeners();
   }
 
-  // ================================================================
-  // CHECK FAVORITE RESTAURANT
-  // ================================================================
-
   bool isRestaurantSaved(
       String restaurantName,
       ) {
-    return _savedRestaurants.contains(
-      restaurantName,
-    );
+    return _savedRestaurants
+        .contains(restaurantName);
   }
 
   // ================================================================
@@ -448,22 +621,20 @@ class MilestoneApp6State extends ChangeNotifier {
     required int quantity,
     required String paymentType,
   }) {
+    if (quantity <= 0) {
+      return;
+    }
+
     final order =
     MilestoneApp6Order(
       id: DateTime.now()
-          .millisecondsSinceEpoch
+          .microsecondsSinceEpoch
           .toString(),
-
       food: food,
-
       size: size,
-
       unitPrice: unitPrice,
-
       quantity: quantity,
-
       paymentType: paymentType,
-
       orderDate: DateTime.now(),
     );
 
@@ -486,10 +657,6 @@ class MilestoneApp6State extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  // ================================================================
-  // CLEAR ADDRESS
-  // ================================================================
 
   void clearAddress() {
     _selectedAddress = null;
