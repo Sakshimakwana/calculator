@@ -22,30 +22,74 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // ==============================================================
+    // THEME COLORS
+    // ==============================================================
+
+    final Color cardColor = isDark
+        ? const Color(0xFF171717)
+        : const Color(0xFFFDFDFD);
+
+    final Color borderColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.06);
+
+    final Color primaryTextColor = isDark
+        ? Colors.white
+        : Colors.black87;
+
+    final Color secondaryTextColor = isDark
+        ? Colors.grey.shade400
+        : Colors.grey.shade600;
+
+    final Color shadowColor = isDark
+        ? Colors.black.withOpacity(0.35)
+        : Colors.black.withOpacity(0.05);
+
+    final Color statusBackground = isOpen
+        ? (isDark
+        ? const Color(0xFF12301F)
+        : const Color(0xFFEAF8EF))
+        : (isDark
+        ? const Color(0xFF35191B)
+        : const Color(0xFFFFEEEE));
+
+    final Color statusColor = isOpen
+        ? const Color(0xFF00A651)
+        : const Color(0xFFE53935);
 
     return Container(
       width: 210,
       padding: const EdgeInsets.all(5),
+
       decoration: BoxDecoration(
-        color: const Color(0xFFFDFDFD),
+        color: cardColor,
         borderRadius: BorderRadius.circular(18),
+
         border: Border.all(
-          color: Colors.grey,
+          color: borderColor,
           width: 1,
         ),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
+            color: shadowColor,
+            blurRadius: isDark ? 12 : 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
+
       child: Stack(
         children: [
           Row(
             children: [
-              // Restaurant Image + OPEN/CLOSED badge
+              // ==========================================================
+              // RESTAURANT IMAGE + OPEN/CLOSED BADGE
+              // ==========================================================
+
               Stack(
                 children: [
                   MilestoneApp6Image(
@@ -55,6 +99,7 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
 
+                  // OPEN / CLOSED BADGE
                   Positioned(
                     top: 6,
                     left: 6,
@@ -63,10 +108,14 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
                         horizontal: 7,
                         vertical: 4,
                       ),
+
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.75),
+                        color: Colors.black.withOpacity(
+                          isDark ? 0.82 : 0.75,
+                        ),
                         borderRadius: BorderRadius.circular(20),
                       ),
+
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -80,7 +129,9 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                           ),
+
                           const SizedBox(width: 4),
+
                           Text(
                             isOpen ? 'OPEN' : 'CLOSED',
                             style: const TextStyle(
@@ -99,27 +150,43 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
 
               const SizedBox(width: 10),
 
+              // ==========================================================
+              // RESTAURANT INFORMATION
+              // ==========================================================
+
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(
                     top: 10,
                     right: 38,
                   ),
+
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
+
                     children: [
+                      // ==================================================
+                      // RESTAURANT NAME
+                      // ==================================================
+
                       Text(
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
+                          color: primaryTextColor,
                         ),
                       ),
 
                       const SizedBox(height: 6),
+
+                      // ==================================================
+                      // RATING + TIME
+                      // ==================================================
 
                       Row(
                         children: [
@@ -133,8 +200,10 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
 
                           Text(
                             rating,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
+                              color: primaryTextColor,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
 
@@ -145,9 +214,10 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
                               time,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+
                               style: TextStyle(
                                 fontSize: 12,
-                                color: theme.hintColor,
+                                color: secondaryTextColor,
                               ),
                             ),
                           ),
@@ -156,32 +226,53 @@ class MilestoneApp6RestaurantCard extends StatelessWidget {
 
                       const SizedBox(height: 7),
 
-                      // OPEN / CLOSED status
-                      Row(
-                        children: [
-                          Icon(
-                            isOpen
-                                ? Icons.access_time_rounded
-                                : Icons.schedule_rounded,
-                            size: 13,
-                            color: isOpen
-                                ? Colors.green
-                                : Colors.red,
-                          ),
+                      // ==================================================
+                      // OPEN / CLOSED STATUS
+                      // ==================================================
 
-                          const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 4,
+                        ),
 
-                          Text(
-                            isOpen ? 'Open now' : 'Closed now',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: isOpen
-                                  ? Colors.green
-                                  : Colors.red,
+                        decoration: BoxDecoration(
+                          color: statusBackground,
+                          borderRadius: BorderRadius.circular(7),
+
+                          border: Border.all(
+                            color: statusColor.withOpacity(
+                              isDark ? 0.25 : 0.15,
                             ),
                           ),
-                        ],
+                        ),
+
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isOpen
+                                  ? Icons.access_time_rounded
+                                  : Icons.schedule_rounded,
+                              size: 13,
+                              color: statusColor,
+                            ),
+
+                            const SizedBox(width: 4),
+
+                            Text(
+                              isOpen
+                                  ? 'Open now'
+                                  : 'Closed now',
+
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

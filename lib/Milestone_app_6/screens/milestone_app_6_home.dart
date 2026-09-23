@@ -45,11 +45,48 @@ class _MilestoneApp6HomeScreenState
   // ==============================================================
 // NEW RESTAURANT - ZOMATO STYLE
 // ==============================================================
+// ============================================================
+// NEW RESTAURANT - ZOMATO STYLE
+// ============================================================
 
   Widget _newRestaurantItem({
     required MilestoneApp6Restaurant restaurant,
   }) {
+    final theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
     final bool isClosed = !restaurant.isOpen;
+
+    final Color cardColor = isClosed
+        ? (isDark
+        ? const Color(0xFF1C1C1C)
+        : const Color(0xFFF5F5F5))
+        : (isDark
+        ? const Color(0xFF171717)
+        : Colors.white);
+
+    final Color titleColor = isClosed
+        ? (isDark
+        ? const Color(0xFF8A8A8A)
+        : const Color(0xFF555555))
+        : (isDark
+        ? Colors.white
+        : Colors.black);
+
+    final Color secondaryColor = isClosed
+        ? (isDark
+        ? const Color(0xFF777777)
+        : const Color(0xFF888888))
+        : (isDark
+        ? const Color(0xFFB5B5B5)
+        : const Color(0xFF666666));
+
+    final Color distanceColor = isClosed
+        ? (isDark
+        ? const Color(0xFF777777)
+        : const Color(0xFF888888))
+        : (isDark
+        ? const Color(0xFFBDBDBD)
+        : const Color(0xFF555555));
 
     return Container(
       margin: const EdgeInsets.fromLTRB(
@@ -59,19 +96,25 @@ class _MilestoneApp6HomeScreenState
         18,
       ),
       decoration: BoxDecoration(
-        color: isClosed
-            ? const Color(0xFFF5F5F5)
-            : Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(18),
+        border: isDark
+            ? Border.all(
+          color: Colors.white.withOpacity(0.06),
+        )
+            : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: isDark
+                ? Colors.black.withOpacity(0.35)
+                : Colors.black.withOpacity(0.06),
+            blurRadius: isDark ? 14 : 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
+
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
 
@@ -88,12 +131,13 @@ class _MilestoneApp6HomeScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // ==========================================================
+            // ========================================================
             // RESTAURANT IMAGE
-            // ==========================================================
+            // ========================================================
 
             AspectRatio(
               aspectRatio: 1.75,
+
               child: isClosed
                   ? ColorFiltered(
                 colorFilter: const ColorFilter.matrix([
@@ -117,36 +161,33 @@ class _MilestoneApp6HomeScreenState
               ),
             ),
 
-            // ==========================================================
+            // ========================================================
             // RESTAURANT INFORMATION
-            // ==========================================================
+            // ========================================================
 
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 14,
-                11,
+                12,
                 14,
-                14,
+                15,
               ),
 
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  // ======================================================
+                  // ==================================================
                   // RESTAURANT NAME
-                  // ======================================================
+                  // ==================================================
 
                   Text(
                     restaurant.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: isClosed
-                          ? const Color(0xFF555555)
-                          : Colors.black,
-                      fontSize: 19,
+                      color: titleColor,
+                      fontSize: 20,
                       fontWeight: FontWeight.w700,
                       height: 1.15,
                     ),
@@ -154,9 +195,9 @@ class _MilestoneApp6HomeScreenState
 
                   const SizedBox(height: 6),
 
-                  // ======================================================
+                  // ==================================================
                   // OPEN / CLOSED + DISTANCE
-                  // ======================================================
+                  // ==================================================
 
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -166,10 +207,10 @@ class _MilestoneApp6HomeScreenState
                         restaurant.isOpen
                             ? Icons.check_circle_rounded
                             : Icons.cancel_rounded,
-                        size: 14,
+                        size: 15,
                         color: restaurant.isOpen
-                            ? const Color(0xFF00A651)
-                            : const Color(0xFFE53935),
+                            ? const Color(0xFF00C853)
+                            : const Color(0xFFFF5252),
                       ),
 
                       const SizedBox(width: 4),
@@ -180,8 +221,8 @@ class _MilestoneApp6HomeScreenState
                             : 'Closed',
                         style: TextStyle(
                           color: restaurant.isOpen
-                              ? const Color(0xFF00A651)
-                              : const Color(0xFFE53935),
+                              ? const Color(0xFF00C853)
+                              : const Color(0xFFFF5252),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -190,10 +231,12 @@ class _MilestoneApp6HomeScreenState
                       if (restaurant.distance.isNotEmpty) ...[
                         const SizedBox(width: 7),
 
-                        const Text(
+                        Text(
                           '•',
                           style: TextStyle(
-                            color: Colors.black45,
+                            color: isDark
+                                ? Colors.white38
+                                : Colors.black45,
                             fontSize: 13,
                           ),
                         ),
@@ -203,9 +246,7 @@ class _MilestoneApp6HomeScreenState
                         Text(
                           restaurant.distance,
                           style: TextStyle(
-                            color: isClosed
-                                ? const Color(0xFF888888)
-                                : const Color(0xFF555555),
+                            color: distanceColor,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -216,18 +257,16 @@ class _MilestoneApp6HomeScreenState
 
                   const SizedBox(height: 6),
 
-                  // ======================================================
+                  // ==================================================
                   // CUISINE
-                  // ======================================================
+                  // ==================================================
 
                   Text(
                     restaurant.cuisine,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: isClosed
-                          ? const Color(0xFF888888)
-                          : const Color(0xFF666666),
+                      color: secondaryColor,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -235,9 +274,9 @@ class _MilestoneApp6HomeScreenState
 
                   const SizedBox(height: 4),
 
-                  // ======================================================
+                  // ==================================================
                   // ADDRESS
-                  // ======================================================
+                  // ==================================================
 
                   if (restaurant.address.isNotEmpty)
                     Row(
@@ -248,8 +287,8 @@ class _MilestoneApp6HomeScreenState
                         Icon(
                           Icons.location_on_rounded,
                           size: 15,
-                          color: isClosed
-                              ? const Color(0xFF999999)
+                          color: isDark
+                              ? const Color(0xFF9E9E9E)
                               : const Color(0xFF777777),
                         ),
 
@@ -261,9 +300,7 @@ class _MilestoneApp6HomeScreenState
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: isClosed
-                                  ? const Color(0xFF888888)
-                                  : const Color(0xFF666666),
+                              color: secondaryColor,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -612,6 +649,7 @@ class _MilestoneApp6HomeScreenState
       animation: widget.state,
       builder: (context, child) {
         final theme = Theme.of(context);
+        final bool isDark = theme.brightness == Brightness.dark;
 
         final restaurantFoods = _restaurantFoods(
           restaurant.name,
@@ -638,13 +676,27 @@ class _MilestoneApp6HomeScreenState
           ),
           decoration: BoxDecoration(
             color: isClosed
-                ? const Color(0xFFF5F5F5)
-                : theme.colorScheme.surface,
+                ? (isDark
+                ? const Color(0xFF1C1C1C)
+                : const Color(0xFFF5F5F5))
+                : (isDark
+                ? const Color(0xFF171717)
+                : theme.colorScheme.surface),
+
             borderRadius: BorderRadius.circular(20),
+
+            border: isDark
+                ? Border.all(
+              color: Colors.white.withOpacity(0.06),
+            )
+                : null,
+
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(.07),
-                blurRadius: 14,
+                color: isDark
+                    ? Colors.black.withOpacity(.35)
+                    : Colors.black.withOpacity(.07),
+                blurRadius: isDark ? 16 : 14,
                 offset: const Offset(0, 5),
               ),
             ],
@@ -725,8 +777,12 @@ class _MilestoneApp6HomeScreenState
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: isClosed
-                              ? const Color(0xFF555555)
-                              : Colors.black,
+                              ? (isDark
+                              ? const Color(0xFF858585)
+                              : const Color(0xFF555555))
+                              : (isDark
+                              ? Colors.white
+                              : Colors.black),
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           height: 1.15,
