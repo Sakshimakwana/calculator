@@ -499,12 +499,21 @@ class _MilestoneApp6MyOrdersScreenState
         final orders = _filteredOrders(
           widget.state.orders,
         );
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFFAFAFA),
+          backgroundColor: isDark
+              ? const Color(0xFF0D0D0D)
+              : const Color(0xFFFAFAFA),
 
           appBar: AppBar(
-            backgroundColor: const Color(0xFFFAFAFA),
+            backgroundColor: isDark
+                ? const Color(0xFF0D0D0D)
+                : const Color(0xFFFAFAFA),
+            foregroundColor: isDark
+                ? Colors.white
+                : const Color(0xFF171717),
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
