@@ -500,29 +500,9 @@ class _MilestoneApp6CartScreenState
                         ),
                       ),
                     ),
+
                   ],
                 ),
-
-                const SizedBox(
-                  height: 3,
-                ),
-
-                Text(
-                  'Size: ${item.size}',
-                  style: TextStyle(
-                    color: theme
-                        .colorScheme
-                        .primary,
-                    fontSize: 12,
-                    fontWeight:
-                    FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 4,
-                ),
-
                 Text(
                   '\$${item.unitPrice.toStringAsFixed(2)} each',
                   style: TextStyle(
@@ -531,6 +511,23 @@ class _MilestoneApp6CartScreenState
                     fontSize: 11,
                   ),
                 ),
+
+
+
+
+                // Text(
+                //   'Size: ${item.size}',
+                //   style: TextStyle(
+                //     color: theme
+                //         .colorScheme
+                //         .primary,
+                //     fontSize: 12,
+                //     fontWeight:
+                //     FontWeight.w700,
+                //   ),
+                // ),
+
+
 
                 const SizedBox(
                   height: 9,

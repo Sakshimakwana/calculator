@@ -988,17 +988,17 @@ class _MilestoneApp6CheckoutScreenState
 
               const SizedBox(height: 4),
 
-              Text(
-                'Size: ${item.size}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: theme
-                      .colorScheme
-                      .primary,
-                  fontWeight:
-                  FontWeight.w700,
-                ),
-              ),
+              // Text(
+              //   'Size: ${item.size}',
+              //   style: TextStyle(
+              //     fontSize: 11,
+              //     color: theme
+              //         .colorScheme
+              //         .primary,
+              //     fontWeight:
+              //     FontWeight.w700,
+              //   ),
+              // ),
 
               const SizedBox(height: 4),
 
