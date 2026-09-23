@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
 import 'milestone_app_6_image.dart';
@@ -154,16 +154,16 @@ class MilestoneApp6FoodCard extends StatelessWidget {
               //         () {
               //       context.push('/food/${food.id}');
               //     },
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(10),
               child: Container(
                 width: double.infinity,
-                height: 245,
+                height: 560,
 
                 decoration: BoxDecoration(
                   color: restaurantClosed
                       ? const Color(0xFFF1F1F1)
                       : theme.cardColor,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: Colors.black.withOpacity(0.04),
                   ),
@@ -179,66 +179,22 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
 
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ==================================================
-                    // FOOD IMAGE
-                    // ==================================================
-
+                    // IMAGE
                     SizedBox(
-                      height: 115,
+                      height: 129,
                       width: double.infinity,
-                      child: restaurantClosed
-                          ? ColorFiltered(
-                        colorFilter:
-                        const ColorFilter.matrix(
-                          <double>[
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                          ],
-                        ),
-                        child: MilestoneApp6Image(
-                          url: food.image,
-                          fit: BoxFit.cover,
-                          borderRadius:
-                          const BorderRadius.vertical(
-                            top: Radius.circular(16),
-                          ),
-                        ),
-                      )
-                          : MilestoneApp6Image(
+                      child: MilestoneApp6Image(
                         url: food.image,
                         fit: BoxFit.cover,
-                        borderRadius:
-                        const BorderRadius.vertical(
+                        borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(16),
                         ),
                       ),
                     ),
 
-                    // ==================================================
-                    // FOOD DETAILS
-                    // ==================================================
-
+                    // CONTENT
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
@@ -248,170 +204,106 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                           7,
                         ),
                         child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.max,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            // ==========================================
                             // FOOD NAME
-                            // ==========================================
-
-                            SizedBox(
-                              height: 18,
-                              child: Text(
-                                food.name,
-                                maxLines: 1,
-                                overflow:
-                                TextOverflow.ellipsis,
-                                style: theme
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(
-                                  fontSize: 13,
-                                  fontWeight:
-                                  FontWeight.w800,
-                                  color: restaurantClosed
-                                      ? const Color(
-                                    0xFF777777,
-                                  )
-                                      : null,
-                                ),
+                            Text(
+                              food.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: restaurantClosed
+                                    ? theme.colorScheme.onSurface.withOpacity(0.45)
+                                    : theme.colorScheme.onSurface,
                               ),
                             ),
 
-                            const SizedBox(height: 5),
+                            const SizedBox(height: 4),
 
-                            // ==========================================
                             // AVAILABILITY
-                            // ==========================================
-
                             Container(
-                              height: 23,
-                              padding:
-                              const EdgeInsets.symmetric(
-                                horizontal: 7,
+                              height: 21,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: availabilityColor
-                                    .withOpacity(0.10),
-                                borderRadius:
-                                BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: availabilityColor
-                                      .withOpacity(0.20),
+                                color: availabilityColor.withOpacity(
+                                  theme.brightness == Brightness.dark
+                                      ? 0.14
+                                      : 0.10,
                                 ),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
-                                mainAxisSize:
-                                MainAxisSize.min,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     availabilityIcon,
-                                    size: 11,
-                                    color:
-                                    availabilityColor,
+                                    size: 10,
+                                    color: availabilityColor,
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 3),
                                   Text(
                                     availabilityText,
                                     style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight:
-                                      FontWeight.w800,
-                                      color:
-                                      availabilityColor,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w800,
+                                      color: availabilityColor,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
 
-                            const Spacer(),
+                            const SizedBox(height: 4),
 
-                            // ==========================================
                             // PRICE
-                            // ==========================================
-
-                            SizedBox(
-                              height: 20,
-                              width: double.infinity,
-                              child: Align(
-                                alignment:
-                                Alignment.centerRight,
-                                child: Text(
-                                  '\$${food.price.toStringAsFixed(2)}',
-                                  style: theme
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(
-                                    fontSize: 14,
-                                    fontWeight:
-                                    FontWeight.w900,
-                                    color: restaurantClosed
-                                        ? const Color(
-                                      0xFF888888,
-                                    )
-                                        : null,
-                                  ),
-                                ),
+                            Text(
+                              '\$${food.price.toStringAsFixed(2)}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: restaurantClosed
+                                    ? theme.colorScheme.onSurface.withOpacity(0.45)
+                                    : theme.colorScheme.onSurface,
                               ),
                             ),
 
                             const SizedBox(height: 5),
 
-                            // ==========================================
-                            // CART CONTROL
-                            // ==========================================
-
+                            // YOUR EXISTING ADD TO CART
                             SizedBox(
                               height: 27,
                               width: double.infinity,
-                              child: quantity > 0 &&
-                                  canAddToCart
+                              child: quantity > 0 && canAddToCart
                                   ? _QuantityControl(
                                 quantity: quantity,
-                                onDecrease:
-                                _decreaseQuantity,
-                                onIncrease:
-                                _increaseQuantity,
+                                onDecrease: _decreaseQuantity,
+                                onIncrease: _increaseQuantity,
                               )
                                   : ElevatedButton(
-                                onPressed:
-                                canAddToCart
+                                onPressed: canAddToCart
                                     ? () {
-                                  _addItem(
-                                    context,
-                                  );
+                                  HapticFeedback.lightImpact();
+                                  _addItem(context);
                                 }
                                     : null,
-                                style: ElevatedButton
-                                    .styleFrom(
-                                  padding:
-                                  EdgeInsets.zero,
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.zero,
                                   elevation: 0,
-                                  minimumSize:
-                                  Size.zero,
+                                  minimumSize: Size.zero,
                                   tapTargetSize:
-                                  MaterialTapTargetSize
-                                      .shrinkWrap,
-                                  backgroundColor:
-                                  canAddToCart
-                                      ? theme
-                                      .colorScheme
-                                      .primary
-                                      : const Color(
-                                    0xFFE0E0E0,
-                                  ),
+                                  MaterialTapTargetSize.shrinkWrap,
+                                  backgroundColor: canAddToCart
+                                      ? theme.colorScheme.primary
+                                      : const Color(0xFFE0E0E0),
                                   disabledBackgroundColor:
-                                  const Color(
-                                      0xFFE0E0E0),
-                                  shape:
-                                  RoundedRectangleBorder(
-                                    borderRadius:
-                                    BorderRadius
-                                        .circular(
-                                      8,
-                                    ),
+                                  const Color(0xFFE0E0E0),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
                                 child: Text(
@@ -420,15 +312,14 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                                       : foodAvailable
                                       ? 'Add to cart'
                                       : 'Currently unavailable',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 9,
-                                    fontWeight:
-                                    FontWeight.w800,
+                                    fontWeight: FontWeight.w800,
                                     color: canAddToCart
                                         ? Colors.white
-                                        : const Color(
-                                      0xFF757575,
-                                    ),
+                                        : const Color(0xFF757575),
                                   ),
                                 ),
                               ),
@@ -438,7 +329,7 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
+                )
               ),
             ),
           ),
