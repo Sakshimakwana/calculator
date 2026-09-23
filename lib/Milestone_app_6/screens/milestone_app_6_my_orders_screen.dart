@@ -593,7 +593,7 @@ class _MilestoneApp6MyOrdersScreenState
       height: 56,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: const Color(0xFFE3E3E3),
         ),
