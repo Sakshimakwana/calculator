@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_order.dart';
 import '../state/milestone_app_6_state.dart';
@@ -23,7 +22,25 @@ class _MilestoneApp6MyOrdersScreenState
   final TextEditingController _searchController =
   TextEditingController();
 
+  final Set<String> _submittedReviews = {};
   String _searchText = '';
+
+  String _ratingText(int rating) {
+    switch (rating) {
+      case 1:
+        return 'Poor';
+      case 2:
+        return 'Fair';
+      case 3:
+        return 'Good';
+      case 4:
+        return 'Very Good';
+      case 5:
+        return 'Excellent';
+      default:
+        return 'Tap to rate';
+    }
+  }
 
   @override
   void initState() {
@@ -40,6 +57,420 @@ class _MilestoneApp6MyOrdersScreenState
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+  // ============================================================
+// REVIEW DIALOG
+// ============================================================
+
+// ============================================================
+// REVIEW DIALOG
+// ============================================================
+
+  // ============================================================
+// REVIEW DIALOG
+// ============================================================
+
+  Future<void> _showReviewDialog(
+      BuildContext context,
+      MilestoneApp6Order order,
+      ) async {
+    int selectedRating = 0;
+    String reviewText = '';
+
+    final bool? submitted = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.45),
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (
+              context,
+              setDialogState,
+              ) {
+            // ========================================================
+            // SUBMIT VALIDATION
+            // ========================================================
+
+            final bool canSubmit =
+                selectedRating > 0 &&
+                    reviewText.trim().isNotEmpty;
+
+            return Dialog(
+              backgroundColor:
+              Theme.of(context).cardColor,
+              insetPadding:
+              const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 24,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                BorderRadius.circular(20),
+              ),
+              child: ConstrainedBox(
+                constraints:
+                const BoxConstraints(
+                  maxWidth: 625,
+                ),
+                child: Padding(
+                  padding:
+                  const EdgeInsets.fromLTRB(
+                    30,
+                    24,
+                    30,
+                    20,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+
+                      // ==================================================
+                      // TITLE
+                      // ==================================================
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Write a Review',
+                              style: TextStyle(
+                                fontSize: 26,
+                                fontWeight:
+                                FontWeight.w800,
+                                color:
+                                Theme.of(context)
+                                    .brightness ==
+                                    Brightness.dark
+                                    ? Colors.white
+                                    : const Color(
+                                  0xFF10131A,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          IconButton(
+                            onPressed: () {
+                              Navigator.pop(
+                                dialogContext,
+                                false,
+                              );
+                            },
+                            icon: Icon(
+                              Icons.close_rounded,
+                              size: 20,
+                              color:
+                              Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // ==================================================
+                      // SUBTITLE
+                      // ==================================================
+
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 15,
+                            color:
+                            Colors.grey.shade500,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text:
+                              'How was your experience with ',
+                            ),
+                            TextSpan(
+                              text:
+                              order.restaurantName,
+                              style: TextStyle(
+                                fontWeight:
+                                FontWeight.w600,
+                                color:
+                                Theme.of(context)
+                                    .brightness ==
+                                    Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: '?',
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ==================================================
+                      // STAR RATING
+                      // ==================================================
+
+                      Center(
+                        child: Row(
+                          mainAxisSize:
+                          MainAxisSize.min,
+                          children: List.generate(
+                            5,
+                                (index) {
+                              final int rating =
+                                  index + 1;
+
+                              return GestureDetector(
+                                behavior:
+                                HitTestBehavior
+                                    .opaque,
+                                onTap: () {
+                                  setDialogState(() {
+                                    selectedRating =
+                                        rating;
+                                  });
+                                },
+                                child: Padding(
+                                  padding:
+                                  const EdgeInsets
+                                      .symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  child: Icon(
+                                    rating <=
+                                        selectedRating
+                                        ? Icons.star_rounded
+                                        : Icons
+                                        .star_border_rounded,
+                                    size: 38,
+                                    color: rating <=
+                                        selectedRating
+                                        ? const Color(
+                                      0xFFFFC107,
+                                    )
+                                        : Colors
+                                        .grey
+                                        .shade300,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 5),
+
+                      Center(
+                        child: Text(
+                          selectedRating == 0
+                              ? 'Tap to rate'
+                              : _ratingText(
+                            selectedRating,
+                          ),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                            Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      // ==================================================
+                      // YOUR REVIEW
+                      // ==================================================
+
+                      Row(
+                        children: [
+                          Text(
+                            'Your Review',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight:
+                              FontWeight.w700,
+                              color:
+                              Theme.of(context)
+                                  .brightness ==
+                                  Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          Text(
+                            '${reviewText.length} / 500',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color:
+                              Colors.grey.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // ==================================================
+                      // REVIEW TEXT FIELD
+                      // ==================================================
+
+                      Container(
+                        height: 145,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color:
+                            Theme.of(context)
+                                .brightness ==
+                                Brightness.dark
+                                ? Colors.white
+                                .withOpacity(0.10)
+                                : const Color(
+                              0xFFE2E2E2,
+                            ),
+                          ),
+                          borderRadius:
+                          BorderRadius.circular(
+                            14,
+                          ),
+                        ),
+                        child: TextField(
+                          maxLength: 500,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical:
+                          TextAlignVertical.top,
+                          onChanged: (value) {
+                            setDialogState(() {
+                              reviewText = value;
+                            });
+                          },
+                          decoration:
+                          const InputDecoration(
+                            counterText: '',
+                            border:
+                            InputBorder.none,
+                            contentPadding:
+                            EdgeInsets.all(10),
+                            hintText:
+                            'Tell us about your experience...',
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      // ==================================================
+                      // BUTTONS
+                      // ==================================================
+
+                      Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.end,
+                        children: [
+
+                          // CANCEL
+                          SizedBox(
+                            height: 42,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Navigator.pop(
+                                  dialogContext,
+                                  false,
+                                );
+                              },
+                              style:
+                              OutlinedButton
+                                  .styleFrom(
+                                shape:
+                                RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius
+                                      .circular(12),
+                                ),
+                              ),
+                              child:
+                              const Text('Cancel'),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          // SUBMIT
+                          SizedBox(
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: canSubmit
+                                  ? () {
+                                Navigator.pop(
+                                  dialogContext,
+                                  true,
+                                );
+                              }
+                                  : null,
+                              style:
+                              ElevatedButton
+                                  .styleFrom(
+                                elevation: 0,
+                                backgroundColor:
+                                Theme.of(context)
+                                    .colorScheme
+                                    .primary,
+                                disabledBackgroundColor:
+                                const Color(
+                                  0xFFE5E5E5,
+                                ),
+                                foregroundColor:
+                                Colors.white,
+                                disabledForegroundColor:
+                                const Color(
+                                  0xFF999999,
+                                ),
+                                padding:
+                                const EdgeInsets
+                                    .symmetric(
+                                  horizontal: 20,
+                                ),
+                                shape:
+                                RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius
+                                      .circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Submit Review',
+                                style: TextStyle(
+                                  fontWeight:
+                                  FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // ============================================================
+    // SAVE REVIEW AFTER DIALOG IS COMPLETELY CLOSED
+    // ============================================================
+
+    if (submitted == true && mounted) {
+      setState(() {
+        _submittedReviews.add(order.id);
+      });
+    }
   }
 
   List<MilestoneApp6Order> _filteredOrders(
@@ -200,22 +631,36 @@ class _MilestoneApp6MyOrdersScreenState
       BuildContext context,
       MilestoneApp6Order order,
       ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final cardColor = isDark
+        ? const Color(0xFF111111)
+        : Colors.white;
+
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : const Color(0xFFE8E8E8);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFE4E4E4),
+          color: borderColor,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(
+              isDark ? 0.28 : 0.05,
+            ),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           _restaurantHeader(
@@ -223,21 +668,9 @@ class _MilestoneApp6MyOrdersScreenState
             order,
           ),
 
-          const Divider(
-            height: 1,
-          ),
-
           _allOrderItems(order),
 
-          const Divider(
-            height: 1,
-          ),
-
           _orderInformation(order),
-
-          const Divider(
-            height: 1,
-          ),
 
           _orderActions(
             context,
@@ -254,106 +687,191 @@ class _MilestoneApp6MyOrdersScreenState
       BuildContext context,
       MilestoneApp6Order order,
       ) {
+    final theme = Theme.of(context);
+    final isDark =
+        theme.brightness == Brightness.dark;
+
+    final statusColor =
+    _statusColor(order.status);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        10,
-        20,
-        10,
-        28,
+        16,
+        16,
+        16,
+        14,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
-          ClipOval(
+          // ==========================================================
+          // RESTAURANT IMAGE
+          // ==========================================================
+
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              borderRadius:
+              BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.grey.shade200,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
             child: Image.network(
               order.restaurantImage,
-              width: 70,
-              height: 70,
               fit: BoxFit.cover,
-              errorBuilder: (
-                  context,
-                  error,
-                  stackTrace,
-                  ) {
-                return
-                  Container(
-                  width: 55,
-                  height: 55,
-                  color: const Color(0xFFF0F0F0),
-                  child: const Icon(
-                    Icons.restaurant,
-                    size: 35,
-                    color: Colors.grey,
+              errorBuilder:
+                  (context, error, stackTrace) {
+                return Container(
+                  color: isDark
+                      ? const Color(0xFF242424)
+                      : const Color(0xFFF3F3F3),
+                  child: Icon(
+                    Icons.restaurant_rounded,
+                    size: 28,
+                    color: isDark
+                        ? Colors.grey.shade500
+                        : Colors.grey.shade500,
                   ),
                 );
               },
             ),
           ),
 
-          const SizedBox(
-            width: 20,
-          ),
+          const SizedBox(width: 13),
+
+          // ==========================================================
+          // RESTAURANT DETAILS
+          // ==========================================================
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
-                Text(
-                  order.restaurantName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        order.restaurantName,
+                        maxLines: 1,
+                        overflow:
+                        TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight:
+                          FontWeight.w800,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(
+                            0xFF171717,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // ORDER ID
+                    Text(
+                      '#${_shortOrderId(order.id)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight:
+                        FontWeight.w700,
+                        color: isDark
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
 
-                const SizedBox(
-                  height: 5,
-                  width: 20,
-                ),
+                const SizedBox(height: 5),
 
                 Row(
                   children: [
                     Icon(
                       Icons.location_on_outlined,
-                      size: 20,
-                      color: Colors.grey.shade600,
+                      size: 15,
+                      color: isDark
+                          ? Colors.grey.shade500
+                          : Colors.grey.shade600,
                     ),
-
-                    const SizedBox(
-                      width: 7,
-                    ),
-
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        order.restaurantAddress.isNotEmpty
+                        order.restaurantAddress
+                            .isNotEmpty
                             ? order.restaurantAddress
                             : 'Ahmedabad',
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                        TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey.shade600,
+                          fontSize: 12,
+                          color: isDark
+                              ? Colors.grey.shade500
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 9),
+
+                // STATUS BADGE
+                // Container(
+                //   padding:
+                //   const EdgeInsets.symmetric(
+                //     horizontal: 9,
+                //     vertical: 5,
+                //   ),
+                //   decoration: BoxDecoration(
+                //     color: statusColor.withOpacity(
+                //       isDark ? 0.16 : 0.10,
+                //     ),
+                //     borderRadius:
+                //     BorderRadius.circular(20),
+                //     border: Border.all(
+                //       color: statusColor.withOpacity(
+                //         isDark ? 0.30 : 0.20,
+                //       ),
+                //     ),
+                //   ),
+                //   child: Row(
+                //     mainAxisSize:
+                //     MainAxisSize.min,
+                //     children: [
+                //       Container(
+                //         width: 6,
+                //         height: 6,
+                //         decoration:
+                //         BoxDecoration(
+                //           color: statusColor,
+                //           shape: BoxShape.circle,
+                //         ),
+                //       ),
+                //       const SizedBox(width: 6),
+                //       Text(
+                //         order.statusText,
+                //         style: TextStyle(
+                //           fontSize: 10,
+                //           fontWeight:
+                //           FontWeight.w800,
+                //           color: statusColor,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
               ],
-            ),
-          ),
-
-          const SizedBox(
-            width: 15,
-          ),
-
-          Text(
-            '#${_shortOrderId(order.id)}',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -363,205 +881,311 @@ class _MilestoneApp6MyOrdersScreenState
   // ============================================================
   // PRODUCT
   // ============================================================
-  Widget _allOrderItems(MilestoneApp6Order order) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        30,
-        20,
-        30,
-        20,
+  Widget _allOrderItems(
+      MilestoneApp6Order order,
+      ) {
+    final context = this.context;
+    final isDark =
+        Theme.of(context).brightness ==
+            Brightness.dark;
+
+    return Container(
+      width: 330
+      ,
+
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF161616)
+            : const Color(0xFFFCFCFC),
       ),
       child: Column(
         children: [
-          for (int index = 0; index < order.items.length; index++) ...[
-            _productRow(order.items[index]),
+          for (
+          int index = 0;
+          index < order.items.length;
+          index++
+          ) ...[
+            _productRow(
+              order.items[index],
+            ),
 
             if (index != order.items.length - 1)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 14),
-                child: Divider(
-                  height: 1,
-                ),
+              Divider(
+                height: 1,
+                color: isDark
+                    ? Colors.white.withOpacity(0.07)
+                    : Colors.grey.shade200,
               ),
           ],
         ],
       ),
     );
   }
-  Widget _productRow(MilestoneApp6CartItem item) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.network(
-            item.food.image,
-            width: 72,
-            height: 72,
-            fit: BoxFit.cover,
-            errorBuilder: (
-                context,
-                error,
-                stackTrace,
-                ) {
-              return Container(
-                width: 72,
-                height: 72,
-                color: const Color(0xFFF0F0F0),
-                child: const Icon(
-                  Icons.fastfood_outlined,
-                  color: Colors.grey,
-                  size: 30,
-                ),
-              );
-            },
+  Widget _productRow(
+      MilestoneApp6CartItem item,
+      ) {
+    final theme = Theme.of(context);
+    final isDark =
+        theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 2,
+      ),
+      child: Row(
+        crossAxisAlignment:
+        CrossAxisAlignment.center,
+        children: [
+          // ==========================================================
+          // FOOD IMAGE
+          // ==========================================================
+
+          Container(
+
+            height: 50,
+            // decoration: BoxDecoration(
+            //   borderRadius:
+            //   BorderRadius.circular(12),
+            //   color: isDark
+            //       ? const Color(0xFF252525)
+            //       : const Color(0xFFF3F3F3),
+            // ),
+           // clipBehavior: Clip.antiAlias,
+            // child: Image.network(
+            //   item.food.image,
+            //   fit: BoxFit.cover,
+            //   errorBuilder:
+            //       (context, error, stackTrace) {
+            //     return Icon(
+            //       Icons.fastfood_outlined,
+            //       size: 28,
+            //       color: isDark
+            //           ? Colors.grey.shade600
+            //           : Colors.grey.shade400,
+            //     );
+            //   },
+            // ),
           ),
-        ),
 
-        const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.food.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+          // ==========================================================
+          // FOOD DETAILS
+          // ==========================================================
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      item.food.name,
+                      maxLines: 1,
+                      overflow:
+                      TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: isDark
+                            ? Colors.white
+                            : const Color(0xFF171717),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    _miniInfo(
+                      '× ${item.quantity}',
+                      isDark,
+                    ),
+
+                  ],
+
                 ),
-              ),
 
-              const SizedBox(height: 6),
-
-              Text(
-                'Size: ${item.size}  •  Qty: ${item.quantity}',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              Text(
-                '\$${item.unitPrice.toStringAsFixed(2)} × ${item.quantity}',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-            ],
+                // Text(
+                //   '\$${item.unitPrice.toStringAsFixed(2)} ',
+                //   style: TextStyle(
+                //     fontSize: 11,
+                //     color: isDark
+                //         ? Colors.grey.shade500
+                //         : Colors.grey.shade600,
+                //   ),
+                // ),
+              ],
+            ),
           ),
-        ),
 
-        const SizedBox(width: 12),
+          const SizedBox(width: 5),
 
-        Text(
-          '\$${item.totalPrice.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+          // ==========================================================
+          // TOTAL
+          // ==========================================================
+
+          Text(
+            '\$${item.totalPrice.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: isDark
+                  ? Colors.white
+                  : const Color(0xFF171717),
+            ),
           ),
+        ],
+      ),
+    );
+  }
+  Widget _miniInfo(
+      String text,
+      bool isDark,
+      ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 1,
+        vertical: 3,
+      ),
+
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: isDark
+              ? Colors.grey.shade400
+              : Colors.grey.shade700,
         ),
-      ],
+      ),
     );
   }
 
   // ============================================================
   // ORDER INFORMATION
   // ============================================================
-
   Widget _orderInformation(
       MilestoneApp6Order order,
       ) {
-    final statusColor =
-    _statusColor(order.status);
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
+
+    final statusColor = _statusColor(order.status);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        18,
-        20,
-        18,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 550) {
-            return Column(
+      child: Row(
+        children: [
+          // ORDER PLACED
+          Expanded(
+            child: Column(
               crossAxisAlignment:
               CrossAxisAlignment.start,
               children: [
-                _infoItem(
+                Text(
                   'Order Placed',
-                  _formatDate(order.orderDate),
-                ),
-
-                const SizedBox(
-                  height: 15,
-                ),
-
-                _infoItem(
-                  'Delivery Status',
-                  order.statusText,
-                  valueColor: statusColor,
-                  showDot: true,
-                ),
-
-                const SizedBox(
-                  height: 15,
-                ),
-
-                _infoItem(
-                  'Total',
-                  '₹${order.totalPrice.toStringAsFixed(2)}',
-                  bold: true,
-                  large: true,
-                ),
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: _infoItem(
-                  'Order Placed',
-                  _formatDate(order.orderDate),
-                ),
-              ),
-
-              Expanded(
-                flex: 2,
-                child: _infoItem(
-                  'Delivery Status',
-                  order.statusText,
-                  valueColor: statusColor,
-                  showDot: true,
-                ),
-              ),
-
-              Expanded(
-                child: Align(
-                  alignment:
-                  Alignment.centerRight,
-                  child: _infoItem(
-                    'Total',
-                    '₹${order.totalPrice.toStringAsFixed(2)}',
-                    bold: true,
-                    large: true,
-                    alignRight: true,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? Colors.grey.shade500
+                        : Colors.grey.shade600,
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+                const SizedBox(height: 4),
+                Text(
+                  _formatDate(order.orderDate),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? Colors.white
+                        : Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 25,),
+
+          // DELIVERY STATUS
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Delivery Status',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? Colors.grey.shade500
+                        : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Flexible(
+                      child: Text(
+                        order.statusText,
+                        maxLines: 1,
+                        overflow:
+                        TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // TOTAL
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Total',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? Colors.grey.shade500
+                        : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '₹${order.totalPrice.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? Colors.white
+                        : Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -638,125 +1262,126 @@ class _MilestoneApp6MyOrdersScreenState
   // ACTIONS
   // ============================================================
 
+  // ============================================================
+// ORDER ACTIONS
+// ============================================================
+
+// ============================================================
+// ORDER ACTIONS
+// ============================================================
+
   Widget _orderActions(
       BuildContext context,
       MilestoneApp6Order order,
       ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        14,
-        20,
-        14,
-      ),
-      child: Row(
-        mainAxisAlignment:
-        MainAxisAlignment.end,
-        children: [
-          if (order.isDelivered)
-            _actionButton(
-              label: 'Write a Review',
-              filled: true,
-              onTap: () {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Review feature coming soon.',
-                    ),
-                    behavior:
-                    SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
+    final bool isplaced =
+        order.status == MilestoneApp6OrderStatus.placed;
 
-          if (order.isCancelled)
-            _cancelledLabel(),
+    final bool isCancelled =
+        order.status == MilestoneApp6OrderStatus.cancelled;
 
-          if (order.canCancel)
-            _actionButton(
-              label: 'Cancel Order',
-              filled: false,
-              danger: true,
-              onTap: () {
-                _confirmCancel(
-                  context,
-                  order,
-                );
-              },
-            ),
+    // ==========================================================
+    // DELIVERED
+    // ==========================================================
 
-          const SizedBox(
-            width: 10,
-          ),
+    if (isplaced) {
+      final bool reviewSubmitted =
+      _submittedReviews.contains(order.id);
 
-          _actionButton(
-            label: 'View Details',
-            filled: false,
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          10,
+          20,
+          14,
+        ),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: reviewSubmitted
+              ? _reviewSubmittedLabel()
+              : _actionButton(
+            label: 'Write a Review',
+            filled: true,
             onTap: () {
-              _openOrderDetails(
+              _showReviewDialog(
                 context,
                 order,
               );
             },
           ),
+        ),
+      );
+    }
 
-          const SizedBox(
-            width: 4,
-          ),
+    // ==========================================================
+    // CANCELLED
+    // ==========================================================
 
-          if (!order.isCancelled)
-            PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.more_horiz,
-              ),
-              onSelected: (value) {
-                if (value == 'preparing') {
-                  widget.state.updateOrderStatus(
-                    order.id,
-                    MilestoneApp6OrderStatus.preparing,
-                  );
-                }
+    if (isCancelled) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          10,
+          20,
+          14,
+        ),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: _cancelledLabel(),
+        ),
+      );
+    }
 
-                if (value == 'out') {
-                  widget.state.updateOrderStatus(
-                    order.id,
-                    MilestoneApp6OrderStatus.outForDelivery,
-                  );
-                }
+    // ==========================================================
+    // OTHER STATUS
+    // ==========================================================
 
-                if (value == 'delivered') {
-                  widget.state.markOrderDelivered(
-                    order.id,
-                  );
-                }
-              },
-              itemBuilder: (context) {
-                return const [
-                  PopupMenuItem(
-                    value: 'preparing',
-                    child: Text(
-                      'Mark Preparing',
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'out',
-                    child: Text(
-                      'Mark Out for Delivery',
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'delivered',
-                    child: Text(
-                      'Mark Delivered',
-                    ),
-                  ),
-                ];
-              },
+    return const SizedBox.shrink();
+  }
+  // ============================================================
+// REVIEW SUBMITTED
+// ============================================================
+
+// ============================================================
+// REVIEW SUBMITTED
+// ============================================================
+
+  Widget _reviewSubmittedLabel() {
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
+
+    return SizedBox(
+      height: 38,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF12351F)
+              : const Color(0xFFEFFFF4),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(
+              Icons.check_rounded,
+              size: 16,
+              color: Color(0xFF00A651),
             ),
-        ],
+            SizedBox(width: 5),
+            Text(
+              'Review Submitted',
+              style: TextStyle(
+                color: Color(0xFF00A651),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -764,64 +1389,84 @@ class _MilestoneApp6MyOrdersScreenState
   // ============================================================
   // BUTTON
   // ============================================================
+  // ============================================================
+// REVIEW BUTTON
+// ============================================================
 
   Widget _actionButton({
     required String label,
     required VoidCallback onTap,
     bool filled = false,
-    bool danger = false,
   }) {
+    final theme = Theme.of(context);
+    final isDark =
+        theme.brightness == Brightness.dark;
+
+    final Color accent =
+        theme.colorScheme.primary;
+
     return SizedBox(
-      height: 44,
+      height: 38,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          backgroundColor: filled
-              ? const Color(0xFFE45B6B)
-              : Colors.white,
-          foregroundColor: danger
-              ? const Color(0xFFD62828)
-              : filled
+          backgroundColor:
+          filled ? accent : Colors.transparent,
+          foregroundColor:
+          filled
+              ? Colors.white
+              : isDark
               ? Colors.white
               : Colors.black87,
           side: BorderSide(
-            color: danger
-                ? const Color(0xFFD62828)
-                : filled
-                ? const Color(0xFFE45B6B)
+            color: filled
+                ? accent
+                : isDark
+                ? Colors.white.withOpacity(0.15)
                 : Colors.grey.shade300,
           ),
           shape: RoundedRectangleBorder(
             borderRadius:
-            BorderRadius.circular(12),
+            BorderRadius.circular(10),
           ),
           padding:
           const EdgeInsets.symmetric(
-            horizontal: 14,
+            horizontal: 16,
           ),
         ),
         child: Text(
           label,
           style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
     );
   }
 
+  // ============================================================
+// CANCELLED LABEL
+// ============================================================
+
   Widget _cancelledLabel() {
+    final isDark =
+        Theme.of(context).brightness ==
+            Brightness.dark;
+
     return Container(
-      height: 38,
+      height: 34,
+      width: 117,
       padding: const EdgeInsets.symmetric(
-        horizontal: 11,
+        horizontal: 10,
       ),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEAEA),
+        color: isDark
+            ? const Color(0xFF3A1717)
+            : const Color(0xFFFFEAEA),
         borderRadius:
-        BorderRadius.circular(10),
+        BorderRadius.circular(9),
       ),
       child: const Text(
         'Order Cancelled',

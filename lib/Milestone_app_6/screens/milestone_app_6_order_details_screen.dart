@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../data/milestone_app_6_address_data.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_order.dart';
@@ -153,7 +152,7 @@ class _MilestoneApp6OrderDetailsScreenState
                     crossAxisAlignment:
                     CrossAxisAlignment.start,
                     children: [
-                      _backButton(context),
+                      // _backButton(context),
 
                       const SizedBox(
                         height: 20,
@@ -226,42 +225,42 @@ class _MilestoneApp6OrderDetailsScreenState
   // BACK BUTTON
   // ============================================================
 
-  Widget _backButton(
-      BuildContext context,
-      ) {
-    return InkWell(
-      borderRadius:
-      BorderRadius.circular(12),
-      onTap: () {
-        Navigator.of(context).pop();
-      },
-      child: const Padding(
-        padding: EdgeInsets.symmetric(
-          vertical: 6,
-          horizontal: 2,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.arrow_back,
-              size: 23,
-              color: Colors.black87,
-            ),
-            SizedBox(width: 10),
-            Text(
-              'Back to Orders',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _backButton(
+  //     BuildContext context,
+  //     ) {
+  //   return InkWell(
+  //     borderRadius:
+  //     BorderRadius.circular(12),
+  //     onTap: () {
+  //       Navigator.of(context).pop();
+  //     },
+  //     child: const Padding(
+  //       padding: EdgeInsets.symmetric(
+  //         vertical: 6,
+  //         horizontal: 2,
+  //       ),
+  //       child: Row(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           Icon(
+  //             Icons.arrow_back,
+  //             size: 23,
+  //             color: Colors.black87,
+  //           ),
+  //           SizedBox(width: 10),
+  //           Text(
+  //             'Back to Orders',
+  //             style: TextStyle(
+  //               fontSize: 16,
+  //               fontWeight: FontWeight.w500,
+  //               color: Colors.black87,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // ============================================================
   // ORDER HEADER
@@ -293,9 +292,9 @@ class _MilestoneApp6OrderDetailsScreenState
                 crossAxisAlignment:
                 CrossAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: _orderTitle(),
-                  ),
+                  // Expanded(
+                  //   child: _orderTitle(),
+                  // ),
                   const SizedBox(
                     width: 12,
                   ),
@@ -307,9 +306,9 @@ class _MilestoneApp6OrderDetailsScreenState
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
                 children: [
-                  _orderTitle(),
+                 // _orderTitle(),
                   const SizedBox(
-                    height: 14,
+                    height: 1,
                   ),
                   _invoiceButton(context),
                 ],
@@ -391,21 +390,21 @@ class _MilestoneApp6OrderDetailsScreenState
     );
   }
 
-  Widget _orderTitle() {
-    return const Text(
-      'Order Details',
-      maxLines: 1,
-      overflow:
-      TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 27,
-        height: 1.15,
-        fontWeight:
-        FontWeight.w800,
-        color: Colors.black,
-      ),
-    );
-  }
+  // Widget _orderTitle() {
+  //   return const Text(
+  //     'Order Details',
+  //     maxLines: 1,
+  //     overflow:
+  //     TextOverflow.ellipsis,
+  //     style: TextStyle(
+  //       fontSize: 27,
+  //       height: 1.15,
+  //       fontWeight:
+  //       FontWeight.w800,
+  //       color: Colors.black,
+  //     ),
+  //   );
+  // }
 
   // ============================================================
   // INVOICE
