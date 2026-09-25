@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../state/milestone_app_6_auth_store.dart';
+import 'package:provider/provider.dart';
+import 'package:app_matic_tech_flutter_app/controllers/auth_controller.dart';
 
 class MilestoneApp6SignupScreen extends StatefulWidget {
   const MilestoneApp6SignupScreen({
@@ -27,7 +27,7 @@ class _MilestoneApp6SignupScreenState
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
-  final _auth = MilestoneApp6AuthStore.instance;
+
 
   @override
   void dispose() {
@@ -164,27 +164,34 @@ class _MilestoneApp6SignupScreenState
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    final authContoller = context.read<AuthController>();
 
     setState(() {
       _isLoading = true;
     });
 
-    await Future.delayed(
-      const Duration(milliseconds: 600),
+    final success = await authContoller.register(
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        password: _passwordController.text,
     );
 
-    _auth.createAccount(
-      fullName: _nameController.text,
-      email: _emailController.text,
-      phone: _phoneController.text,
-      password: _passwordController.text,
-    );
 
     if (!mounted) return;
 
     setState(() {
       _isLoading = false;
     });
+
+    if(!success){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(authContoller.errorMessage ??'Registration failed. Please try again',
+          ),
+        behavior: SnackBarBehavior.floating,
+      ),
+      );
+    }
 
     await showDialog<void>(
       context: context,
@@ -229,6 +236,7 @@ class _MilestoneApp6SignupScreenState
               ),
               const SizedBox(height: 8),
               Text(
+                authContoller.registerResponse?.message ??
                 'Your account has been created successfully.\nPlease sign in to continue.',
                 textAlign: TextAlign.center,
                 style: TextStyle(

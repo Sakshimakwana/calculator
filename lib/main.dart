@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-
 import 'Milestone_app_6/routes/milestone_app_6_routes.dart';
 import 'Milestone_app_6/state/milestone_app_6_state.dart';
 import 'Milestone_app_6/theme/milestone_app_6_theme.dart';
-
+import 'package:provider/provider.dart';
+import 'core/network/api_service.dart';
+import 'core/network/dio_client.dart';
+import 'repositories/auth_repository.dart';
+import 'controllers/auth_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,10 +20,16 @@ Future<void> main() async {
   MilestoneApp6Routes(state);
 
   runApp(
-    MilestoneApp6App(
-      state: state,
-      routes: routes,
-    ),
+   ChangeNotifierProvider(create: (_) => AuthController(
+       AuthRepository(
+           ApiService(DioClient.dio)
+       ),
+   ),
+   child: MilestoneApp6App(
+       state: state,
+       routes: routes),
+
+   )
   );
 }
 
