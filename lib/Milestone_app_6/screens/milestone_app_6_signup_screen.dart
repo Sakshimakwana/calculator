@@ -189,8 +189,10 @@ class _MilestoneApp6SignupScreenState
           content: Text(authContoller.errorMessage ??'Registration failed. Please try again',
           ),
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
       ),
       );
+      return;
     }
 
     await showDialog<void>(
@@ -237,7 +239,7 @@ class _MilestoneApp6SignupScreenState
               const SizedBox(height: 8),
               Text(
                 authContoller.registerResponse?.message ??
-                'Your account has been created successfully.\nPlease sign in to continue.',
+                'Your account has been created successfully.\nPlease login to continue.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(context)
@@ -266,7 +268,7 @@ class _MilestoneApp6SignupScreenState
                     ),
                   ),
                   child: const Text(
-                    'Continue to Sign In',
+                    'Continue to Login',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                     ),
@@ -527,27 +529,23 @@ class _MilestoneApp6SignupScreenState
                       SizedBox(
                         height: 54,
                         child: ElevatedButton(
-                          onPressed:
-                          _isLoading
+                          onPressed: _isLoading
                               ? null
                               : _createAccount,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primary,
                             foregroundColor: Colors.white,
                             elevation: 2,
-                            shadowColor:
-                            primary.withOpacity(.25),
+                            shadowColor: primary.withOpacity(.25),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(15),
                             ),
                           ),
                           child: _isLoading
                               ? const SizedBox(
                             width: 22,
                             height: 22,
-                            child:
-                            CircularProgressIndicator(
+                            child: CircularProgressIndicator(
                               strokeWidth: 2.4,
                               color: Colors.white,
                             ),
@@ -556,8 +554,7 @@ class _MilestoneApp6SignupScreenState
                             'Create Account',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight:
-                              FontWeight.w700,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),

@@ -5,11 +5,13 @@ import 'Milestone_app_6/theme/milestone_app_6_theme.dart';
 import 'package:provider/provider.dart';
 import 'core/network/api_service.dart';
 import 'core/network/dio_client.dart';
+import 'core/storage/auth_storage.dart';
 import 'repositories/auth_repository.dart';
 import 'controllers/auth_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AuthStorage.init();
 
   final state =
   MilestoneApp6State();

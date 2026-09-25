@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/auth_controller.dart';
 
-import '../state/milestone_app_6_auth_store.dart';
 
 class MilestoneApp6LoginScreen extends StatefulWidget {
   const MilestoneApp6LoginScreen({
@@ -23,7 +24,6 @@ class _MilestoneApp6LoginScreenState
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final _auth = MilestoneApp6AuthStore.instance;
 
   @override
   void dispose() {
@@ -82,19 +82,16 @@ class _MilestoneApp6LoginScreenState
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    final authController = context.read<AuthController>();
 
     setState(() {
       _isLoading = true;
     });
 
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    );
+    final success = await authController.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text);
 
-    final success = _auth.login(
-      email: _emailController.text,
-      password: _passwordController.text,
-    );
 
     if (!mounted) return;
 
@@ -102,22 +99,20 @@ class _MilestoneApp6LoginScreenState
       _isLoading = false;
     });
 
-    if (success) {
-      context.go('/home');
+    if (!success) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          authController.errorMessage ?? 'login failed. Please try again',
+        ),
+        behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusGeometry.circular(14),
+      ),
+      )
+      );
       return;
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Invalid email or password.',
-        ),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      ),
-    );
+    context.go('/home');
   }
 
   @override

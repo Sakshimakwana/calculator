@@ -2,6 +2,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/screens/milestone_app
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/storage/auth_storage.dart';
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../screens/milestone_app_6_my_orders_screen.dart';
@@ -38,10 +39,12 @@ class MilestoneApp6Routes {
       // INITIAL LOCATION
       // ================================================================
 
-      initialLocation: state.onboardingDone
-          ? '/login'
-          : '/onboarding',
-
+      initialLocation:
+      !state.onboardingDone
+          ? '/onboarding'
+          : AuthStorage.isLoggedIn
+          ? '/home'
+          : '/login',
       // ================================================================
       // REFRESH ROUTER WHEN STATE CHANGES
       // ================================================================
