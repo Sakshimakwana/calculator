@@ -32,16 +32,28 @@ class MilestoneApp6HomeScreen extends StatefulWidget {
 class _MilestoneApp6HomeScreenState
     extends State<MilestoneApp6HomeScreen> {
   // ==============================================================
+  // RESTAURANT API
+  // ==============================================================
+
+  final MilestoneApp6RestaurantApi _restaurantApi =
+  MilestoneApp6RestaurantApi();
+
+  /// Restaurants received from API.
+  ///
+  /// This replaces the old static:
+  /// restaurants
+  /// newRestaurants
+  List<MilestoneApp6Restaurant> _nearbyRestaurants = [];
+
+  bool _isLoadingNearbyRestaurants = false;
+
+  String? _nearbyRestaurantsError;
+
+  // ==============================================================
   // ADDRESS
   // ==============================================================
 
   String _selectedAddress = '';
-
-  // ==============================================================
-  // RESTAURANT API
-  // ==============================================================
-
-  bool _isLoading = false;
 
   // ==============================================================
   // CATEGORY
@@ -82,6 +94,7 @@ class _MilestoneApp6HomeScreenState
   stt.SpeechToText();
 
   bool _isListening = false;
+
   bool _speechAvailable = false;
 
   // ==============================================================
@@ -127,13 +140,16 @@ class _MilestoneApp6HomeScreenState
 
     if (!mounted) return;
 
-    setState(() {
-      if (addressId != null && addressId > 0) {
-        _selectedAddress =
-        'Address #$addressId';
-      } else {
+    if (addressId == null || addressId <= 0) {
+      setState(() {
         _selectedAddress = '';
-      }
+      });
+
+      return;
+    }
+
+    setState(() {
+      _selectedAddress = 'Address #$addressId';
     });
   }
 
@@ -143,17 +159,18 @@ class _MilestoneApp6HomeScreenState
 
   Future<void> _loadNearbyRestaurants() async {
     try {
-      if (!mounted) return;
+      if (mounted) {
+        setState(() {
+          _isLoadingNearbyRestaurants = true;
+          _nearbyRestaurantsError = null;
+        });
+      }
 
-      setState(() {
-        _isLoading = true;
-      });
+      // ==========================================================
+      // GET LOGIN TOKEN
+      // ==========================================================
 
-      // ----------------------------------------------------------
-      // AUTH TOKEN
-      // ----------------------------------------------------------
-
-      final String? token = AuthStorage.token;
+      final token = AuthStorage.token;
 
       if (token == null || token.isEmpty) {
         if (!mounted) return;
@@ -162,9 +179,9 @@ class _MilestoneApp6HomeScreenState
         return;
       }
 
-      // ----------------------------------------------------------
-      // SELECTED ADDRESS ID
-      // ----------------------------------------------------------
+      // ==========================================================
+      // GET SELECTED ADDRESS ID
+      // ==========================================================
 
       final int? addressId =
           AddressStorage.selectedAddressId;
@@ -176,41 +193,73 @@ class _MilestoneApp6HomeScreenState
         return;
       }
 
-      // ----------------------------------------------------------
-      // API CALL
-      // ----------------------------------------------------------
+      debugPrint('');
+      debugPrint(
+        '==========================================',
+      );
+      debugPrint(
+        'HOME NEARBY RESTAURANTS',
+      );
+      debugPrint(
+        'SELECTED ADDRESS ID: $addressId',
+      );
+      debugPrint(
+        '==========================================',
+      );
 
-      await MilestoneApp6RestaurantApi()
-          .fetchNearbyRestaurants(
+      // ==========================================================
+      // CALL NEARBY RESTAURANT API
+      // ==========================================================
+
+      final response =
+      await _restaurantApi.fetchNearbyRestaurants(
         token: token,
         addressId: addressId,
         page: 1,
         openNow: false,
       );
 
+      debugPrint(
+        'RAW RESTAURANT COUNT: ${response.length}',
+      );
+
+      // ==========================================================
+      // JSON -> MODEL
+      // ==========================================================
+
+      final List<MilestoneApp6Restaurant>
+      restaurants = response
+          .map(
+            (json) =>
+            MilestoneApp6Restaurant.fromJson(
+              json,
+            ),
+      )
+          .toList();
+
+      debugPrint(
+        'PARSED RESTAURANT COUNT: ${restaurants.length}',
+      );
+
       if (!mounted) return;
 
       setState(() {
-        _isLoading = false;
+        _nearbyRestaurants = restaurants;
+        _isLoadingNearbyRestaurants = false;
+        _nearbyRestaurantsError = null;
       });
     } catch (e) {
+      debugPrint(
+        'NEARBY RESTAURANT ERROR: $e',
+      );
+
       if (!mounted) return;
 
       setState(() {
-        _isLoading = false;
+        _isLoadingNearbyRestaurants = false;
+        _nearbyRestaurants = [];
+        _nearbyRestaurantsError = e.toString();
       });
-
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              'Unable to load nearby restaurants.',
-            ),
-            behavior:
-            SnackBarBehavior.floating,
-          ),
-        );
     }
   }
 
@@ -485,6 +534,268 @@ class _MilestoneApp6HomeScreenState
   }
 
   // ==============================================================
+  // NEARBY RESTAURANTS HORIZONTAL
+  // ==============================================================
+
+  Widget _buildNearbyRestaurantsHorizontal() {
+    // ------------------------------------------------------------
+    // LOADING
+    // ------------------------------------------------------------
+
+    if (_isLoadingNearbyRestaurants) {
+      return const SizedBox(
+        height: 350,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // ERROR
+    // ------------------------------------------------------------
+
+    if (_nearbyRestaurantsError != null) {
+      return SizedBox(
+        height: 180,
+        child: Center(
+          child: Padding(
+            padding:
+            const EdgeInsets.symmetric(
+              horizontal: 30,
+            ),
+            child: Column(
+              mainAxisAlignment:
+              MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons
+                      .cloud_off_rounded,
+                  size: 42,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary,
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                const Text(
+                  'Unable to load restaurants.',
+                  textAlign:
+                  TextAlign.center,
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                TextButton(
+                  onPressed:
+                  _loadNearbyRestaurants,
+                  child: const Text(
+                    'Retry',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // EMPTY
+    // ------------------------------------------------------------
+
+    if (_nearbyRestaurants.isEmpty) {
+      return SizedBox(
+        height: 180,
+        child: Center(
+          child: Padding(
+            padding:
+            const EdgeInsets.symmetric(
+              horizontal: 30,
+            ),
+            child: Column(
+              mainAxisAlignment:
+              MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons
+                      .restaurant_outlined,
+                  size: 42,
+                  color: Theme.of(context)
+                      .hintColor,
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Text(
+                  'No nearby restaurants found.',
+                  textAlign:
+                  TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context)
+                        .hintColor,
+                    fontWeight:
+                    FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // RESTAURANTS
+    // ------------------------------------------------------------
+
+    return SizedBox(
+      height: 350,
+      child: ListView.separated(
+        padding:
+        const EdgeInsets.fromLTRB(
+          10,
+          0,
+          16,
+          0,
+        ),
+        scrollDirection:
+        Axis.horizontal,
+        physics:
+        const BouncingScrollPhysics(),
+        itemCount:
+        _nearbyRestaurants.length,
+        separatorBuilder:
+            (_, __) =>
+        const SizedBox(
+          width: 1,
+        ),
+        itemBuilder:
+            (context, index) {
+          final restaurant =
+          _nearbyRestaurants[index];
+
+          return SizedBox(
+            width: 340,
+            child: _restaurantItem(
+              restaurant: restaurant,
+              showFoodCards: false,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ==============================================================
+  // NEARBY RESTAURANTS VERTICAL
+  // ==============================================================
+
+  Widget _buildNearbyRestaurantsVertical() {
+    // ------------------------------------------------------------
+    // LOADING
+    // ------------------------------------------------------------
+
+    if (_isLoadingNearbyRestaurants) {
+      return const Padding(
+        padding:
+        EdgeInsets.symmetric(
+          vertical: 30,
+        ),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // ERROR
+    // ------------------------------------------------------------
+
+    if (_nearbyRestaurantsError != null) {
+      return Padding(
+        padding:
+        const EdgeInsets.symmetric(
+          vertical: 30,
+          horizontal: 30,
+        ),
+        child: Column(
+          children: [
+            const Text(
+              'Unable to load restaurants.',
+              textAlign:
+              TextAlign.center,
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            TextButton(
+              onPressed:
+              _loadNearbyRestaurants,
+              child: const Text(
+                'Retry',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // EMPTY
+    // ------------------------------------------------------------
+
+    if (_nearbyRestaurants.isEmpty) {
+      return Padding(
+        padding:
+        const EdgeInsets.symmetric(
+          vertical: 35,
+          horizontal: 30,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons
+                  .restaurant_menu_rounded,
+              size: 42,
+              color: Theme.of(context)
+                  .hintColor,
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            Text(
+              'No nearby restaurants found.',
+              textAlign:
+              TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context)
+                    .hintColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // RESTAURANTS
+    // ------------------------------------------------------------
+
+    return Column(
+      children:
+      _nearbyRestaurants.map(
+            (restaurant) {
+          return _newRestaurantItem(
+            restaurant: restaurant,
+          );
+        },
+      ).toList(),
+    );
+  }
+
+  // ==============================================================
   // NEW RESTAURANT - ZOMATO STYLE
   // ==============================================================
 
@@ -495,7 +806,8 @@ class _MilestoneApp6HomeScreenState
     Theme.of(context);
 
     final bool isDark =
-        theme.brightness == Brightness.dark;
+        theme.brightness ==
+            Brightness.dark;
 
     final bool isClosed =
     !restaurant.isOpen;
@@ -537,39 +849,40 @@ class _MilestoneApp6HomeScreenState
         : const Color(0xFF555555));
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(
+      margin:
+      const EdgeInsets.fromLTRB(
         16,
         0,
         16,
         18,
       ),
-      decoration: BoxDecoration(
+      decoration:
+      BoxDecoration(
         color: cardColor,
         borderRadius:
         BorderRadius.circular(18),
         border: isDark
             ? Border.all(
-          color:
-          Colors.white.withOpacity(
-            0.06,
-          ),
+          color: Colors.white
+              .withOpacity(0.06),
         )
             : null,
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(
-              0.35,
-            )
-                : Colors.black.withOpacity(
-              0.06,
-            ),
-            blurRadius: isDark ? 14 : 10,
-            offset: const Offset(0, 4),
+                ? Colors.black
+                .withOpacity(0.35)
+                : Colors.black
+                .withOpacity(0.06),
+            blurRadius:
+            isDark ? 14 : 10,
+            offset:
+            const Offset(0, 4),
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
+      clipBehavior:
+      Clip.antiAlias,
       child: InkWell(
         borderRadius:
         BorderRadius.circular(18),
@@ -586,9 +899,9 @@ class _MilestoneApp6HomeScreenState
           crossAxisAlignment:
           CrossAxisAlignment.start,
           children: [
-            // ----------------------------------------------------
+            // ------------------------------------------------------
             // IMAGE
-            // ----------------------------------------------------
+            // ------------------------------------------------------
 
             AspectRatio(
               aspectRatio: 1.75,
@@ -624,8 +937,7 @@ class _MilestoneApp6HomeScreenState
                   restaurant.image,
                   width:
                   double.infinity,
-                  fit:
-                  BoxFit.cover,
+                  fit: BoxFit.cover,
                   borderRadius:
                   BorderRadius.zero,
                 ),
@@ -641,9 +953,9 @@ class _MilestoneApp6HomeScreenState
               ),
             ),
 
-            // ----------------------------------------------------
+            // ------------------------------------------------------
             // INFORMATION
-            // ----------------------------------------------------
+            // ------------------------------------------------------
 
             Padding(
               padding:
@@ -704,9 +1016,11 @@ class _MilestoneApp6HomeScreenState
                         restaurant.isOpen
                             ? 'Open'
                             : 'Closed',
-                        style: TextStyle(
+                        style:
+                        TextStyle(
                           color:
-                          restaurant.isOpen
+                          restaurant
+                              .isOpen
                               ? const Color(
                             0xFF00C853,
                           )
@@ -727,7 +1041,8 @@ class _MilestoneApp6HomeScreenState
                         ),
                         Text(
                           '•',
-                          style: TextStyle(
+                          style:
+                          TextStyle(
                             color: isDark
                                 ? Colors.white38
                                 : Colors.black45,
@@ -739,7 +1054,8 @@ class _MilestoneApp6HomeScreenState
                         ),
                         Text(
                           restaurant.distance,
-                          style: TextStyle(
+                          style:
+                          TextStyle(
                             color:
                             distanceColor,
                             fontSize: 14,
@@ -755,26 +1071,30 @@ class _MilestoneApp6HomeScreenState
                     height: 6,
                   ),
 
-                  Text(
-                    restaurant.cuisine,
-                    maxLines: 1,
-                    overflow:
-                    TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: secondaryColor,
-                      fontSize: 14,
-                      fontWeight:
-                      FontWeight.w500,
+                  if (restaurant
+                      .cuisine
+                      .isNotEmpty)
+                    Text(
+                      restaurant.cuisine,
+                      maxLines: 1,
+                      overflow:
+                      TextOverflow.ellipsis,
+                      style:
+                      TextStyle(
+                        color:
+                        secondaryColor,
+                        fontSize: 14,
+                        fontWeight:
+                        FontWeight.w500,
+                      ),
                     ),
-                  ),
-
-                  const SizedBox(
-                    height: 4,
-                  ),
 
                   if (restaurant
                       .address
-                      .isNotEmpty)
+                      .isNotEmpty) ...[
+                    const SizedBox(
+                      height: 4,
+                    ),
                     Row(
                       crossAxisAlignment:
                       CrossAxisAlignment
@@ -802,7 +1122,8 @@ class _MilestoneApp6HomeScreenState
                             overflow:
                             TextOverflow
                                 .ellipsis,
-                            style: TextStyle(
+                            style:
+                            TextStyle(
                               color:
                               secondaryColor,
                               fontSize: 13,
@@ -813,6 +1134,7 @@ class _MilestoneApp6HomeScreenState
                         ),
                       ],
                     ),
+                  ],
                 ],
               ),
             ),
@@ -832,7 +1154,8 @@ class _MilestoneApp6HomeScreenState
   }) {
     return AnimatedBuilder(
       animation: widget.state,
-      builder: (context, child) {
+      builder:
+          (context, child) {
         final ThemeData theme =
         Theme.of(context);
 
@@ -846,30 +1169,19 @@ class _MilestoneApp6HomeScreenState
           restaurant.name,
         );
 
-        // --------------------------------------------------------
-        // FILTERED RESTAURANT
-        // --------------------------------------------------------
-
-        if (restaurantFoods.isEmpty &&
-            (_searchController.text
-                .trim()
-                .isNotEmpty ||
-                _selectedCategory !=
-                    'All')) {
-          return const SizedBox.shrink();
-        }
-
         final bool isClosed =
         !restaurant.isOpen;
 
         return Container(
-          margin: const EdgeInsets.fromLTRB(
+          margin:
+          const EdgeInsets.fromLTRB(
             16,
             0,
             16,
             24,
           ),
-          decoration: BoxDecoration(
+          decoration:
+          BoxDecoration(
             color: isClosed
                 ? (isDark
                 ? const Color(
@@ -885,7 +1197,9 @@ class _MilestoneApp6HomeScreenState
                 : theme.colorScheme
                 .surface),
             borderRadius:
-            BorderRadius.circular(20),
+            BorderRadius.circular(
+              20,
+            ),
             border: isDark
                 ? Border.all(
               color: Colors.white
@@ -924,9 +1238,9 @@ class _MilestoneApp6HomeScreenState
               crossAxisAlignment:
               CrossAxisAlignment.start,
               children: [
-                // ------------------------------------------------
+                // --------------------------------------------------
                 // IMAGE
-                // ------------------------------------------------
+                // --------------------------------------------------
 
                 SizedBox(
                   height: 200,
@@ -961,11 +1275,9 @@ class _MilestoneApp6HomeScreenState
                     MilestoneApp6Image(
                       url:
                       restaurant.image,
-                      fit:
-                      BoxFit.cover,
+                      fit: BoxFit.cover,
                       borderRadius:
-                      BorderRadius
-                          .zero,
+                      BorderRadius.zero,
                     ),
                   )
                       : MilestoneApp6Image(
@@ -977,9 +1289,9 @@ class _MilestoneApp6HomeScreenState
                   ),
                 ),
 
-                // ------------------------------------------------
+                // --------------------------------------------------
                 // INFORMATION
-                // ------------------------------------------------
+                // --------------------------------------------------
 
                 Padding(
                   padding:
@@ -1002,7 +1314,8 @@ class _MilestoneApp6HomeScreenState
                         overflow:
                         TextOverflow
                             .ellipsis,
-                        style: TextStyle(
+                        style:
+                        TextStyle(
                           color: isClosed
                               ? (isDark
                               ? const Color(
@@ -1033,9 +1346,9 @@ class _MilestoneApp6HomeScreenState
                             restaurant.isOpen
                                 ? 'Open'
                                 : 'Closed',
-                            style: TextStyle(
-                              color:
-                              restaurant
+                            style:
+                            TextStyle(
+                              color: restaurant
                                   .isOpen
                                   ? const Color(
                                 0xFF00A651,
@@ -1045,8 +1358,7 @@ class _MilestoneApp6HomeScreenState
                               ),
                               fontSize: 15,
                               fontWeight:
-                              FontWeight
-                                  .w600,
+                              FontWeight.w600,
                             ),
                           ),
 
@@ -1056,7 +1368,8 @@ class _MilestoneApp6HomeScreenState
 
                           Text(
                             '•',
-                            style: TextStyle(
+                            style:
+                            TextStyle(
                               color: isDark
                                   ? Colors.white54
                                   : Colors.black54,
@@ -1074,9 +1387,9 @@ class _MilestoneApp6HomeScreenState
                             Text(
                               restaurant
                                   .distance,
-                              style: TextStyle(
-                                color:
-                                isClosed
+                              style:
+                              TextStyle(
+                                color: isClosed
                                     ? const Color(
                                   0xFF888888,
                                 )
@@ -1089,8 +1402,7 @@ class _MilestoneApp6HomeScreenState
                                 )),
                                 fontSize: 14,
                                 fontWeight:
-                                FontWeight
-                                    .w500,
+                                FontWeight.w500,
                               ),
                             ),
                         ],
@@ -1100,29 +1412,33 @@ class _MilestoneApp6HomeScreenState
                         height: 6,
                       ),
 
-                      Text(
-                        restaurant.cuisine,
-                        maxLines: 1,
-                        overflow:
-                        TextOverflow
-                            .ellipsis,
-                        style: TextStyle(
-                          color: isClosed
-                              ? const Color(
-                            0xFF888888,
-                          )
-                              : (isDark
-                              ? const Color(
-                            0xFFB5B5B5,
-                          )
-                              : const Color(
-                            0xFF666666,
-                          )),
-                          fontSize: 15,
-                          fontWeight:
-                          FontWeight.w500,
+                      if (restaurant
+                          .cuisine
+                          .isNotEmpty)
+                        Text(
+                          restaurant.cuisine,
+                          maxLines: 1,
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
+                          style:
+                          TextStyle(
+                            color: isClosed
+                                ? const Color(
+                              0xFF888888,
+                            )
+                                : (isDark
+                                ? const Color(
+                              0xFFB5B5B5,
+                            )
+                                : const Color(
+                              0xFF666666,
+                            )),
+                            fontSize: 15,
+                            fontWeight:
+                            FontWeight.w500,
+                          ),
                         ),
-                      ),
 
                       if (restaurant
                           .address
@@ -1136,7 +1452,8 @@ class _MilestoneApp6HomeScreenState
                           overflow:
                           TextOverflow
                               .ellipsis,
-                          style: TextStyle(
+                          style:
+                          TextStyle(
                             color: isClosed
                                 ? const Color(
                               0xFF888888,
@@ -1165,7 +1482,6 @@ class _MilestoneApp6HomeScreenState
                         const SizedBox(
                           height: 14,
                         ),
-
                         SizedBox(
                           height: 280,
                           child:
@@ -1188,8 +1504,10 @@ class _MilestoneApp6HomeScreenState
                               width: 12,
                             ),
                             itemBuilder:
-                                (context,
-                                index) {
+                                (
+                                context,
+                                index,
+                                ) {
                               final food =
                               restaurantFoods[
                               index];
@@ -1285,7 +1603,8 @@ class _MilestoneApp6HomeScreenState
           title: const Text(
             'Foodie',
             style: TextStyle(
-              fontWeight: FontWeight.w700,
+              fontWeight:
+              FontWeight.w700,
             ),
           ),
 
@@ -1359,7 +1678,8 @@ class _MilestoneApp6HomeScreenState
                           overflow:
                           TextOverflow
                               .ellipsis,
-                          style: TextStyle(
+                          style:
+                          TextStyle(
                             fontSize: 10,
                             fontWeight:
                             FontWeight.w700,
@@ -1410,8 +1730,7 @@ class _MilestoneApp6HomeScreenState
                 ),
                 child: Column(
                   crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+                  CrossAxisAlignment.start,
                   mainAxisAlignment:
                   MainAxisAlignment.end,
                   children: [
@@ -1496,10 +1815,10 @@ class _MilestoneApp6HomeScreenState
         ),
 
         // ==========================================================
-        // LOADING
+        // RESTAURANT API LOADING
         // ==========================================================
 
-        if (_isLoading)
+        if (_isLoadingNearbyRestaurants)
           const SliverToBoxAdapter(
             child: Padding(
               padding:
@@ -1538,40 +1857,8 @@ class _MilestoneApp6HomeScreenState
         ),
 
         SliverToBoxAdapter(
-          child: SizedBox(
-            height: 350,
-            child: ListView.separated(
-              padding:
-              const EdgeInsets.fromLTRB(
-                10,
-                0,
-                16,
-                0,
-              ),
-              scrollDirection:
-              Axis.horizontal,
-              physics:
-              const BouncingScrollPhysics(),
-              itemCount:
-              restaurants.length,
-              separatorBuilder:
-                  (_, __) =>
-              const SizedBox(
-                width: 1,
-              ),
-              itemBuilder:
-                  (context, index) {
-                return SizedBox(
-                  width: 340,
-                  child: _restaurantItem(
-                    restaurant:
-                    restaurants[index],
-                    showFoodCards: false,
-                  ),
-                );
-              },
-            ),
-          ),
+          child:
+          _buildNearbyRestaurantsHorizontal(),
         ),
 
         // ==========================================================
@@ -1590,18 +1877,9 @@ class _MilestoneApp6HomeScreenState
           ),
         ),
 
-        SliverList(
-          delegate:
-          SliverChildBuilderDelegate(
-                (context, index) {
-              return _newRestaurantItem(
-                restaurant:
-                newRestaurants[index],
-              );
-            },
-            childCount:
-            newRestaurants.length,
-          ),
+        SliverToBoxAdapter(
+          child:
+          _buildNearbyRestaurantsVertical(),
         ),
 
         // ==========================================================
@@ -1660,7 +1938,8 @@ class _MilestoneApp6HomeScreenState
       Axis.horizontal,
       physics:
       const BouncingScrollPhysics(),
-      itemCount: categories.length,
+      itemCount:
+      categories.length,
       separatorBuilder:
           (_, __) =>
       const SizedBox(
@@ -1720,7 +1999,8 @@ class _MilestoneApp6HomeScreenState
                   .colorScheme
                   .primary
                   .withOpacity(.10),
-              shape: BoxShape.circle,
+              shape:
+              BoxShape.circle,
             ),
             child: Icon(
               Icons.search_off_rounded,
@@ -1776,7 +2056,8 @@ class _MilestoneApp6HomeScreenState
               icon: const Icon(
                 Icons.clear_rounded,
               ),
-              label: const Text(
+              label:
+              const Text(
                 'Clear Search',
               ),
             ),
@@ -1819,9 +2100,9 @@ class _MilestoneApp6HomeScreenState
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // --------------------------------------------------
+              // ----------------------------------------------------
               // BACKGROUND
-              // --------------------------------------------------
+              // ----------------------------------------------------
 
               const DecoratedBox(
                 decoration:
@@ -1843,9 +2124,9 @@ class _MilestoneApp6HomeScreenState
                 ),
               ),
 
-              // --------------------------------------------------
+              // ----------------------------------------------------
               // IMAGE
-              // --------------------------------------------------
+              // ----------------------------------------------------
 
               Positioned(
                 top: 0,
@@ -1864,9 +2145,9 @@ class _MilestoneApp6HomeScreenState
                 ),
               ),
 
-              // --------------------------------------------------
+              // ----------------------------------------------------
               // OVERLAY
-              // --------------------------------------------------
+              // ----------------------------------------------------
 
               Positioned.fill(
                 child: IgnorePointer(
@@ -1907,9 +2188,9 @@ class _MilestoneApp6HomeScreenState
                 ),
               ),
 
-              // --------------------------------------------------
+              // ----------------------------------------------------
               // CONTENT
-              // --------------------------------------------------
+              // ----------------------------------------------------
 
               Positioned(
                 left: 18,
@@ -1936,8 +2217,7 @@ class _MilestoneApp6HomeScreenState
                           fontSize: 17,
                           height: 1.05,
                           fontWeight:
-                          FontWeight
-                              .w800,
+                          FontWeight.w800,
                         ),
                       ),
 
@@ -2036,9 +2316,7 @@ class _MilestoneApp6HomeScreenState
             child: Text(
               'See All',
               style: TextStyle(
-                color: Theme.of(
-                  context,
-                )
+                color: Theme.of(context)
                     .colorScheme
                     .primary,
                 fontSize: 11,
@@ -2081,7 +2359,9 @@ class _MilestoneApp6HomeScreenState
 class MilestoneApp6HomeStickyHeaderDelegate
     extends SliverPersistentHeaderDelegate {
   final double minHeight;
+
   final double maxHeight;
+
   final Widget child;
 
   MilestoneApp6HomeStickyHeaderDelegate({
@@ -2129,6 +2409,7 @@ class MilestoneApp6HomeStickyHeaderDelegate
         oldDelegate.minHeight ||
         maxHeight !=
             oldDelegate.maxHeight ||
-        child != oldDelegate.child;
+        child !=
+            oldDelegate.child;
   }
 }

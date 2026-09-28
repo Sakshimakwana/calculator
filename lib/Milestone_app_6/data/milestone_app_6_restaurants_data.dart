@@ -6,8 +6,6 @@ class MilestoneApp6Restaurant {
   final String cuisine;
   final String price;
   final bool isOpen;
-
-  // New fields
   final String distance;
   final String address;
 
@@ -22,6 +20,22 @@ class MilestoneApp6Restaurant {
     this.distance = '',
     this.address = '',
   });
+
+  factory MilestoneApp6Restaurant.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return MilestoneApp6Restaurant(
+      name: json['name']?.toString() ?? '',
+      image: json['image']?.toString() ?? '',
+      rating: json['rating']?.toString() ?? '',
+      time: json['time']?.toString() ?? '',
+      cuisine: json['cuisine']?.toString() ?? '',
+      price: json['price']?.toString() ?? '',
+      isOpen: json['is_open'] == true,
+      distance: json['distance']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+    );
+  }
 }
 
 // ============================================================================
