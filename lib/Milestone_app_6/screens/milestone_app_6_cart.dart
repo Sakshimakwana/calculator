@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../data/milestone_app_6_address_data.dart';
+
 import '../data/milestone_app_6_cart_item.dart';
 import '../state/milestone_app_6_state.dart';
 import '../widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_image.dart';
 
-class MilestoneApp6CartScreen
-    extends StatefulWidget {
+class MilestoneApp6CartScreen extends StatefulWidget {
   final MilestoneApp6State state;
 
   const MilestoneApp6CartScreen({
@@ -16,73 +15,59 @@ class MilestoneApp6CartScreen
   });
 
   @override
-  State<MilestoneApp6CartScreen>
-  createState() =>
+  State<MilestoneApp6CartScreen> createState() =>
       _MilestoneApp6CartScreenState();
 }
 
 class _MilestoneApp6CartScreenState
     extends State<MilestoneApp6CartScreen> {
-  late final TextEditingController
-  _promoController;
+  late final TextEditingController _promoController;
 
-  MilestoneApp6State get state =>
-      widget.state;
+  MilestoneApp6State get state => widget.state;
 
   @override
   void initState() {
     super.initState();
 
-    _promoController =
-        TextEditingController(
-          text:
-          state.appliedPromoCode ?? '',
-        );
+    _promoController = TextEditingController(
+      text: state.appliedPromoCode ?? '',
+    );
   }
 
   @override
   void dispose() {
     _promoController.dispose();
-
     super.dispose();
   }
 
+  // ================================================================
+  // BUILD
+  // ================================================================
+
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: state,
-      builder: (
-          context,
-          child,
-          ) {
-        final items =
-        state.cart.values.toList();
+      builder: (context, child) {
+        final items = state.cart.values.toList();
 
         return Scaffold(
-          appBar:
-          _appBar(context),
+          appBar: _appBar(context),
           body: items.isEmpty
               ? _emptyCart(context)
               : SafeArea(
             child: Column(
               children: [
                 Expanded(
-                  child:
-                  ListView(
-                    padding:
-                    const EdgeInsets
-                        .fromLTRB(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(
                       16,
                       12,
                       16,
                       20,
                     ),
                     children: [
-                      _deliveryAddress(
-                        context,
-                      ),
+                      _deliveryAddress(context),
 
                       const SizedBox(
                         height: 20,
@@ -91,29 +76,22 @@ class _MilestoneApp6CartScreenState
                       Row(
                         children: [
                           const Expanded(
-                            child:
-                            Text(
+                            child: Text(
                               'Your Items',
-                              style:
-                              TextStyle(
-                                fontSize:
-                                19,
+                              style: TextStyle(
+                                fontSize: 19,
                                 fontWeight:
-                                FontWeight
-                                    .w800,
+                                FontWeight.w800,
                               ),
                             ),
                           ),
                           Text(
                             '${state.cartCount} item${state.cartCount == 1 ? '' : 's'}',
-                            style:
-                            TextStyle(
-                              fontSize:
-                              13,
+                            style: TextStyle(
+                              fontSize: 13,
                               color:
-                              Theme.of(
-                                context,
-                              ).hintColor,
+                              Theme.of(context)
+                                  .hintColor,
                             ),
                           ),
                         ],
@@ -124,45 +102,34 @@ class _MilestoneApp6CartScreenState
                       ),
 
                       ...items.map(
-                            (
-                            item,
-                            ) =>
-                            _cartItem(
-                              context,
-                              item,
-                            ),
+                            (item) => _cartItem(
+                          context,
+                          item,
+                        ),
                       ),
 
                       const SizedBox(
                         height: 8,
                       ),
 
-                      _promoSection(
-                        context,
-                      ),
+                      _promoSection(context),
 
                       const SizedBox(
                         height: 20,
                       ),
 
-                      _summary(
-                        context,
-                      ),
+                      _summary(context),
 
                       const SizedBox(
                         height: 20,
                       ),
 
-                      _paymentInfo(
-                        context,
-                      ),
+                      _paymentInfo(context),
                     ],
                   ),
                 ),
 
-                _bottomCheckoutBar(
-                  context,
-                ),
+                _bottomCheckoutBar(context),
               ],
             ),
           ),
@@ -200,13 +167,10 @@ class _MilestoneApp6CartScreenState
           IconButton(
             tooltip: 'Clear cart',
             onPressed: () {
-              _showClearCartDialog(
-                context,
-              );
+              _showClearCartDialog(context);
             },
             icon: const Icon(
-              Icons
-                  .delete_sweep_outlined,
+              Icons.delete_sweep_outlined,
             ),
           ),
       ],
@@ -217,7 +181,9 @@ class _MilestoneApp6CartScreenState
   // DELIVERY ADDRESS
   // ================================================================
 
-  Widget _deliveryAddress(BuildContext context) {
+  Widget _deliveryAddress(
+      BuildContext context,
+      ) {
     final theme = Theme.of(context);
     final address = state.selectedAddress;
 
@@ -225,9 +191,11 @@ class _MilestoneApp6CartScreenState
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+        BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(.25),
+          color: theme.dividerColor
+              .withOpacity(.25),
         ),
       ),
       child: Column(
@@ -244,11 +212,14 @@ class _MilestoneApp6CartScreenState
                 ),
                 child: Icon(
                   Icons.location_on_outlined,
-                  color: theme.colorScheme.primary,
+                  color:
+                  theme.colorScheme.primary,
                 ),
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(
+                width: 12,
+              ),
 
               const Expanded(
                 child: Column(
@@ -259,10 +230,13 @@ class _MilestoneApp6CartScreenState
                       'Delivery Address',
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight:
+                        FontWeight.w800,
                       ),
                     ),
-                    SizedBox(height: 3),
+                    SizedBox(
+                      height: 3,
+                    ),
                     Text(
                       'Where should we deliver your order?',
                       style: TextStyle(
@@ -274,29 +248,44 @@ class _MilestoneApp6CartScreenState
               ),
 
               TextButton(
-                onPressed: () {
-                  context.push(
+                onPressed: () async {
+                  await context.push(
                     '/profile/address',
                     extra: state,
                   );
+
+                  if (!mounted) return;
+
+                  setState(() {});
                 },
                 child: Text(
-                  address == null ? 'Add' : 'Change',
+                  address == null
+                      ? 'Add'
+                      : 'Change',
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
+                    fontWeight:
+                    FontWeight.w700,
+                    color:
+                    theme.colorScheme.primary,
                   ),
                 ),
               ),
             ],
           ),
 
+          // --------------------------------------------------------
+          // SELECTED ADDRESS
+          // --------------------------------------------------------
+
           if (address != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(
+              height: 14,
+            ),
 
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(13),
+              padding:
+              const EdgeInsets.all(13),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary
                     .withOpacity(.05),
@@ -308,65 +297,58 @@ class _MilestoneApp6CartScreenState
                 CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    _addressIcon(address.label),
+                    _addressIcon(
+                      address.label,
+                    ),
                     size: 19,
                     color:
                     theme.colorScheme.primary,
                   ),
 
-                  const SizedBox(width: 10),
+                  const SizedBox(
+                    width: 10,
+                  ),
 
                   Expanded(
                     child: Column(
                       crossAxisAlignment:
                       CrossAxisAlignment.start,
                       children: [
+                        // ADDRESS LABEL
                         Text(
                           address.label,
-                          style: const TextStyle(
+                          maxLines: 1,
+                          overflow:
+                          TextOverflow.ellipsis,
+                          style:
+                          const TextStyle(
                             fontWeight:
                             FontWeight.w800,
+                            fontSize: 14,
                           ),
                         ),
 
-                        if (address.name
-                            .trim()
-                            .isNotEmpty) ...[
-                          const SizedBox(height: 5),
-                          Text(
-                            address.name,
-                            style:
-                            const TextStyle(
-                              fontWeight:
-                              FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                        const SizedBox(
+                          height: 6,
+                        ),
 
-                        const SizedBox(height: 5),
-
+                        // FULL ADDRESS
                         Text(
-                          address.fullAddress,
+                          address.fullAddress
+                              .trim()
+                              .isEmpty
+                              ? 'Address details not available'
+                              : address.fullAddress,
+                          maxLines: 4,
+                          overflow:
+                          TextOverflow.ellipsis,
                           style: TextStyle(
                             color:
                             theme.hintColor,
                             fontSize: 12,
+                            height: 1.4,
                           ),
                         ),
-
-                        if (address.phone
-                            .trim()
-                            .isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            address.phone,
-                            style: TextStyle(
-                              color:
-                              theme.hintColor,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -391,14 +373,13 @@ class _MilestoneApp6CartScreenState
         return Icons.home_outlined;
 
       case 'work':
+      case 'office':
         return Icons.business_outlined;
 
       default:
-        return Icons
-            .location_on_outlined;
+        return Icons.location_on_outlined;
     }
   }
-
 
   // ================================================================
   // CART ITEM
@@ -408,8 +389,7 @@ class _MilestoneApp6CartScreenState
       BuildContext context,
       MilestoneApp6CartItem item,
       ) {
-    final theme =
-    Theme.of(context);
+    final theme = Theme.of(context);
 
     return Container(
       margin:
@@ -423,9 +403,7 @@ class _MilestoneApp6CartScreenState
         color:
         theme.colorScheme.surface,
         borderRadius:
-        BorderRadius.circular(
-          18,
-        ),
+        BorderRadius.circular(18),
         border: Border.all(
           color: theme.dividerColor
               .withOpacity(0.25),
@@ -435,46 +413,46 @@ class _MilestoneApp6CartScreenState
         crossAxisAlignment:
         CrossAxisAlignment.start,
         children: [
+          // ========================================================
           // IMAGE
+          // ========================================================
+
           MilestoneApp6Image(
             url: item.food.image,
             width: 88,
             height: 88,
             borderRadius:
-            BorderRadius.circular(
-              15,
-            ),
+            BorderRadius.circular(15),
           ),
 
           const SizedBox(
             width: 12,
           ),
 
+          // ========================================================
           // DETAILS
+          // ========================================================
+
           Expanded(
             child: Column(
               crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+              CrossAxisAlignment.start,
               children: [
                 Row(
                   crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+                  CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
                         item.food.name,
                         maxLines: 2,
                         overflow:
-                        TextOverflow
-                            .ellipsis,
+                        TextOverflow.ellipsis,
                         style:
                         const TextStyle(
                           fontSize: 14,
                           fontWeight:
-                          FontWeight
-                              .w800,
+                          FontWeight.w800,
                         ),
                       ),
                     ),
@@ -495,14 +473,16 @@ class _MilestoneApp6CartScreenState
                             .delete_outline_rounded,
                         size: 20,
                         color: Colors.red
-                            .withOpacity(
-                          0.85,
-                        ),
+                            .withOpacity(.85),
                       ),
                     ),
-
                   ],
                 ),
+
+                const SizedBox(
+                  height: 2,
+                ),
+
                 Text(
                   '\$${item.unitPrice.toStringAsFixed(2)} each',
                   style: TextStyle(
@@ -511,23 +491,6 @@ class _MilestoneApp6CartScreenState
                     fontSize: 11,
                   ),
                 ),
-
-
-
-
-                // Text(
-                //   'Size: ${item.size}',
-                //   style: TextStyle(
-                //     color: theme
-                //         .colorScheme
-                //         .primary,
-                //     fontSize: 12,
-                //     fontWeight:
-                //     FontWeight.w700,
-                //   ),
-                // ),
-
-
 
                 const SizedBox(
                   height: 9,
@@ -539,11 +502,9 @@ class _MilestoneApp6CartScreenState
                       context,
                       Icons.remove,
                           () {
-                        state
-                            .removeFromCart(
+                        state.removeFromCart(
                           item.food,
-                          size:
-                          item.size,
+                          size: item.size,
                         );
                       },
                     ),
@@ -559,8 +520,7 @@ class _MilestoneApp6CartScreenState
                         style:
                         const TextStyle(
                           fontWeight:
-                          FontWeight
-                              .w800,
+                          FontWeight.w800,
                           fontSize: 14,
                         ),
                       ),
@@ -572,8 +532,7 @@ class _MilestoneApp6CartScreenState
                           () {
                         state.addToCart(
                           item.food,
-                          size:
-                          item.size,
+                          size: item.size,
                           unitPrice:
                           item.unitPrice,
                         );
@@ -588,8 +547,7 @@ class _MilestoneApp6CartScreenState
                       const TextStyle(
                         fontSize: 14,
                         fontWeight:
-                        FontWeight
-                            .w900,
+                        FontWeight.w900,
                       ),
                     ),
                   ],
@@ -603,25 +561,21 @@ class _MilestoneApp6CartScreenState
   }
 
   // ================================================================
-  // DELETE DIALOG
+  // DELETE ITEM DIALOG
   // ================================================================
 
   void _showDeleteDialog(
       BuildContext context,
       MilestoneApp6CartItem item,
       ) {
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (
-          dialogContext,
-          ) {
+      builder: (dialogContext) {
         return AlertDialog(
           shape:
           RoundedRectangleBorder(
             borderRadius:
-            BorderRadius.circular(
-              20,
-            ),
+            BorderRadius.circular(20),
           ),
           title: const Text(
             'Remove item?',
@@ -655,6 +609,8 @@ class _MilestoneApp6CartScreenState
                   dialogContext,
                 );
 
+                if (!mounted) return;
+
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(
@@ -668,8 +624,7 @@ class _MilestoneApp6CartScreenState
                       onPressed: () {
                         state.addToCart(
                           item.food,
-                          size:
-                          item.size,
+                          size: item.size,
                           unitPrice:
                           item.unitPrice,
                           quantity:
@@ -702,18 +657,14 @@ class _MilestoneApp6CartScreenState
   void _showClearCartDialog(
       BuildContext context,
       ) {
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (
-          dialogContext,
-          ) {
+      builder: (dialogContext) {
         return AlertDialog(
           shape:
           RoundedRectangleBorder(
             borderRadius:
-            BorderRadius.circular(
-              20,
-            ),
+            BorderRadius.circular(20),
           ),
           title: const Text(
             'Clear Cart?',
@@ -743,6 +694,8 @@ class _MilestoneApp6CartScreenState
                 Navigator.pop(
                   dialogContext,
                 );
+
+                if (!mounted) return;
 
                 ScaffoldMessenger.of(
                   context,
@@ -797,9 +750,7 @@ class _MilestoneApp6CartScreenState
                 .primary
                 .withOpacity(0.10),
             borderRadius:
-            BorderRadius.circular(
-              9,
-            ),
+            BorderRadius.circular(9),
           ),
           child: Icon(
             icon,
@@ -814,7 +765,7 @@ class _MilestoneApp6CartScreenState
   }
 
   // ================================================================
-  // PROMO
+  // PROMO SECTION
   // ================================================================
 
   Widget _promoSection(
@@ -831,9 +782,7 @@ class _MilestoneApp6CartScreenState
         color:
         theme.colorScheme.surface,
         borderRadius:
-        BorderRadius.circular(
-          18,
-        ),
+        BorderRadius.circular(18),
         border: Border.all(
           color: theme.dividerColor
               .withOpacity(0.25),
@@ -874,9 +823,7 @@ class _MilestoneApp6CartScreenState
                     OutlineInputBorder(
                       borderRadius:
                       BorderRadius
-                          .circular(
-                        12,
-                      ),
+                          .circular(12),
                     ),
                   ),
                 ),
@@ -915,6 +862,8 @@ class _MilestoneApp6CartScreenState
                     state.applyPromoCode(
                       code,
                     );
+
+                    if (!mounted) return;
 
                     ScaffoldMessenger
                         .of(
@@ -974,7 +923,6 @@ class _MilestoneApp6CartScreenState
                 TextButton(
                   onPressed: () {
                     state.clearPromo();
-
                     _promoController
                         .clear();
                   },
@@ -983,8 +931,7 @@ class _MilestoneApp6CartScreenState
                     'Remove',
                     style:
                     TextStyle(
-                      color:
-                      Colors.red,
+                      color: Colors.red,
                       fontSize: 11,
                     ),
                   ),
@@ -1015,9 +962,7 @@ class _MilestoneApp6CartScreenState
         color:
         theme.colorScheme.surface,
         borderRadius:
-        BorderRadius.circular(
-          20,
-        ),
+        BorderRadius.circular(20),
         border: Border.all(
           color: theme.dividerColor
               .withOpacity(0.25),
@@ -1057,17 +1002,16 @@ class _MilestoneApp6CartScreenState
                 ? 'FREE'
                 : '\$${state.deliveryCharge.toStringAsFixed(2)}',
             valueColor:
-            state.deliveryCharge ==
-                0
+            state.deliveryCharge == 0
                 ? Colors.green
                 : null,
           ),
 
-          if (state.discountAmount >
-              0) ...[
+          if (state.discountAmount > 0) ...[
             const SizedBox(
               height: 10,
             ),
+
             _summaryRow(
               context,
               'Coupon Discount',
@@ -1109,18 +1053,22 @@ class _MilestoneApp6CartScreenState
       }) {
     return Row(
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize:
-            bold ? 15 : 13,
-            fontWeight: bold
-                ? FontWeight.w800
-                : FontWeight.w500,
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize:
+              bold ? 15 : 13,
+              fontWeight: bold
+                  ? FontWeight.w800
+                  : FontWeight.w500,
+            ),
           ),
         ),
 
-        const Spacer(),
+        const SizedBox(
+          width: 12,
+        ),
 
         Text(
           value,
@@ -1152,23 +1100,18 @@ class _MilestoneApp6CartScreenState
       const EdgeInsets.all(14),
       decoration:
       BoxDecoration(
-        color: theme
-            .colorScheme
-            .primary
+        color: theme.colorScheme.primary
             .withOpacity(0.07),
         borderRadius:
-        BorderRadius.circular(
-          15,
-        ),
+        BorderRadius.circular(15),
       ),
       child: Row(
         children: [
           Icon(
             Icons.lock_outline_rounded,
             size: 19,
-            color: theme
-                .colorScheme
-                .primary,
+            color:
+            theme.colorScheme.primary,
           ),
 
           const SizedBox(
@@ -1223,8 +1166,7 @@ class _MilestoneApp6CartScreenState
         children: [
           Column(
             crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
+            CrossAxisAlignment.start,
             children: [
               Text(
                 'Total',
@@ -1257,15 +1199,21 @@ class _MilestoneApp6CartScreenState
 
           Expanded(
             child: MilestoneApp6Button(
-              label: 'Proceed to Checkout',
+              label:
+              'Proceed to Checkout',
               onPressed: () {
-                if (state.selectedAddress == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                if (state.selectedAddress ==
+                    null) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(
                     const SnackBar(
                       content: Text(
                         'Please add a delivery address first.',
                       ),
-                      behavior: SnackBarBehavior.floating,
+                      behavior:
+                      SnackBarBehavior
+                          .floating,
                     ),
                   );
 
@@ -1273,12 +1221,16 @@ class _MilestoneApp6CartScreenState
                 }
 
                 if (state.cart.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(
                     const SnackBar(
                       content: Text(
                         'Your cart is empty.',
                       ),
-                      behavior: SnackBarBehavior.floating,
+                      behavior:
+                      SnackBarBehavior
+                          .floating,
                     ),
                   );
 
@@ -1294,79 +1246,6 @@ class _MilestoneApp6CartScreenState
           ),
         ],
       ),
-    );
-  }
-
-  // ================================================================
-  // CHECKOUT DIALOG
-  // ================================================================
-
-  void _showCheckoutDialog(
-      BuildContext context,
-      ) {
-    showDialog(
-      context: context,
-      builder: (
-          dialogContext,
-          ) {
-        return AlertDialog(
-          shape:
-          RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(
-              20,
-            ),
-          ),
-          title: const Text(
-            'Place Order?',
-            style: TextStyle(
-              fontWeight:
-              FontWeight.w800,
-            ),
-          ),
-          content: Text(
-            'Your order total is \$${state.finalTotal.toStringAsFixed(2)}.\n\nDo you want to place this order?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                );
-              },
-              child:
-              const Text('Cancel'),
-            ),
-
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                );
-
-                state.clearCart();
-
-                ScaffoldMessenger
-                    .of(
-                  context,
-                ).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Order placed successfully!',
-                    ),
-                  ),
-                );
-
-                context.go('/home');
-              },
-              child:
-              const Text(
-                'Place Order',
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -1397,8 +1276,7 @@ class _MilestoneApp6CartScreenState
                     .colorScheme
                     .primary
                     .withOpacity(0.08),
-                shape:
-                BoxShape.circle,
+                shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons

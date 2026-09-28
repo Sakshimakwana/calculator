@@ -8,7 +8,6 @@ class MilestoneApp6LoginScreen extends StatefulWidget {
   const MilestoneApp6LoginScreen({
     super.key,
   });
-
   @override
   State<MilestoneApp6LoginScreen> createState() =>
       _MilestoneApp6LoginScreenState();
@@ -112,7 +111,7 @@ class _MilestoneApp6LoginScreenState
       );
       return;
     }
-    context.go('/home');
+    context.go('/select-address');
   }
 
   @override

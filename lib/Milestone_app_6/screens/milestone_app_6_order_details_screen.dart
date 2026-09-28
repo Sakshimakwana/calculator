@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../data/milestone_app_6_address_data.dart';
+
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_order.dart';
+import '../modelss/milestone_app_6_address_model.dart';
 import '../state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
 
@@ -46,14 +47,12 @@ class _MilestoneApp6OrderDetailsScreenState
   void initState() {
     super.initState();
 
-    if (widget.orderId != null &&
-        widget.orderId!.trim().isNotEmpty) {
+    if (widget.orderId != null && widget.orderId!.trim().isNotEmpty) {
       _orderId = widget.orderId!;
     } else if (widget.state.orders.isNotEmpty) {
       _orderId = widget.state.orders.first.id;
     } else {
-      _orderId =
-          DateTime.now().millisecondsSinceEpoch.toString();
+      _orderId = DateTime.now().millisecondsSinceEpoch.toString();
     }
   }
 
@@ -76,8 +75,7 @@ class _MilestoneApp6OrderDetailsScreenState
   // ============================================================
 
   String get _customerName {
-    final String name =
-    widget.auth.userName.trim();
+    final String name = widget.auth.userName.trim();
 
     if (name.isEmpty) {
       return 'Customer';
@@ -103,18 +101,14 @@ class _MilestoneApp6OrderDetailsScreenState
     return AnimatedBuilder(
       animation: widget.state,
       builder: (context, child) {
-        final ThemeData theme =
-        Theme.of(context);
+        final ThemeData theme = Theme.of(context);
 
         return Scaffold(
-          backgroundColor:
-          const Color(0xFFF8F7F5),
-
+          backgroundColor: const Color(0xFFF8F7F5),
           appBar: AppBar(
             elevation: 0,
             scrolledUnderElevation: 0,
-            backgroundColor:
-            const Color(0xFFF8F7F5),
+            backgroundColor: const Color(0xFFF8F7F5),
             foregroundColor: Colors.black,
             centerTitle: true,
             title: const Text(
@@ -126,22 +120,15 @@ class _MilestoneApp6OrderDetailsScreenState
               ),
             ),
           ),
-
           body: SafeArea(
             top: false,
             child: LayoutBuilder(
-              builder: (
-                  context,
-                  constraints,
-                  ) {
+              builder: (context, constraints) {
                 final double horizontalPadding =
-                constraints.maxWidth >= 700
-                    ? 32.0
-                    : 18.0;
+                constraints.maxWidth >= 700 ? 32.0 : 18.0;
 
                 return SingleChildScrollView(
-                  physics:
-                  const BouncingScrollPhysics(),
+                  physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
                     4,
@@ -149,67 +136,44 @@ class _MilestoneApp6OrderDetailsScreenState
                     32,
                   ),
                   child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // _backButton(context),
-
-                      const SizedBox(
-                        height: 20,
-                      ),
+                      const SizedBox(height: 20),
 
                       _orderHeader(context),
 
-                      const SizedBox(
-                        height: 18,
-                      ),
+                      const SizedBox(height: 18),
 
                       _orderStatusCard(context),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       _timelineCard(context),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      _customerAndAddressCard(
-                        context,
-                      ),
+                      _customerAndAddressCard(context),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       _orderedItemsCard(context),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       _billCard(context),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       _paymentCard(context),
 
-                      const SizedBox(
-                        height: 22,
-                      ),
+                      const SizedBox(height: 22),
 
                       _homeButton(
                         context,
                         theme,
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 );
@@ -222,132 +186,63 @@ class _MilestoneApp6OrderDetailsScreenState
   }
 
   // ============================================================
-  // BACK BUTTON
-  // ============================================================
-
-  // Widget _backButton(
-  //     BuildContext context,
-  //     ) {
-  //   return InkWell(
-  //     borderRadius:
-  //     BorderRadius.circular(12),
-  //     onTap: () {
-  //       Navigator.of(context).pop();
-  //     },
-  //     child: const Padding(
-  //       padding: EdgeInsets.symmetric(
-  //         vertical: 6,
-  //         horizontal: 2,
-  //       ),
-  //       child: Row(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           Icon(
-  //             Icons.arrow_back,
-  //             size: 23,
-  //             color: Colors.black87,
-  //           ),
-  //           SizedBox(width: 10),
-  //           Text(
-  //             'Back to Orders',
-  //             style: TextStyle(
-  //               fontSize: 16,
-  //               fontWeight: FontWeight.w500,
-  //               color: Colors.black87,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // ============================================================
   // ORDER HEADER
   // ============================================================
 
-  Widget _orderHeader(
-      BuildContext context,
-      ) {
-    final MilestoneApp6Order? order =
-        _currentOrder;
+  Widget _orderHeader(BuildContext context) {
+    final MilestoneApp6Order? order = _currentOrder;
 
-    final bool isCancelled =
-        order?.isCancelled ?? false;
+    final bool isCancelled = order?.isCancelled ?? false;
 
     return LayoutBuilder(
-      builder: (
-          context,
-          constraints,
-          ) {
-        final bool compact =
-            constraints.maxWidth < 370;
+      builder: (context, constraints) {
+        final bool compact = constraints.maxWidth < 370;
 
         return Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!compact)
               Row(
-                crossAxisAlignment:
-                CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Expanded(
-                  //   child: _orderTitle(),
-                  // ),
-                  const SizedBox(
-                    width: 12,
-                  ),
+                  const Spacer(),
                   _invoiceButton(context),
                 ],
               )
             else
               Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 // _orderTitle(),
-                  const SizedBox(
-                    height: 1,
-                  ),
+                  const SizedBox(height: 1),
                   _invoiceButton(context),
                 ],
               ),
 
-            const SizedBox(
-              height: 14,
-            ),
+            const SizedBox(height: 14),
 
             Wrap(
               spacing: 10,
               runSpacing: 10,
-              crossAxisAlignment:
-              WrapCrossAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   'Order ID: #${_shortOrderId(_orderId)}',
                   style: TextStyle(
                     fontSize: 14,
-                    color:
-                    Colors.grey.shade600,
-                    fontWeight:
-                    FontWeight.w500,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 _statusChip(order),
               ],
             ),
 
-            if (!isCancelled &&
-                (order?.canCancel ?? true)) ...[
-              const SizedBox(
-                height: 16,
-              ),
+            if (!isCancelled && (order?.canCancel ?? true)) ...[
+              const SizedBox(height: 16),
+
               OutlinedButton.icon(
                 onPressed: () {
-                  _showCancelOrderDialog(
-                    context,
-                  );
+                  _showCancelOrderDialog(context);
                 },
                 icon: const Icon(
                   Icons.close,
@@ -356,30 +251,17 @@ class _MilestoneApp6OrderDetailsScreenState
                 label: const Text(
                   'Cancel Order',
                 ),
-                style:
-                OutlinedButton.styleFrom(
-                  foregroundColor:
-                  const Color(
-                    0xFFD62828,
-                  ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFD62828),
                   side: const BorderSide(
-                    color: Color(
-                      0xFFD62828,
-                    ),
+                    color: Color(0xFFD62828),
                   ),
-                  minimumSize:
-                  const Size(0, 48),
-                  padding:
-                  const EdgeInsets
-                      .symmetric(
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                   ),
-                  shape:
-                  RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(
-                      13,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
                   ),
                 ),
               ),
@@ -390,40 +272,19 @@ class _MilestoneApp6OrderDetailsScreenState
     );
   }
 
-  // Widget _orderTitle() {
-  //   return const Text(
-  //     'Order Details',
-  //     maxLines: 1,
-  //     overflow:
-  //     TextOverflow.ellipsis,
-  //     style: TextStyle(
-  //       fontSize: 27,
-  //       height: 1.15,
-  //       fontWeight:
-  //       FontWeight.w800,
-  //       color: Colors.black,
-  //     ),
-  //   );
-  // }
-
   // ============================================================
   // INVOICE
   // ============================================================
 
-  Widget _invoiceButton(
-      BuildContext context,
-      ) {
+  Widget _invoiceButton(BuildContext context) {
     return OutlinedButton.icon(
       onPressed: () {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               'Invoice generated successfully.',
             ),
-            behavior:
-            SnackBarBehavior.floating,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       },
@@ -436,26 +297,19 @@ class _MilestoneApp6OrderDetailsScreenState
         'Generate Invoice',
         style: TextStyle(
           color: Colors.grey.shade600,
-          fontWeight:
-          FontWeight.w600,
+          fontWeight: FontWeight.w600,
         ),
       ),
       style: OutlinedButton.styleFrom(
-        minimumSize:
-        const Size(0, 46),
-        padding:
-        const EdgeInsets.symmetric(
+        minimumSize: const Size(0, 46),
+        padding: const EdgeInsets.symmetric(
           horizontal: 14,
         ),
         side: BorderSide(
           color: Colors.grey.shade300,
         ),
-        shape:
-        RoundedRectangleBorder(
-          borderRadius:
-          BorderRadius.circular(
-            14,
-          ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
     );
@@ -465,77 +319,57 @@ class _MilestoneApp6OrderDetailsScreenState
   // STATUS CHIP
   // ============================================================
 
-  Widget _statusChip(
-      MilestoneApp6Order? order,
-      ) {
+  Widget _statusChip(MilestoneApp6Order? order) {
     if (order == null) {
       return _statusBadge(
         text: 'Placed',
-        color:
-        const Color(0xFF238B45),
-        background:
-        const Color(0xFFEAF9EE),
-        icon:
-        Icons.check_circle_outline,
+        color: const Color(0xFF238B45),
+        background: const Color(0xFFEAF9EE),
+        icon: Icons.check_circle_outline,
       );
     }
 
     if (order.isCancelled) {
       return _statusBadge(
         text: 'Cancelled',
-        color:
-        const Color(0xFFD62828),
-        background:
-        const Color(0xFFFFEAEA),
-        icon:
-        Icons.cancel_outlined,
+        color: const Color(0xFFD62828),
+        background: const Color(0xFFFFEAEA),
+        icon: Icons.cancel_outlined,
       );
     }
 
     if (order.isDelivered) {
       return _statusBadge(
         text: 'Delivered',
-        color:
-        const Color(0xFF238B45),
-        background:
-        const Color(0xFFEAF9EE),
-        icon:
-        Icons.check_circle_outline,
+        color: const Color(0xFF238B45),
+        background: const Color(0xFFEAF9EE),
+        icon: Icons.check_circle_outline,
       );
     }
 
     if (order.isOutForDelivery) {
       return _statusBadge(
         text: 'Out for Delivery',
-        color:
-        const Color(0xFF2563EB),
-        background:
-        const Color(0xFFEFF6FF),
-        icon:
-        Icons.delivery_dining_outlined,
+        color: const Color(0xFF2563EB),
+        background: const Color(0xFFEFF6FF),
+        icon: Icons.delivery_dining_outlined,
       );
     }
 
     if (order.isPreparing) {
       return _statusBadge(
         text: 'Preparing',
-        color:
-        const Color(0xFFE67E22),
-        background:
-        const Color(0xFFFFF4E8),
-        icon:
-        Icons.restaurant_outlined,
+        color: const Color(0xFFE67E22),
+        background: const Color(0xFFFFF4E8),
+        icon: Icons.restaurant_outlined,
       );
     }
 
     return _statusBadge(
       text: 'Placed',
-      color:
-      const Color(0xFF238B45),
-      background:
-      const Color(0xFFEAF9EE),
-      icon:
-      Icons.check_circle_outline,
+      color: const Color(0xFF238B45),
+      background: const Color(0xFFEAF9EE),
+      icon: Icons.check_circle_outline,
     );
   }
 
@@ -546,34 +380,28 @@ class _MilestoneApp6OrderDetailsScreenState
     required IconData icon,
   }) {
     return Container(
-      padding:
-      const EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 13,
         vertical: 8,
       ),
       decoration: BoxDecoration(
         color: background,
-        borderRadius:
-        BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
-        mainAxisSize:
-        MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
             size: 19,
             color: color,
           ),
-          const SizedBox(
-            width: 7,
-          ),
+          const SizedBox(width: 7),
           Text(
             text,
             style: TextStyle(
               fontSize: 14,
-              fontWeight:
-              FontWeight.w800,
+              fontWeight: FontWeight.w800,
               color: color,
             ),
           ),
@@ -586,11 +414,8 @@ class _MilestoneApp6OrderDetailsScreenState
   // ORDER STATUS CARD
   // ============================================================
 
-  Widget _orderStatusCard(
-      BuildContext context,
-      ) {
-    final MilestoneApp6Order? order =
-        _currentOrder;
+  Widget _orderStatusCard(BuildContext context) {
+    final MilestoneApp6Order? order = _currentOrder;
 
     if (order?.isCancelled == true) {
       return _card(
@@ -599,49 +424,37 @@ class _MilestoneApp6OrderDetailsScreenState
             Container(
               height: 52,
               width: 52,
-              decoration:
-              const BoxDecoration(
-                color:
-                Color(0xFFFFE7E7),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFE7E7),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.cancel,
-                color:
-                Color(0xFFD62828),
+                color: Color(0xFFD62828),
                 size: 31,
               ),
             ),
 
-            const SizedBox(
-              width: 14,
-            ),
+            const SizedBox(width: 14),
 
             const Expanded(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Order cancelled',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight:
-                      FontWeight.w800,
-                      color:
-                      Color(0xFFD62828),
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFD62828),
                     ),
                   ),
-                  SizedBox(
-                    height: 5,
-                  ),
+                  SizedBox(height: 5),
                   Text(
                     'This order has been cancelled successfully.',
                     style: TextStyle(
                       fontSize: 13,
-                      color:
-                      Colors.black54,
+                      color: Colors.black54,
                       height: 1.35,
                     ),
                   ),
@@ -659,47 +472,36 @@ class _MilestoneApp6OrderDetailsScreenState
           Container(
             height: 52,
             width: 52,
-            decoration:
-            const BoxDecoration(
-              color:
-              Color(0xFFFFE7EA),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFE7EA),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.check_circle,
-              color:
-              Color(0xFFEF5B6B),
+              color: Color(0xFFEF5B6B),
               size: 32,
             ),
           ),
 
-          const SizedBox(
-            width: 14,
-          ),
+          const SizedBox(width: 14),
 
           const Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Order placed successfully',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight:
-                    FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(
-                  height: 5,
-                ),
+                SizedBox(height: 5),
                 Text(
                   'Your restaurant has received your order.',
                   style: TextStyle(
                     fontSize: 13,
-                    color:
-                    Colors.black54,
+                    color: Colors.black54,
                     height: 1.35,
                   ),
                 ),
@@ -715,11 +517,8 @@ class _MilestoneApp6OrderDetailsScreenState
   // TIMELINE
   // ============================================================
 
-  Widget _timelineCard(
-      BuildContext context,
-      ) {
-    final MilestoneApp6Order? order =
-        _currentOrder;
+  Widget _timelineCard(BuildContext context) {
+    final MilestoneApp6Order? order = _currentOrder;
 
     if (order?.isCancelled == true) {
       return _card(
@@ -728,48 +527,36 @@ class _MilestoneApp6OrderDetailsScreenState
             Container(
               width: 46,
               height: 46,
-              decoration:
-              const BoxDecoration(
-                color:
-                Color(0xFFFFEAEA),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFEAEA),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.close,
-                color:
-                Color(0xFFD62828),
+                color: Color(0xFFD62828),
               ),
             ),
 
-            const SizedBox(
-              width: 14,
-            ),
+            const SizedBox(width: 14),
 
             const Expanded(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Order Cancelled',
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight:
-                      FontWeight.w800,
-                      color:
-                      Color(0xFFD62828),
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFD62828),
                     ),
                   ),
-                  SizedBox(
-                    height: 4,
-                  ),
+                  SizedBox(height: 4),
                   Text(
                     'This order will not be delivered.',
                     style: TextStyle(
                       fontSize: 13,
-                      color:
-                      Colors.black54,
+                      color: Colors.black54,
                     ),
                   ),
                 ],
@@ -780,19 +567,13 @@ class _MilestoneApp6OrderDetailsScreenState
       );
     }
 
-    final bool isPreparing =
-        order?.isPreparing ?? false;
-
-    final bool isOutForDelivery =
-        order?.isOutForDelivery ?? false;
-
-    final bool isDelivered =
-        order?.isDelivered ?? false;
+    final bool isPreparing = order?.isPreparing ?? false;
+    final bool isOutForDelivery = order?.isOutForDelivery ?? false;
+    final bool isDelivered = order?.isDelivered ?? false;
 
     return Container(
       width: double.infinity,
-      padding:
-      const EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         8,
         22,
         8,
@@ -800,31 +581,20 @@ class _MilestoneApp6OrderDetailsScreenState
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(
-          18,
-        ),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color:
-          Colors.grey.shade200,
+          color: Colors.grey.shade200,
         ),
         boxShadow: [
           BoxShadow(
-            color:
-            Colors.black.withOpacity(
-              0.03,
-            ),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 8,
-            offset:
-            const Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: LayoutBuilder(
-        builder: (
-            context,
-            constraints,
-            ) {
+        builder: (context, constraints) {
           return Stack(
             children: [
               Positioned(
@@ -833,35 +603,25 @@ class _MilestoneApp6OrderDetailsScreenState
                 top: 23,
                 child: Container(
                   height: 2,
-                  color:
-                  const Color(
-                    0xFFE5E5E5,
-                  ),
+                  color: const Color(0xFFE5E5E5),
                 ),
               ),
 
               Row(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child:
-                    _timelineStep(
-                      title:
-                      'Order Placed',
-                      subtitle:
-                      'Completed',
+                    child: _timelineStep(
+                      title: 'Order Placed',
+                      subtitle: 'Completed',
                       active: true,
                       completed: true,
                     ),
                   ),
 
                   Expanded(
-                    child:
-                    _timelineStep(
-                      title:
-                      'Preparing',
+                    child: _timelineStep(
+                      title: 'Preparing',
                       subtitle:
                       isPreparing ||
                           isOutForDelivery ||
@@ -879,36 +639,27 @@ class _MilestoneApp6OrderDetailsScreenState
                   ),
 
                   Expanded(
-                    child:
-                    _timelineStep(
-                      title:
-                      'Out for Delivery',
+                    child: _timelineStep(
+                      title: 'Out for Delivery',
                       subtitle:
-                      isOutForDelivery ||
-                          isDelivered
+                      isOutForDelivery || isDelivered
                           ? 'Completed'
                           : 'Pending',
                       active:
                       isOutForDelivery ||
                           isDelivered,
-                      completed:
-                      isDelivered,
+                      completed: isDelivered,
                     ),
                   ),
 
                   Expanded(
-                    child:
-                    _timelineStep(
-                      title:
-                      'Delivered',
-                      subtitle:
-                      isDelivered
+                    child: _timelineStep(
+                      title: 'Delivered',
+                      subtitle: isDelivered
                           ? 'Completed'
                           : 'Pending',
-                      active:
-                      isDelivered,
-                      completed:
-                      isDelivered,
+                      active: isDelivered,
+                      completed: isDelivered,
                     ),
                   ),
                 ],
@@ -927,39 +678,27 @@ class _MilestoneApp6OrderDetailsScreenState
     required bool completed,
   }) {
     return Column(
-      mainAxisSize:
-      MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 48,
           height: 48,
-          decoration:
-          BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: active
-                ? const Color(
-              0xFFEF6878,
-            )
+                ? const Color(0xFFEF6878)
                 : Colors.white,
             border: Border.all(
               color: active
-                  ? const Color(
-                0xFFEF6878,
-              )
-                  : const Color(
-                0xFFE5E5E5,
-              ),
+                  ? const Color(0xFFEF6878)
+                  : const Color(0xFFE5E5E5),
               width: 2,
             ),
             boxShadow: active
                 ? [
               BoxShadow(
-                color:
-                const Color(
-                  0xFFEF6878,
-                ).withOpacity(
-                  0.15,
-                ),
+                color: const Color(0xFFEF6878)
+                    .withOpacity(0.15),
                 blurRadius: 0,
                 spreadRadius: 5,
               ),
@@ -974,61 +713,48 @@ class _MilestoneApp6OrderDetailsScreenState
           )
               : const Icon(
             Icons.circle,
-            color:
-            Color(0xFFD5D9DE),
+            color: Color(0xFFD5D9DE),
             size: 9,
           ),
         ),
 
-        const SizedBox(
-          height: 13,
-        ),
+        const SizedBox(height: 13),
 
         Text(
           title,
-          textAlign:
-          TextAlign.center,
+          textAlign: TextAlign.center,
           maxLines: 2,
-          overflow:
-          TextOverflow.ellipsis,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 13,
             height: 1.2,
-            fontWeight: active
+            fontWeight:
+            active
                 ? FontWeight.w700
                 : FontWeight.w500,
             color: active
                 ? Colors.black
-                : const Color(
-              0xFF999999,
-            ),
+                : const Color(0xFF999999),
           ),
         ),
 
-        const SizedBox(
-          height: 2,
-        ),
+        const SizedBox(height: 2),
 
         Text(
           subtitle,
-          textAlign:
-          TextAlign.center,
+          textAlign: TextAlign.center,
           maxLines: 2,
-          overflow:
-          TextOverflow.ellipsis,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 12,
             height: 1.2,
-            fontWeight: active
+            fontWeight:
+            active
                 ? FontWeight.w500
                 : FontWeight.w400,
             color: active
-                ? const Color(
-              0xFFEF6878,
-            )
-                : const Color(
-              0xFF999999,
-            ),
+                ? const Color(0xFFEF6878)
+                : const Color(0xFF999999),
           ),
         ),
       ],
@@ -1039,75 +765,53 @@ class _MilestoneApp6OrderDetailsScreenState
   // CUSTOMER + ADDRESS
   // ============================================================
 
-  Widget _customerAndAddressCard(
-      BuildContext context,
-      ) {
-    final MilestoneApp6Address?
-    address = _address;
+  Widget _customerAndAddressCard(BuildContext context) {
+    final MilestoneApp6Address? address = _address;
 
     return _card(
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle(
-            icon:
-            Icons.location_on_outlined,
-            title:
-            'Delivery Details',
+            icon: Icons.location_on_outlined,
+            title: 'Delivery Details',
           ),
 
-          const SizedBox(
-            height: 18,
-          ),
+          const SizedBox(height: 18),
 
           Row(
-            crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(
                 Icons.person_outline,
                 size: 21,
-                color:
-                Colors.black54,
+                color: Colors.black54,
               ),
 
-              const SizedBox(
-                width: 12,
-              ),
+              const SizedBox(width: 12),
 
               Expanded(
                 child: Column(
                   crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+                  CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Customer',
-                      style:
-                      TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color:
-                        Colors.black45,
+                        color: Colors.black45,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 3,
-                    ),
+                    const SizedBox(height: 3),
 
                     Text(
                       _customerName,
                       maxLines: 2,
-                      overflow:
-                      TextOverflow
-                          .ellipsis,
-                      style:
-                      const TextStyle(
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                         fontSize: 14,
-                        fontWeight:
-                        FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -1116,82 +820,48 @@ class _MilestoneApp6OrderDetailsScreenState
             ],
           ),
 
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16),
 
           Row(
-            crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(
                 Icons.home_outlined,
                 size: 21,
-                color:
-                Colors.black54,
+                color: Colors.black54,
               ),
 
-              const SizedBox(
-                width: 12,
-              ),
+              const SizedBox(width: 12),
 
               Expanded(
                 child: Column(
                   crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+                  CrossAxisAlignment.start,
                   children: [
                     Text(
                       address?.label ??
                           'Delivery Address',
-                      style:
-                      const TextStyle(
+                      style: const TextStyle(
                         fontSize: 11,
-                        color:
-                        Colors.black45,
+                        color: Colors.black45,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 3,
-                    ),
+                    const SizedBox(height: 3),
 
                     Text(
                       address == null
                           ? 'No address selected'
-                          : address
-                          .fullAddress,
-                      style:
-                      TextStyle(
+                          : address.fullAddress,
+                      style: TextStyle(
                         fontSize: 14,
                         height: 1.4,
-                        fontWeight:
-                        FontWeight.w600,
-                        color: address ==
-                            null
+                        fontWeight: FontWeight.w600,
+                        color: address == null
                             ? Colors.grey
                             : Colors.black87,
                       ),
                     ),
-
-                    if (address != null &&
-                        address.phone
-                            .trim()
-                            .isNotEmpty) ...[
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      Text(
-                        address.phone,
-                        style:
-                        const TextStyle(
-                          fontSize: 13,
-                          color:
-                          Colors.black54,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -1206,66 +876,48 @@ class _MilestoneApp6OrderDetailsScreenState
   // ORDERED ITEMS
   // ============================================================
 
-  Widget _orderedItemsCard(
-      BuildContext context,
-      ) {
+  Widget _orderedItemsCard(BuildContext context) {
     return _card(
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle(
-            icon:
-            Icons.shopping_bag_outlined,
-            title:
-            'Ordered Items',
+            icon: Icons.shopping_bag_outlined,
+            title: 'Ordered Items',
             trailing:
             '${widget.items.length} item${widget.items.length == 1 ? '' : 's'}',
           ),
 
-          const SizedBox(
-            height: 15,
-          ),
+          const SizedBox(height: 15),
 
           if (widget.items.isEmpty)
             const Padding(
-              padding:
-              EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 vertical: 15,
               ),
               child: Text(
                 'No order items found.',
                 style: TextStyle(
-                  color:
-                  Colors.black54,
+                  color: Colors.black54,
                 ),
               ),
             )
           else
-            ...widget.items
-                .asMap()
-                .entries
-                .map(
+            ...widget.items.asMap().entries.map(
                   (entry) {
-                final int index =
-                    entry.key;
-
-                final MilestoneApp6CartItem
-                item = entry.value;
+                final int index = entry.key;
+                final MilestoneApp6CartItem item =
+                    entry.value;
 
                 return Padding(
-                  padding:
-                  EdgeInsets.only(
+                  padding: EdgeInsets.only(
                     bottom:
                     index ==
-                        widget.items
-                            .length -
-                            1
+                        widget.items.length - 1
                         ? 0
                         : 14,
                   ),
-                  child:
-                  _orderItem(item),
+                  child: _orderItem(item),
                 );
               },
             ),
@@ -1274,31 +926,20 @@ class _MilestoneApp6OrderDetailsScreenState
     );
   }
 
-  Widget _orderItem(
-      MilestoneApp6CartItem item,
-      ) {
+  Widget _orderItem(MilestoneApp6CartItem item) {
     return Container(
-      padding:
-      const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color:
-        const Color(0xFFFAFAFA),
-        borderRadius:
-        BorderRadius.circular(
-          14,
-        ),
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color:
-          Colors.grey.shade200,
+          color: Colors.grey.shade200,
         ),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius:
-            BorderRadius.circular(
-              11,
-            ),
+            borderRadius: BorderRadius.circular(11),
             child: Image.network(
               item.food.image,
               width: 68,
@@ -1312,72 +953,52 @@ class _MilestoneApp6OrderDetailsScreenState
                 return Container(
                   width: 68,
                   height: 68,
-                  color:
-                  Colors.grey.shade200,
-                  child:
-                  const Icon(
-                    Icons
-                        .fastfood_outlined,
-                    color:
-                    Colors.grey,
+                  color: Colors.grey.shade200,
+                  child: const Icon(
+                    Icons.fastfood_outlined,
+                    color: Colors.grey,
                   ),
                 );
               },
             ),
           ),
 
-          const SizedBox(
-            width: 12,
-          ),
+          const SizedBox(width: 12),
 
           Expanded(
             child: Column(
               crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+              CrossAxisAlignment.start,
               children: [
                 Text(
                   item.food.name,
                   maxLines: 2,
-                  overflow:
-                  TextOverflow
-                      .ellipsis,
-                  style:
-                  const TextStyle(
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
                     fontSize: 14,
-                    fontWeight:
-                    FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
 
-                const SizedBox(
-                  height: 5,
-                ),
+                const SizedBox(height: 5),
 
                 Text(
                   'Size: ${item.size}  •  Qty: ${item.quantity}',
                   maxLines: 1,
-                  overflow:
-                  TextOverflow
-                      .ellipsis,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11.5,
-                    color:
-                    Colors.grey.shade600,
+                    color: Colors.grey.shade600,
                   ),
                 ),
 
-                const SizedBox(
-                  height: 7,
-                ),
+                const SizedBox(height: 7),
 
                 Text(
                   '\$${item.totalPrice.toStringAsFixed(2)}',
-                  style:
-                  const TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    fontWeight:
-                    FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -1392,33 +1013,24 @@ class _MilestoneApp6OrderDetailsScreenState
   // BILL
   // ============================================================
 
-  Widget _billCard(
-      BuildContext context,
-      ) {
+  Widget _billCard(BuildContext context) {
     return _card(
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle(
-            icon:
-            Icons.receipt_long_outlined,
-            title:
-            'Bill Summary',
+            icon: Icons.receipt_long_outlined,
+            title: 'Bill Summary',
           ),
 
-          const SizedBox(
-            height: 18,
-          ),
+          const SizedBox(height: 18),
 
           _billRow(
             'Item Total',
             '\$${widget.subtotal.toStringAsFixed(2)}',
           ),
 
-          const SizedBox(
-            height: 10,
-          ),
+          const SizedBox(height: 10),
 
           _billRow(
             'Delivery Fee',
@@ -1426,22 +1038,17 @@ class _MilestoneApp6OrderDetailsScreenState
           ),
 
           if (widget.discount > 0) ...[
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
+
             _billRow(
               'Discount',
               '-\$${widget.discount.toStringAsFixed(2)}',
-              valueColor:
-              const Color(
-                0xFF238B45,
-              ),
+              valueColor: const Color(0xFF238B45),
             ),
           ],
 
           const Padding(
-            padding:
-            EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               vertical: 15,
             ),
             child: Divider(
@@ -1474,30 +1081,30 @@ class _MilestoneApp6OrderDetailsScreenState
             title,
             style: TextStyle(
               fontSize: fontSize,
-              fontWeight: bold
+              fontWeight:
+              bold
                   ? FontWeight.w800
                   : FontWeight.w500,
-              color: bold
+              color:
+              bold
                   ? Colors.black
                   : Colors.black54,
             ),
           ),
         ),
 
-        const SizedBox(
-          width: 10,
-        ),
+        const SizedBox(width: 10),
 
         Text(
           value,
           style: TextStyle(
             fontSize: fontSize,
-            fontWeight: bold
+            fontWeight:
+            bold
                 ? FontWeight.w900
                 : FontWeight.w600,
             color:
-            valueColor ??
-                Colors.black87,
+            valueColor ?? Colors.black87,
           ),
         ),
       ],
@@ -1508,95 +1115,65 @@ class _MilestoneApp6OrderDetailsScreenState
   // PAYMENT
   // ============================================================
 
-  Widget _paymentCard(
-      BuildContext context,
-      ) {
-    final MilestoneApp6Order? order =
-        _currentOrder;
+  Widget _paymentCard(BuildContext context) {
+    final MilestoneApp6Order? order = _currentOrder;
 
     final bool isCancelled =
         order?.isCancelled ?? false;
 
     return _card(
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle(
-            icon:
-            Icons.payment_outlined,
-            title:
-            'Payment Details',
+            icon: Icons.payment_outlined,
+            title: 'Payment Details',
           ),
 
-          const SizedBox(
-            height: 17,
-          ),
+          const SizedBox(height: 17),
 
           Row(
-            crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 height: 42,
                 width: 42,
-                decoration:
-                BoxDecoration(
-                  color:
-                  const Color(
-                    0xFFF1F1F1,
-                  ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F1F1),
                   borderRadius:
-                  BorderRadius
-                      .circular(
-                    11,
-                  ),
+                  BorderRadius.circular(11),
                 ),
                 child: const Icon(
-                  Icons
-                      .credit_card_outlined,
+                  Icons.credit_card_outlined,
                   size: 21,
-                  color:
-                  Colors.black54,
+                  color: Colors.black54,
                 ),
               ),
 
-              const SizedBox(
-                width: 12,
-              ),
+              const SizedBox(width: 12),
 
               Expanded(
                 child: Column(
                   crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+                  CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Payment Method',
-                      style:
-                      TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color:
-                        Colors.black45,
+                        color: Colors.black45,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 3,
-                    ),
+                    const SizedBox(height: 3),
 
                     Text(
                       widget.paymentType,
                       maxLines: 2,
-                      overflow:
-                      TextOverflow
-                          .ellipsis,
-                      style:
-                      const TextStyle(
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                         fontSize: 14,
-                        fontWeight:
-                        FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -1605,52 +1182,30 @@ class _MilestoneApp6OrderDetailsScreenState
             ],
           ),
 
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16),
 
           Container(
             width: double.infinity,
-            padding:
-            const EdgeInsets.all(
-              13,
-            ),
-            decoration:
-            BoxDecoration(
-              color:
-              isCancelled
-                  ? const Color(
-                0xFFFFF5F5,
-              )
-                  : const Color(
-                0xFFF7F9F8,
-              ),
-              borderRadius:
-              BorderRadius.circular(
-                12,
-              ),
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: isCancelled
+                  ? const Color(0xFFFFF5F5)
+                  : const Color(0xFFF7F9F8),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 Icon(
                   isCancelled
-                      ? Icons
-                      .info_outline
-                      : Icons
-                      .check_circle_outline,
+                      ? Icons.info_outline
+                      : Icons.check_circle_outline,
                   size: 19,
                   color: isCancelled
-                      ? const Color(
-                    0xFFD62828,
-                  )
-                      : const Color(
-                    0xFF238B45,
-                  ),
+                      ? const Color(0xFFD62828)
+                      : const Color(0xFF238B45),
                 ),
 
-                const SizedBox(
-                  width: 9,
-                ),
+                const SizedBox(width: 9),
 
                 Expanded(
                   child: Text(
@@ -1663,14 +1218,9 @@ class _MilestoneApp6OrderDetailsScreenState
                     style: TextStyle(
                       fontSize: 12.5,
                       color: isCancelled
-                          ? const Color(
-                        0xFFD62828,
-                      )
-                          : const Color(
-                        0xFF238B45,
-                      ),
-                      fontWeight:
-                      FontWeight.w600,
+                          ? const Color(0xFFD62828)
+                          : const Color(0xFF238B45),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -1699,18 +1249,14 @@ class _MilestoneApp6OrderDetailsScreenState
           color: Colors.black87,
         ),
 
-        const SizedBox(
-          width: 9,
-        ),
+        const SizedBox(width: 9),
 
         Expanded(
           child: Text(
             title,
-            style:
-            const TextStyle(
+            style: const TextStyle(
               fontSize: 16,
-              fontWeight:
-              FontWeight.w800,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
@@ -1720,10 +1266,8 @@ class _MilestoneApp6OrderDetailsScreenState
             trailing,
             style: TextStyle(
               fontSize: 12,
-              color:
-              Colors.grey.shade500,
-              fontWeight:
-              FontWeight.w500,
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w500,
             ),
           ),
       ],
@@ -1744,23 +1288,15 @@ class _MilestoneApp6OrderDetailsScreenState
       padding: padding,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(
-          19,
-        ),
+        borderRadius: BorderRadius.circular(19),
         border: Border.all(
-          color:
-          Colors.grey.shade200,
+          color: Colors.grey.shade200,
         ),
         boxShadow: [
           BoxShadow(
-            color:
-            Colors.black.withOpacity(
-              0.035,
-            ),
+            color: Colors.black.withOpacity(0.035),
             blurRadius: 10,
-            offset:
-            const Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -1781,10 +1317,8 @@ class _MilestoneApp6OrderDetailsScreenState
       height: 52,
       child: ElevatedButton.icon(
         onPressed: () {
-          Navigator.of(context)
-              .popUntil(
-                (route) =>
-            route.isFirst,
+          Navigator.of(context).popUntil(
+                (route) => route.isFirst,
           );
         },
         icon: const Icon(
@@ -1795,25 +1329,15 @@ class _MilestoneApp6OrderDetailsScreenState
           'Continue Shopping',
           style: TextStyle(
             fontSize: 15,
-            fontWeight:
-            FontWeight.w800,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        style:
-        ElevatedButton.styleFrom(
-          backgroundColor:
-          const Color(
-            0xFFEF5B6B,
-          ),
-          foregroundColor:
-          Colors.white,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFEF5B6B),
+          foregroundColor: Colors.white,
           elevation: 0,
-          shape:
-          RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(
-              15,
-            ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
           ),
         ),
       ),
@@ -1824,37 +1348,28 @@ class _MilestoneApp6OrderDetailsScreenState
   // CANCEL ORDER
   // ============================================================
 
-  void _showCancelOrderDialog(
-      BuildContext context,
-      ) {
-    final MilestoneApp6Order? order =
-        _currentOrder;
+  void _showCancelOrderDialog(BuildContext context) {
+    final MilestoneApp6Order? order = _currentOrder;
 
     if (order == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Order information could not be found.',
           ),
-          behavior:
-          SnackBarBehavior.floating,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
     if (!order.canCancel) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'This order can no longer be cancelled.',
           ),
-          behavior:
-          SnackBarBehavior.floating,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -1862,22 +1377,15 @@ class _MilestoneApp6OrderDetailsScreenState
 
     showDialog<void>(
       context: context,
-      builder: (
-          dialogContext,
-          ) {
+      builder: (dialogContext) {
         return AlertDialog(
-          shape:
-          RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(
-              22,
-            ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
           ),
           title: const Text(
             'Cancel Order?',
             style: TextStyle(
-              fontWeight:
-              FontWeight.w800,
+              fontWeight: FontWeight.w800,
             ),
           ),
           content: const Text(
@@ -1886,8 +1394,7 @@ class _MilestoneApp6OrderDetailsScreenState
               height: 1.4,
             ),
           ),
-          actionsPadding:
-          const EdgeInsets.fromLTRB(
+          actionsPadding: const EdgeInsets.fromLTRB(
             18,
             0,
             18,
@@ -1896,9 +1403,7 @@ class _MilestoneApp6OrderDetailsScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                Navigator.of(dialogContext).pop();
               },
               child: const Text(
                 'Keep Order',
@@ -1906,50 +1411,33 @@ class _MilestoneApp6OrderDetailsScreenState
             ),
 
             FilledButton(
-              style:
-              FilledButton.styleFrom(
-                backgroundColor:
-                const Color(
-                  0xFFD62828,
-                ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFD62828),
               ),
               onPressed: () {
                 final bool cancelled =
-                widget.state
-                    .cancelOrder(
-                  order.id,
-                );
+                widget.state.cancelOrder(order.id);
 
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                Navigator.of(dialogContext).pop();
 
                 if (!cancelled) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
                         'This order cannot be cancelled now.',
                       ),
-                      behavior:
-                      SnackBarBehavior
-                          .floating,
+                      behavior: SnackBarBehavior.floating,
                     ),
                   );
                   return;
                 }
 
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
                       'Order cancelled successfully.',
                     ),
-                    behavior:
-                    SnackBarBehavior
-                        .floating,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               },
@@ -1967,15 +1455,11 @@ class _MilestoneApp6OrderDetailsScreenState
   // SHORT ORDER ID
   // ============================================================
 
-  String _shortOrderId(
-      String id,
-      ) {
+  String _shortOrderId(String id) {
     if (id.length <= 6) {
       return id;
     }
 
-    return id.substring(
-      id.length - 6,
-    );
+    return id.substring(id.length - 6);
   }
 }

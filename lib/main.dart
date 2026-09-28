@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/core/storage/address_storage.dart';
 import 'package:flutter/material.dart';
 import 'Milestone_app_6/routes/milestone_app_6_routes.dart';
 import 'Milestone_app_6/state/milestone_app_6_state.dart';
@@ -12,6 +13,7 @@ import 'controllers/auth_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AuthStorage.init();
+  await AddressStorage.init();
 
   final state =
   MilestoneApp6State();

@@ -1,20 +1,21 @@
 class ApiConstants {
   ApiConstants._();
 
-  // =========================
-  // Base URL
-  // =========================
-
-  static const String baseUrl =
-      'https://tomato-backend-hpby.onrender.com/api';
-
-  // =========================
-  // Authentication Endpoints
-  // =========================
+  static const String baseUrl = 'https://tomato-backend-hpby.onrender.com/api';
 
   static const String register = '/register';
 
   static const String login = '/login';
 
   static const String logout = '/logout';
+
+  static const String addresses = '/addresses';
+
+  static const String storeAddress = '/addresses/store';
+
+  static String updateAddress(int id) => '/addresses/$id/update';
+
+  static String deleteAddress(int id) => '/addresses/$id/destroy';
+
+  static const String nearbyRestaurants = '/restaurants/nearby';
 }

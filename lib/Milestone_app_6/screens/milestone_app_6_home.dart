@@ -1,8 +1,12 @@
 import 'dart:async';
+
+import 'package:app_matic_tech_flutter_app/core/storage/address_storage.dart';
+import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
+import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_api.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:shared_preferences/shared_preferences.dart';
+
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../state/milestone_app_6_state.dart';
@@ -27,295 +31,18 @@ class MilestoneApp6HomeScreen extends StatefulWidget {
 
 class _MilestoneApp6HomeScreenState
     extends State<MilestoneApp6HomeScreen> {
+  // ==============================================================
+  // ADDRESS
+  // ==============================================================
 
   String _selectedAddress = '';
 
-  Future<void> _loadSelectedAddress() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final address = prefs.getString('selected_address') ?? '';
-
-    if (!mounted) return;
-
-    setState(() {
-      _selectedAddress = address;
-    });
-  }
-
   // ==============================================================
-// NEW RESTAURANT - ZOMATO STYLE
-// ==============================================================
-// ============================================================
-// NEW RESTAURANT - ZOMATO STYLE
-// ============================================================
+  // RESTAURANT API
+  // ==============================================================
 
-  Widget _newRestaurantItem({
-    required MilestoneApp6Restaurant restaurant,
-  }) {
-    final theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-    final bool isClosed = !restaurant.isOpen;
+  bool _isLoading = false;
 
-    final Color cardColor = isClosed
-        ? (isDark
-        ? const Color(0xFF1C1C1C)
-        : const Color(0xFFF5F5F5))
-        : (isDark
-        ? const Color(0xFF171717)
-        : Colors.white);
-
-    final Color titleColor = isClosed
-        ? (isDark
-        ? const Color(0xFF8A8A8A)
-        : const Color(0xFF555555))
-        : (isDark
-        ? Colors.white
-        : Colors.black);
-
-    final Color secondaryColor = isClosed
-        ? (isDark
-        ? const Color(0xFF777777)
-        : const Color(0xFF888888))
-        : (isDark
-        ? const Color(0xFFB5B5B5)
-        : const Color(0xFF666666));
-
-    final Color distanceColor = isClosed
-        ? (isDark
-        ? const Color(0xFF777777)
-        : const Color(0xFF888888))
-        : (isDark
-        ? const Color(0xFFBDBDBD)
-        : const Color(0xFF555555));
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        18,
-      ),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: isDark
-            ? Border.all(
-          color: Colors.white.withOpacity(0.06),
-        )
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.35)
-                : Colors.black.withOpacity(0.06),
-            blurRadius: isDark ? 14 : 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-
-        onTap: () {
-          context.push(
-            '/restaurant/${Uri.encodeComponent(
-              restaurant.name,
-            )}',
-          );
-        },
-
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            // ========================================================
-            // RESTAURANT IMAGE
-            // ========================================================
-
-            AspectRatio(
-              aspectRatio: 1.75,
-
-              child: isClosed
-                  ? ColorFiltered(
-                colorFilter: const ColorFilter.matrix([
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
-                ]),
-                child: MilestoneApp6Image(
-                  url: restaurant.image,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  borderRadius: BorderRadius.zero,
-                ),
-              )
-                  : MilestoneApp6Image(
-                url: restaurant.image,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
-
-            // ========================================================
-            // RESTAURANT INFORMATION
-            // ========================================================
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                14,
-                12,
-                14,
-                15,
-              ),
-
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  // ==================================================
-                  // RESTAURANT NAME
-                  // ==================================================
-
-                  Text(
-                    restaurant.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: titleColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      height: 1.15,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // ==================================================
-                  // OPEN / CLOSED + DISTANCE
-                  // ==================================================
-
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-
-                      Icon(
-                        restaurant.isOpen
-                            ? Icons.check_circle_rounded
-                            : Icons.cancel_rounded,
-                        size: 15,
-                        color: restaurant.isOpen
-                            ? const Color(0xFF00C853)
-                            : const Color(0xFFFF5252),
-                      ),
-
-                      const SizedBox(width: 4),
-
-                      Text(
-                        restaurant.isOpen
-                            ? 'Open'
-                            : 'Closed',
-                        style: TextStyle(
-                          color: restaurant.isOpen
-                              ? const Color(0xFF00C853)
-                              : const Color(0xFFFF5252),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-
-                      if (restaurant.distance.isNotEmpty) ...[
-                        const SizedBox(width: 7),
-
-                        Text(
-                          '•',
-                          style: TextStyle(
-                            color: isDark
-                                ? Colors.white38
-                                : Colors.black45,
-                            fontSize: 13,
-                          ),
-                        ),
-
-                        const SizedBox(width: 7),
-
-                        Text(
-                          restaurant.distance,
-                          style: TextStyle(
-                            color: distanceColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // ==================================================
-                  // CUISINE
-                  // ==================================================
-
-                  Text(
-                    restaurant.cuisine,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: secondaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // ==================================================
-                  // ADDRESS
-                  // ==================================================
-
-                  if (restaurant.address.isNotEmpty)
-                    Row(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-
-                        Icon(
-                          Icons.location_on_rounded,
-                          size: 15,
-                          color: isDark
-                              ? const Color(0xFF9E9E9E)
-                              : const Color(0xFF777777),
-                        ),
-
-                        const SizedBox(width: 4),
-
-                        Expanded(
-                          child: Text(
-                            restaurant.address,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: secondaryColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
   // ==============================================================
   // CATEGORY
   // ==============================================================
@@ -367,7 +94,9 @@ class _MilestoneApp6HomeScreenState
 
     _loadSelectedAddress();
 
-    _searchController.addListener(_onSearchChanged);
+    _searchController.addListener(
+      _onSearchChanged,
+    );
 
     _searchHintTimer = Timer.periodic(
       const Duration(seconds: 3),
@@ -384,6 +113,105 @@ class _MilestoneApp6HomeScreenState
         }
       },
     );
+
+    _loadNearbyRestaurants();
+  }
+
+  // ==============================================================
+  // LOAD SELECTED ADDRESS
+  // ==============================================================
+
+  Future<void> _loadSelectedAddress() async {
+    final int? addressId =
+        AddressStorage.selectedAddressId;
+
+    if (!mounted) return;
+
+    setState(() {
+      if (addressId != null && addressId > 0) {
+        _selectedAddress =
+        'Address #$addressId';
+      } else {
+        _selectedAddress = '';
+      }
+    });
+  }
+
+  // ==============================================================
+  // LOAD NEARBY RESTAURANTS
+  // ==============================================================
+
+  Future<void> _loadNearbyRestaurants() async {
+    try {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      // ----------------------------------------------------------
+      // AUTH TOKEN
+      // ----------------------------------------------------------
+
+      final String? token = AuthStorage.token;
+
+      if (token == null || token.isEmpty) {
+        if (!mounted) return;
+
+        context.go('/login');
+        return;
+      }
+
+      // ----------------------------------------------------------
+      // SELECTED ADDRESS ID
+      // ----------------------------------------------------------
+
+      final int? addressId =
+          AddressStorage.selectedAddressId;
+
+      if (addressId == null || addressId <= 0) {
+        if (!mounted) return;
+
+        context.go('/select-address');
+        return;
+      }
+
+      // ----------------------------------------------------------
+      // API CALL
+      // ----------------------------------------------------------
+
+      await MilestoneApp6RestaurantApi()
+          .fetchNearbyRestaurants(
+        token: token,
+        addressId: addressId,
+        page: 1,
+        openNow: false,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Unable to load nearby restaurants.',
+            ),
+            behavior:
+            SnackBarBehavior.floating,
+          ),
+        );
+    }
   }
 
   // ==============================================================
@@ -422,7 +250,8 @@ class _MilestoneApp6HomeScreenState
   // ==============================================================
 
   Future<void> _initializeSpeech() async {
-    final available = await _speech.initialize(
+    final bool available =
+    await _speech.initialize(
       onStatus: (status) {
         if (!mounted) return;
 
@@ -467,6 +296,8 @@ class _MilestoneApp6HomeScreenState
               content: Text(
                 'Speech recognition is not available.',
               ),
+              behavior:
+              SnackBarBehavior.floating,
             ),
           );
 
@@ -474,9 +305,9 @@ class _MilestoneApp6HomeScreenState
       }
     }
 
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
     // STOP LISTENING
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
 
     if (_isListening) {
       await _speech.stop();
@@ -490,9 +321,9 @@ class _MilestoneApp6HomeScreenState
       return;
     }
 
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
     // START LISTENING
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
 
     FocusScope.of(context).unfocus();
 
@@ -506,12 +337,14 @@ class _MilestoneApp6HomeScreenState
       onResult: (result) {
         if (!mounted) return;
 
-        final words = result.recognizedWords;
+        final String words =
+            result.recognizedWords;
 
         _searchController.value =
             TextEditingValue(
               text: words,
-              selection: TextSelection.collapsed(
+              selection:
+              TextSelection.collapsed(
                 offset: words.length,
               ),
             );
@@ -537,9 +370,9 @@ class _MilestoneApp6HomeScreenState
     Iterable<MilestoneApp6Food> result =
         milestoneApp6Foods;
 
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
     // CATEGORY
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
 
     if (_selectedCategory != 'All') {
       result = result.where(
@@ -549,20 +382,25 @@ class _MilestoneApp6HomeScreenState
       );
     }
 
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
     // SEARCH
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
 
-    final query =
-    _searchController.text.trim().toLowerCase();
+    final String query =
+    _searchController.text
+        .trim()
+        .toLowerCase();
 
     if (query.isNotEmpty) {
       result = result.where(
             (food) {
-          final name = food.name.toLowerCase();
-          final category =
+          final String name =
+          food.name.toLowerCase();
+
+          final String category =
           food.category.toLowerCase();
-          final restaurant =
+
+          final String restaurant =
           food.restaurant.toLowerCase();
 
           return name.contains(query) ||
@@ -585,13 +423,17 @@ class _MilestoneApp6HomeScreenState
     Iterable<MilestoneApp6Food> result =
     milestoneApp6Foods.where(
           (food) =>
-      food.restaurant.trim().toLowerCase() ==
-          restaurantName.trim().toLowerCase(),
+      food.restaurant
+          .trim()
+          .toLowerCase() ==
+          restaurantName
+              .trim()
+              .toLowerCase(),
     );
 
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
     // CATEGORY FILTER
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
 
     if (_selectedCategory != 'All') {
       result = result.where(
@@ -601,20 +443,25 @@ class _MilestoneApp6HomeScreenState
       );
     }
 
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
     // SEARCH FILTER
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------
 
-    final query =
-    _searchController.text.trim().toLowerCase();
+    final String query =
+    _searchController.text
+        .trim()
+        .toLowerCase();
 
     if (query.isNotEmpty) {
       result = result.where(
             (food) {
-          final name = food.name.toLowerCase();
-          final category =
+          final String name =
+          food.name.toLowerCase();
+
+          final String category =
           food.category.toLowerCase();
-          final restaurant =
+
+          final String restaurant =
           food.restaurant.toLowerCase();
 
           return name.contains(query) ||
@@ -638,6 +485,344 @@ class _MilestoneApp6HomeScreenState
   }
 
   // ==============================================================
+  // NEW RESTAURANT - ZOMATO STYLE
+  // ==============================================================
+
+  Widget _newRestaurantItem({
+    required MilestoneApp6Restaurant restaurant,
+  }) {
+    final ThemeData theme =
+    Theme.of(context);
+
+    final bool isDark =
+        theme.brightness == Brightness.dark;
+
+    final bool isClosed =
+    !restaurant.isOpen;
+
+    final Color cardColor =
+    isClosed
+        ? (isDark
+        ? const Color(0xFF1C1C1C)
+        : const Color(0xFFF5F5F5))
+        : (isDark
+        ? const Color(0xFF171717)
+        : Colors.white);
+
+    final Color titleColor =
+    isClosed
+        ? (isDark
+        ? const Color(0xFF8A8A8A)
+        : const Color(0xFF555555))
+        : (isDark
+        ? Colors.white
+        : Colors.black);
+
+    final Color secondaryColor =
+    isClosed
+        ? (isDark
+        ? const Color(0xFF777777)
+        : const Color(0xFF888888))
+        : (isDark
+        ? const Color(0xFFB5B5B5)
+        : const Color(0xFF666666));
+
+    final Color distanceColor =
+    isClosed
+        ? (isDark
+        ? const Color(0xFF777777)
+        : const Color(0xFF888888))
+        : (isDark
+        ? const Color(0xFFBDBDBD)
+        : const Color(0xFF555555));
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        18,
+      ),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius:
+        BorderRadius.circular(18),
+        border: isDark
+            ? Border.all(
+          color:
+          Colors.white.withOpacity(
+            0.06,
+          ),
+        )
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(
+              0.35,
+            )
+                : Colors.black.withOpacity(
+              0.06,
+            ),
+            blurRadius: isDark ? 14 : 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius:
+        BorderRadius.circular(18),
+        onTap: () {
+          context.push(
+            '/restaurant/${Uri.encodeComponent(
+              restaurant.name,
+            )}',
+          );
+        },
+        child: Column(
+          mainAxisSize:
+          MainAxisSize.min,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+          children: [
+            // ----------------------------------------------------
+            // IMAGE
+            // ----------------------------------------------------
+
+            AspectRatio(
+              aspectRatio: 1.75,
+              child: isClosed
+                  ? ColorFiltered(
+                colorFilter:
+                const ColorFilter
+                    .matrix([
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                ]),
+                child:
+                MilestoneApp6Image(
+                  url:
+                  restaurant.image,
+                  width:
+                  double.infinity,
+                  fit:
+                  BoxFit.cover,
+                  borderRadius:
+                  BorderRadius.zero,
+                ),
+              )
+                  : MilestoneApp6Image(
+                url:
+                restaurant.image,
+                width:
+                double.infinity,
+                fit: BoxFit.cover,
+                borderRadius:
+                BorderRadius.zero,
+              ),
+            ),
+
+            // ----------------------------------------------------
+            // INFORMATION
+            // ----------------------------------------------------
+
+            Padding(
+              padding:
+              const EdgeInsets.fromLTRB(
+                14,
+                12,
+                14,
+                15,
+              ),
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    restaurant.name,
+                    maxLines: 1,
+                    overflow:
+                    TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: 20,
+                      fontWeight:
+                      FontWeight.w700,
+                      height: 1.15,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 6,
+                  ),
+
+                  Row(
+                    mainAxisSize:
+                    MainAxisSize.min,
+                    children: [
+                      Icon(
+                        restaurant.isOpen
+                            ? Icons
+                            .check_circle_rounded
+                            : Icons
+                            .cancel_rounded,
+                        size: 15,
+                        color:
+                        restaurant.isOpen
+                            ? const Color(
+                          0xFF00C853,
+                        )
+                            : const Color(
+                          0xFFFF5252,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 4,
+                      ),
+
+                      Text(
+                        restaurant.isOpen
+                            ? 'Open'
+                            : 'Closed',
+                        style: TextStyle(
+                          color:
+                          restaurant.isOpen
+                              ? const Color(
+                            0xFF00C853,
+                          )
+                              : const Color(
+                            0xFFFF5252,
+                          ),
+                          fontSize: 14,
+                          fontWeight:
+                          FontWeight.w600,
+                        ),
+                      ),
+
+                      if (restaurant
+                          .distance
+                          .isNotEmpty) ...[
+                        const SizedBox(
+                          width: 7,
+                        ),
+                        Text(
+                          '•',
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.white38
+                                : Colors.black45,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 7,
+                        ),
+                        Text(
+                          restaurant.distance,
+                          style: TextStyle(
+                            color:
+                            distanceColor,
+                            fontSize: 14,
+                            fontWeight:
+                            FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(
+                    height: 6,
+                  ),
+
+                  Text(
+                    restaurant.cuisine,
+                    maxLines: 1,
+                    overflow:
+                    TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: secondaryColor,
+                      fontSize: 14,
+                      fontWeight:
+                      FontWeight.w500,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 4,
+                  ),
+
+                  if (restaurant
+                      .address
+                      .isNotEmpty)
+                    Row(
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
+                      children: [
+                        Icon(
+                          Icons
+                              .location_on_rounded,
+                          size: 15,
+                          color: isDark
+                              ? const Color(
+                            0xFF9E9E9E,
+                          )
+                              : const Color(
+                            0xFF777777,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 4,
+                        ),
+                        Expanded(
+                          child: Text(
+                            restaurant.address,
+                            maxLines: 1,
+                            overflow:
+                            TextOverflow
+                                .ellipsis,
+                            style: TextStyle(
+                              color:
+                              secondaryColor,
+                              fontSize: 13,
+                              fontWeight:
+                              FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==============================================================
   // RESTAURANT ITEM
   // ==============================================================
 
@@ -648,24 +833,34 @@ class _MilestoneApp6HomeScreenState
     return AnimatedBuilder(
       animation: widget.state,
       builder: (context, child) {
-        final theme = Theme.of(context);
-        final bool isDark = theme.brightness == Brightness.dark;
+        final ThemeData theme =
+        Theme.of(context);
 
-        final restaurantFoods = _restaurantFoods(
+        final bool isDark =
+            theme.brightness ==
+                Brightness.dark;
+
+        final List<MilestoneApp6Food>
+        restaurantFoods =
+        _restaurantFoods(
           restaurant.name,
         );
 
-        // ==========================================================
-        // SEARCH / CATEGORY FILTER
-        // ==========================================================
+        // --------------------------------------------------------
+        // FILTERED RESTAURANT
+        // --------------------------------------------------------
 
         if (restaurantFoods.isEmpty &&
-            (_searchController.text.trim().isNotEmpty ||
-                _selectedCategory != 'All')) {
+            (_searchController.text
+                .trim()
+                .isNotEmpty ||
+                _selectedCategory !=
+                    'All')) {
           return const SizedBox.shrink();
         }
 
-        final bool isClosed = !restaurant.isOpen;
+        final bool isClosed =
+        !restaurant.isOpen;
 
         return Container(
           margin: const EdgeInsets.fromLTRB(
@@ -677,35 +872,45 @@ class _MilestoneApp6HomeScreenState
           decoration: BoxDecoration(
             color: isClosed
                 ? (isDark
-                ? const Color(0xFF1C1C1C)
-                : const Color(0xFFF5F5F5))
+                ? const Color(
+              0xFF1C1C1C,
+            )
+                : const Color(
+              0xFFF5F5F5,
+            ))
                 : (isDark
-                ? const Color(0xFF171717)
-                : theme.colorScheme.surface),
-
-            borderRadius: BorderRadius.circular(20),
-
+                ? const Color(
+              0xFF171717,
+            )
+                : theme.colorScheme
+                .surface),
+            borderRadius:
+            BorderRadius.circular(20),
             border: isDark
                 ? Border.all(
-              color: Colors.white.withOpacity(0.06),
+              color: Colors.white
+                  .withOpacity(0.06),
             )
                 : null,
-
             boxShadow: [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withOpacity(.35)
-                    : Colors.black.withOpacity(.07),
-                blurRadius: isDark ? 16 : 14,
-                offset: const Offset(0, 5),
+                    ? Colors.black
+                    .withOpacity(.35)
+                    : Colors.black
+                    .withOpacity(.07),
+                blurRadius:
+                isDark ? 16 : 14,
+                offset:
+                const Offset(0, 5),
               ),
             ],
           ),
-          clipBehavior: Clip.antiAlias,
-
+          clipBehavior:
+          Clip.antiAlias,
           child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-
+            borderRadius:
+            BorderRadius.circular(20),
             onTap: () {
               context.push(
                 '/restaurant/${Uri.encodeComponent(
@@ -713,220 +918,298 @@ class _MilestoneApp6HomeScreenState
                 )}',
               );
             },
-
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize:
+              MainAxisSize.min,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
-
-                // ========================================================
-                // RESTAURANT IMAGE
-                // ========================================================
+                // ------------------------------------------------
+                // IMAGE
+                // ------------------------------------------------
 
                 SizedBox(
                   height: 200,
                   width: double.infinity,
-
                   child: isClosed
                       ? ColorFiltered(
                     colorFilter:
-                    const ColorFilter.matrix([
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0,      0,      0,      1, 0,
+                    const ColorFilter
+                        .matrix([
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
                     ]),
-                    child: MilestoneApp6Image(
-                      url: restaurant.image,
-                      fit: BoxFit.cover,
-                      borderRadius: BorderRadius.zero,
+                    child:
+                    MilestoneApp6Image(
+                      url:
+                      restaurant.image,
+                      fit:
+                      BoxFit.cover,
+                      borderRadius:
+                      BorderRadius
+                          .zero,
                     ),
                   )
                       : MilestoneApp6Image(
-                    url: restaurant.image,
+                    url:
+                    restaurant.image,
                     fit: BoxFit.cover,
-                    borderRadius: BorderRadius.zero,
+                    borderRadius:
+                    BorderRadius.zero,
                   ),
                 ),
 
-                // ========================================================
-                // RESTAURANT INFORMATION
-                // ========================================================
+                // ------------------------------------------------
+                // INFORMATION
+                // ------------------------------------------------
 
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding:
+                  const EdgeInsets.fromLTRB(
                     14,
                     11,
                     14,
                     14,
                   ),
-
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize:
+                    MainAxisSize.min,
                     crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    CrossAxisAlignment
+                        .start,
                     children: [
-
-                      // ==================================================
-                      // RESTAURANT NAME
-                      // ==================================================
-
                       Text(
                         restaurant.name,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                        TextOverflow
+                            .ellipsis,
                         style: TextStyle(
                           color: isClosed
                               ? (isDark
-                              ? const Color(0xFF858585)
-                              : const Color(0xFF555555))
+                              ? const Color(
+                            0xFF858585,
+                          )
+                              : const Color(
+                            0xFF555555,
+                          ))
                               : (isDark
                               ? Colors.white
                               : Colors.black),
                           fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                          fontWeight:
+                          FontWeight.w700,
                           height: 1.15,
                         ),
                       ),
 
-                      const SizedBox(height: 5),
-
-                      // ==================================================
-                      // OPEN / CLOSED + DISTANCE
-                      // ==================================================
+                      const SizedBox(
+                        height: 5,
+                      ),
 
                       Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisSize:
+                        MainAxisSize.min,
                         children: [
-
                           Text(
                             restaurant.isOpen
                                 ? 'Open'
                                 : 'Closed',
                             style: TextStyle(
-                              color: restaurant.isOpen
-                                  ? const Color(0xFF00A651)
-                                  : const Color(0xFFE53935),
+                              color:
+                              restaurant
+                                  .isOpen
+                                  ? const Color(
+                                0xFF00A651,
+                              )
+                                  : const Color(
+                                0xFFE53935,
+                              ),
                               fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                              fontWeight:
+                              FontWeight
+                                  .w600,
                             ),
                           ),
 
-                          const SizedBox(width: 6),
+                          const SizedBox(
+                            width: 6,
+                          ),
 
-                          const Text(
+                          Text(
                             '•',
                             style: TextStyle(
-                              color: Colors.black54,
+                              color: isDark
+                                  ? Colors.white54
+                                  : Colors.black54,
                               fontSize: 14,
                             ),
                           ),
 
-                          const SizedBox(width: 6),
+                          const SizedBox(
+                            width: 6,
+                          ),
 
-                          if (restaurant.distance.isNotEmpty)
+                          if (restaurant
+                              .distance
+                              .isNotEmpty)
                             Text(
-                              restaurant.distance,
+                              restaurant
+                                  .distance,
                               style: TextStyle(
-                                color: isClosed
-                                    ? const Color(0xFF888888)
-                                    : const Color(0xFF555555),
+                                color:
+                                isClosed
+                                    ? const Color(
+                                  0xFF888888,
+                                )
+                                    : (isDark
+                                    ? const Color(
+                                  0xFFBDBDBD,
+                                )
+                                    : const Color(
+                                  0xFF555555,
+                                )),
                                 fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                fontWeight:
+                                FontWeight
+                                    .w500,
                               ),
                             ),
                         ],
                       ),
 
-                      const SizedBox(height: 6),
-
-                      // ==================================================
-                      // CUISINE
-                      // ==================================================
+                      const SizedBox(
+                        height: 6,
+                      ),
 
                       Text(
                         restaurant.cuisine,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                        TextOverflow
+                            .ellipsis,
                         style: TextStyle(
                           color: isClosed
-                              ? const Color(0xFF888888)
-                              : const Color(0xFF666666),
+                              ? const Color(
+                            0xFF888888,
+                          )
+                              : (isDark
+                              ? const Color(
+                            0xFFB5B5B5,
+                          )
+                              : const Color(
+                            0xFF666666,
+                          )),
                           fontSize: 15,
-                          fontWeight: FontWeight.w500,
+                          fontWeight:
+                          FontWeight.w500,
                         ),
                       ),
 
-                      const SizedBox(height: 3),
-
-                      // ==================================================
-                      // ADDRESS
-                      // ==================================================
-
-                      if (restaurant.address.isNotEmpty)
+                      if (restaurant
+                          .address
+                          .isNotEmpty) ...[
+                        const SizedBox(
+                          height: 3,
+                        ),
                         Text(
                           restaurant.address,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
                           style: TextStyle(
                             color: isClosed
-                                ? const Color(0xFF888888)
-                                : const Color(0xFF666666),
+                                ? const Color(
+                              0xFF888888,
+                            )
+                                : (isDark
+                                ? const Color(
+                              0xFFB5B5B5,
+                            )
+                                : const Color(
+                              0xFF666666,
+                            )),
                             fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontWeight:
+                            FontWeight.w500,
                           ),
                         ),
+                      ],
 
-                      // ==================================================
+                      // ------------------------------------------------
                       // FOOD CARDS
-                      // ==================================================
+                      // ------------------------------------------------
 
                       if (showFoodCards &&
-                          restaurantFoods.isNotEmpty) ...[
-                        const SizedBox(height: 14),
+                          restaurantFoods
+                              .isNotEmpty) ...[
+                        const SizedBox(
+                          height: 14,
+                        ),
 
                         SizedBox(
                           height: 280,
-
-                          child: ListView.separated(
-                            padding: const EdgeInsets.only(
+                          child:
+                          ListView.separated(
+                            padding:
+                            const EdgeInsets
+                                .only(
                               bottom: 5,
                             ),
-
-                            scrollDirection: Axis.horizontal,
-
+                            scrollDirection:
+                            Axis.horizontal,
                             physics:
                             const BouncingScrollPhysics(),
-
                             itemCount:
-                            restaurantFoods.length,
-
+                            restaurantFoods
+                                .length,
                             separatorBuilder:
                                 (_, __) =>
                             const SizedBox(
                               width: 12,
                             ),
-
                             itemBuilder:
-                                (context, index) {
+                                (context,
+                                index) {
                               final food =
-                              restaurantFoods[index];
+                              restaurantFoods[
+                              index];
 
                               return SizedBox(
                                 width: 190,
-
                                 child:
                                 MilestoneApp6FoodCard(
                                   food: food,
-                                  state: widget.state,
-
-                                  // IMPORTANT
+                                  state:
+                                  widget.state,
                                   restaurantIsOpen:
-                                  restaurant.isOpen,
-
-                                  onTap: restaurant.isOpen
+                                  restaurant
+                                      .isOpen,
+                                  onTap:
+                                  restaurant
+                                      .isOpen
                                       ? () {
-                                    context.push(
+                                    context
+                                        .push(
                                       '/food/${food.id}',
                                     );
                                   }
@@ -938,26 +1221,28 @@ class _MilestoneApp6HomeScreenState
                         ),
                       ],
 
-                      // ==================================================
+                      // ------------------------------------------------
                       // NO FOOD
-                      // ==================================================
+                      // ------------------------------------------------
 
                       if (showFoodCards &&
-                          restaurantFoods.isEmpty)
+                          restaurantFoods
+                              .isEmpty)
                         Padding(
                           padding:
-                          const EdgeInsets.only(
+                          const EdgeInsets
+                              .only(
                             top: 10,
                             bottom: 4,
                           ),
-
                           child: Text(
                             'Explore the menu to discover delicious dishes.',
                             style: theme
                                 .textTheme
                                 .bodySmall
                                 ?.copyWith(
-                              color: theme.hintColor,
+                              color:
+                              theme.hintColor,
                             ),
                           ),
                         ),
@@ -991,11 +1276,11 @@ class _MilestoneApp6HomeScreenState
           floating: false,
           snap: false,
           expandedHeight: 110,
-
           backgroundColor:
-          Theme.of(context).scaffoldBackgroundColor,
-
-          surfaceTintColor: Colors.transparent,
+          Theme.of(context)
+              .scaffoldBackgroundColor,
+          surfaceTintColor:
+          Colors.transparent,
 
           title: const Text(
             'Foodie',
@@ -1004,71 +1289,100 @@ class _MilestoneApp6HomeScreenState
             ),
           ),
 
-
-          // ============================================================
-          // RIGHT SIDE - ADDRESS
-          // ============================================================
+          // --------------------------------------------------------
+          // ADDRESS
+          // --------------------------------------------------------
 
           actions: [
             Padding(
-              padding: const EdgeInsets.only(right: 12),
+              padding:
+              const EdgeInsets.only(
+                right: 12,
+              ),
               child: GestureDetector(
                 onTap: () async {
-                  await context.push('/profile/address');
+                  await context.push(
+                    '/profile/address',
+                  );
 
-                  _loadSelectedAddress();
+                  await _loadSelectedAddress();
+
+                  await _loadNearbyRestaurants();
                 },
                 child: Container(
-                  constraints: const BoxConstraints(
+                  constraints:
+                  const BoxConstraints(
                     maxWidth: 145,
                   ),
-                  padding: const EdgeInsets.symmetric(
+                  padding:
+                  const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 6,
                   ),
-                  decoration: BoxDecoration(
+                  decoration:
+                  BoxDecoration(
                     color: Theme.of(context)
                         .colorScheme
                         .primary
                         .withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius:
+                    BorderRadius.circular(
+                      10,
+                    ),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize:
+                    MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.location_on_rounded,
+                        Icons
+                            .location_on_rounded,
                         size: 17,
-                        color: Theme.of(context)
+                        color: Theme.of(
+                          context,
+                        )
                             .colorScheme
                             .primary,
                       ),
 
-                      const SizedBox(width: 4),
+                      const SizedBox(
+                        width: 4,
+                      ),
 
                       Flexible(
                         child: Text(
-                          _selectedAddress.isEmpty
+                          _selectedAddress
+                              .isEmpty
                               ? 'Add address'
                               : _selectedAddress,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Theme.of(context)
+                            fontWeight:
+                            FontWeight.w700,
+                            color: Theme.of(
+                              context,
+                            )
                                 .colorScheme
                                 .primary,
                           ),
                         ),
                       ),
 
-                      const SizedBox(width: 2),
+                      const SizedBox(
+                        width: 2,
+                      ),
 
                       Icon(
-                        Icons.keyboard_arrow_down_rounded,
+                        Icons
+                            .keyboard_arrow_down_rounded,
                         size: 16,
-                        color: Theme.of(context)
+                        color: Theme.of(
+                          context,
+                        )
                             .colorScheme
                             .primary,
                       ),
@@ -1079,14 +1393,16 @@ class _MilestoneApp6HomeScreenState
             ),
           ],
 
-          // ============================================================
+          // --------------------------------------------------------
           // FLEXIBLE SPACE
-          // ============================================================
+          // --------------------------------------------------------
 
-          flexibleSpace: FlexibleSpaceBar(
+          flexibleSpace:
+          FlexibleSpaceBar(
             background: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
+                padding:
+                const EdgeInsets.fromLTRB(
                   20,
                   0,
                   20,
@@ -1094,7 +1410,8 @@ class _MilestoneApp6HomeScreenState
                 ),
                 child: Column(
                   crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  CrossAxisAlignment
+                      .start,
                   mainAxisAlignment:
                   MainAxisAlignment.end,
                   children: [
@@ -1102,18 +1419,27 @@ class _MilestoneApp6HomeScreenState
                       'Hi, Sakshi',
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                        fontWeight:
+                        FontWeight.w700,
                       ),
                     ),
 
-                    const SizedBox(height: 2),
+                    const SizedBox(
+                      height: 2,
+                    ),
 
                     Text(
                       'What would you like to eat today?',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Theme.of(context).hintColor,
+                        color:
+                        Theme.of(context)
+                            .hintColor,
                       ),
+                    ),
+
+                    const SizedBox(
+                      height: 12,
                     ),
                   ],
                 ),
@@ -1130,48 +1456,32 @@ class _MilestoneApp6HomeScreenState
           pinned: true,
           delegate:
           MilestoneApp6HomeStickyHeaderDelegate(
-            minHeight:
-            MediaQuery.paddingOf(context)
-                .top +
-                150,
-            maxHeight:
-            MediaQuery.paddingOf(context)
-                .top +
-                150,
+            minHeight: 145,
+            maxHeight: 145,
             child: Container(
               color: Theme.of(context)
                   .scaffoldBackgroundColor,
               child: Column(
                 children: [
-                  // --------------------------------------------------
+                  // ------------------------------------------------
                   // SEARCH
-                  // --------------------------------------------------
+                  // ------------------------------------------------
 
                   SizedBox(
-                    height: 50 +
-                        MediaQuery.paddingOf(
-                          context,
-                        ).top,
-                    child: SafeArea(
-                      bottom: true,
-                      child:
-                      _buildSearchBar(),
-                    ),
+                    height: 58,
+                    child:
+                    _buildSearchBar(),
                   ),
 
-                  // --------------------------------------------------
+                  // ------------------------------------------------
                   // CATEGORY
-                  // --------------------------------------------------
+                  // ------------------------------------------------
 
                   SizedBox(
-                    height: 94,
+                    height: 86,
                     child:
                     _buildCategoryRow(),
                   ),
-
-                  // --------------------------------------------------
-                  // DIVIDER
-                  // --------------------------------------------------
 
                   Container(
                     height: 1,
@@ -1186,6 +1496,24 @@ class _MilestoneApp6HomeScreenState
         ),
 
         // ==========================================================
+        // LOADING
+        // ==========================================================
+
+        if (_isLoading)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding:
+              EdgeInsets.symmetric(
+                vertical: 12,
+              ),
+              child:
+              LinearProgressIndicator(
+                minHeight: 2,
+              ),
+            ),
+          ),
+
+        // ==========================================================
         // BANNER
         // ==========================================================
 
@@ -1193,18 +1521,18 @@ class _MilestoneApp6HomeScreenState
           child: _banner(context),
         ),
 
-
         // ==========================================================
         // POPULAR RESTAURANTS
         // ==========================================================
 
-        // Popular Restaurants - OLD DATA - HORIZONTAL
         SliverToBoxAdapter(
           child: _sectionTitle(
             context,
             'Popular Restaurants',
                 () {
-              context.push('/restaurants');
+              context.push(
+                '/restaurants',
+              );
             },
           ),
         ),
@@ -1212,24 +1540,32 @@ class _MilestoneApp6HomeScreenState
         SliverToBoxAdapter(
           child: SizedBox(
             height: 350,
-
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
+              padding:
+              const EdgeInsets.fromLTRB(
                 10,
                 0,
                 16,
                 0,
               ),
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: restaurants.length,
-              separatorBuilder: (_, __) =>
-              const SizedBox(width: 1),
-              itemBuilder: (context, index) {
+              scrollDirection:
+              Axis.horizontal,
+              physics:
+              const BouncingScrollPhysics(),
+              itemCount:
+              restaurants.length,
+              separatorBuilder:
+                  (_, __) =>
+              const SizedBox(
+                width: 1,
+              ),
+              itemBuilder:
+                  (context, index) {
                 return SizedBox(
                   width: 340,
                   child: _restaurantItem(
-                    restaurant: restaurants[index],
+                    restaurant:
+                    restaurants[index],
                     showFoodCards: false,
                   ),
                 );
@@ -1238,30 +1574,38 @@ class _MilestoneApp6HomeScreenState
           ),
         ),
 
+        // ==========================================================
+        // ALL RESTAURANTS
+        // ==========================================================
+
         SliverToBoxAdapter(
           child: _sectionTitle(
             context,
             'All Restaurants',
                 () {
-              context.push('/restaurants');
+              context.push(
+                '/restaurants',
+              );
             },
           ),
         ),
 
         SliverList(
-          delegate: SliverChildBuilderDelegate(
+          delegate:
+          SliverChildBuilderDelegate(
                 (context, index) {
               return _newRestaurantItem(
-                restaurant: newRestaurants[index],
+                restaurant:
+                newRestaurants[index],
               );
             },
-            childCount: newRestaurants.length,
+            childCount:
+            newRestaurants.length,
           ),
         ),
 
-
         // ==========================================================
-        // FOOD SEARCH EMPTY STATE
+        // EMPTY SEARCH
         // ==========================================================
 
         if (_filteredFoods.isEmpty &&
@@ -1293,13 +1637,15 @@ class _MilestoneApp6HomeScreenState
   // ==============================================================
 
   Widget _buildCategoryRow() {
-    final allCategory =
+    final MilestoneApp6Category
+    allCategory =
     MilestoneApp6Category(
       'All',
       'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500',
     );
 
-    final categories = [
+    final List<MilestoneApp6Category>
+    categories = [
       allCategory,
       ...milestoneApp6Categories,
     ];
@@ -1317,13 +1663,15 @@ class _MilestoneApp6HomeScreenState
       itemCount: categories.length,
       separatorBuilder:
           (_, __) =>
-      const SizedBox(width: 10),
+      const SizedBox(
+        width: 10,
+      ),
       itemBuilder:
           (context, index) {
         final category =
         categories[index];
 
-        final selected =
+        final bool selected =
             _selectedCategory ==
                 category.name;
 
@@ -1347,10 +1695,10 @@ class _MilestoneApp6HomeScreenState
   Widget _buildEmptyFoodState(
       BuildContext context,
       ) {
-    final theme =
+    final ThemeData theme =
     Theme.of(context);
 
-    final hasSearch =
+    final bool hasSearch =
         _searchController.text
             .trim()
             .isNotEmpty;
@@ -1444,14 +1792,14 @@ class _MilestoneApp6HomeScreenState
   Widget _banner(
       BuildContext context,
       ) {
-    final width =
+    final double width =
         MediaQuery.sizeOf(context)
             .width;
 
-    final isTablet =
+    final bool isTablet =
         width >= 700;
 
-    final bannerHeight =
+    final double bannerHeight =
     isTablet ? 150.0 : 140.0;
 
     return Padding(
@@ -1467,15 +1815,13 @@ class _MilestoneApp6HomeScreenState
         width: double.infinity,
         child: ClipRRect(
           borderRadius:
-          BorderRadius.circular(
-            20,
-          ),
+          BorderRadius.circular(20),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // ======================================================
+              // --------------------------------------------------
               // BACKGROUND
-              // ======================================================
+              // --------------------------------------------------
 
               const DecoratedBox(
                 decoration:
@@ -1497,9 +1843,9 @@ class _MilestoneApp6HomeScreenState
                 ),
               ),
 
-              // ======================================================
-              // FOOD IMAGE
-              // ======================================================
+              // --------------------------------------------------
+              // IMAGE
+              // --------------------------------------------------
 
               Positioned(
                 top: 0,
@@ -1518,23 +1864,22 @@ class _MilestoneApp6HomeScreenState
                 ),
               ),
 
-              // ======================================================
-              // IMAGE OVERLAY
-              // ======================================================
+              // --------------------------------------------------
+              // OVERLAY
+              // --------------------------------------------------
 
               Positioned.fill(
-                child:
-                IgnorePointer(
+                child: IgnorePointer(
                   child:
                   DecoratedBox(
                     decoration:
                     BoxDecoration(
                       gradient:
                       LinearGradient(
-                        begin: Alignment
-                            .centerLeft,
-                        end: Alignment
-                            .centerRight,
+                        begin:
+                        Alignment.centerLeft,
+                        end:
+                        Alignment.centerRight,
                         stops: const [
                           0.0,
                           0.38,
@@ -1562,9 +1907,9 @@ class _MilestoneApp6HomeScreenState
                 ),
               ),
 
-              // ======================================================
+              // --------------------------------------------------
               // CONTENT
-              // ======================================================
+              // --------------------------------------------------
 
               Positioned(
                 left: 18,
@@ -1576,21 +1921,23 @@ class _MilestoneApp6HomeScreenState
                       : width * .43,
                   child: Column(
                     crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    CrossAxisAlignment
+                        .start,
                     children: [
                       const Text(
                         'Delicious Food\nDelivered to You',
                         maxLines: 2,
                         overflow:
-                        TextOverflow.ellipsis,
-                        style:
-                        TextStyle(
+                        TextOverflow
+                            .ellipsis,
+                        style: TextStyle(
                           color:
                           Colors.white,
                           fontSize: 17,
                           height: 1.05,
                           fontWeight:
-                          FontWeight.w800,
+                          FontWeight
+                              .w800,
                         ),
                       ),
 
@@ -1602,8 +1949,7 @@ class _MilestoneApp6HomeScreenState
                             '/categories',
                           );
                         },
-                        child:
-                        Container(
+                        child: Container(
                           padding:
                           const EdgeInsets
                               .symmetric(
@@ -1626,10 +1972,9 @@ class _MilestoneApp6HomeScreenState
                             'Order Now',
                             style:
                             TextStyle(
-                              color:
-                              Colors.black54,
-                              fontSize:
-                              10,
+                              color: Colors
+                                  .black54,
+                              fontSize: 10,
                               fontWeight:
                               FontWeight
                                   .w700,
@@ -1693,7 +2038,9 @@ class _MilestoneApp6HomeScreenState
               style: TextStyle(
                 color: Theme.of(
                   context,
-                ).colorScheme.primary,
+                )
+                    .colorScheme
+                    .primary,
                 fontSize: 11,
                 fontWeight:
                 FontWeight.w600,
@@ -1785,4 +2132,3 @@ class MilestoneApp6HomeStickyHeaderDelegate
         child != oldDelegate.child;
   }
 }
-

@@ -1,17 +1,31 @@
+import 'package:app_matic_tech_flutter_app/services/milestone_app_6_address_api.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../data/milestone_app_6_restaurants_data.dart';
-import '../data/milestone_app_6_address_data.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_order.dart';
+import '../data/milestone_app_6_restaurants_data.dart';
+import '../modelss/milestone_app_6_address_model.dart';
 
 class MilestoneApp6State extends ChangeNotifier {
   // ================================================================
   // SHARED PREFERENCES
   // ================================================================
+  final MilestoneApp6AddressApi _addressApi =
+  MilestoneApp6AddressApi();
 
-  static const String _themeKey = 'milestone_app_6_dark';
+  final TextEditingController _searchController =
+  TextEditingController();
+
+  List<MilestoneApp6Address> _savedAddresses = [];
+
+  bool _isLoadingAddresses = true;
+  bool _isSavingAddress = false;
+  bool _isUpdatingAddress = false;
+  bool _isDeletingAddress = false;
+  static const String _themeKey =
+      'milestone_app_6_dark';
+
   static const String _onboardingKey =
       'milestone_app_6_onboarding_done';
 
@@ -19,7 +33,11 @@ class MilestoneApp6State extends ChangeNotifier {
   // THEME
   // ================================================================
 
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode =
+      ThemeMode.light;
+
+  ThemeMode get themeMode =>
+      _themeMode;
 
   // ================================================================
   // ONBOARDING
@@ -27,28 +45,50 @@ class MilestoneApp6State extends ChangeNotifier {
 
   bool _onboardingDone = false;
 
+  bool get onboardingDone =>
+      _onboardingDone;
+
   // ================================================================
   // CART
   // ================================================================
 
-  final Map<String, MilestoneApp6CartItem> _cart =
+  final Map<String, MilestoneApp6CartItem>
+  _cart =
   <String, MilestoneApp6CartItem>{};
+
+  Map<String, MilestoneApp6CartItem>
+  get cart =>
+      Map.unmodifiable(_cart);
 
   // ================================================================
   // FAVORITES
   // ================================================================
 
-  final Set<String> _saved = <String>{};
+  final Set<String> _saved =
+  <String>{};
 
   final Set<String> _savedRestaurants =
   <String>{};
+
+  Set<String> get saved =>
+      Set.unmodifiable(_saved);
+
+  Set<String> get savedRestaurants =>
+      Set.unmodifiable(
+        _savedRestaurants,
+      );
 
   // ================================================================
   // ORDERS
   // ================================================================
 
-  final List<MilestoneApp6Order> _orders =
+  final List<MilestoneApp6Order>
+  _orders =
   <MilestoneApp6Order>[];
+
+  List<MilestoneApp6Order>
+  get orders =>
+      List.unmodifiable(_orders);
 
   // ================================================================
   // PROMO
@@ -58,40 +98,43 @@ class MilestoneApp6State extends ChangeNotifier {
 
   double _promoDiscount = 0.0;
 
-  // ================================================================
-  // ADDRESS
-  // ================================================================
-
-  MilestoneApp6Address? _selectedAddress;
-
-  // ================================================================
-  // GETTERS
-  // ================================================================
-
-  ThemeMode get themeMode => _themeMode;
-
-  bool get onboardingDone => _onboardingDone;
-
-  Map<String, MilestoneApp6CartItem> get cart =>
-      Map.unmodifiable(_cart);
-
-  Set<String> get saved =>
-      Set.unmodifiable(_saved);
-
-  Set<String> get savedRestaurants =>
-      Set.unmodifiable(_savedRestaurants);
-
-  List<MilestoneApp6Order> get orders =>
-      List.unmodifiable(_orders);
-
-  MilestoneApp6Address? get selectedAddress =>
-      _selectedAddress;
-
   String? get appliedPromoCode =>
       _appliedPromoCode;
 
   double get promoDiscount =>
       _promoDiscount;
+
+  // ================================================================
+  // ADDRESS
+  // ================================================================
+
+  MilestoneApp6Address?
+  _selectedAddress;
+
+  MilestoneApp6Address?
+  get selectedAddress =>
+      _selectedAddress;
+
+
+  // ================================================================
+  // SET ADDRESS
+  // ================================================================
+
+  void setAddress(
+      MilestoneApp6Address address,
+      ) {
+    _selectedAddress = address;
+    notifyListeners();
+  }
+
+  // ================================================================
+  // CLEAR ADDRESS
+  // ================================================================
+
+  void clearAddress() {
+    _selectedAddress = null;
+    notifyListeners();
+  }
 
   // ================================================================
   // CART COUNT
@@ -100,7 +143,11 @@ class MilestoneApp6State extends ChangeNotifier {
   int get cartCount {
     return _cart.values.fold<int>(
       0,
-          (total, item) => total + item.quantity,
+          (
+          total,
+          item,
+          ) =>
+      total + item.quantity,
     );
   }
 
@@ -111,7 +158,11 @@ class MilestoneApp6State extends ChangeNotifier {
   double get cartSubtotal {
     return _cart.values.fold<double>(
       0.0,
-          (total, item) => total + item.totalPrice,
+          (
+          total,
+          item,
+          ) =>
+      total + item.totalPrice,
     );
   }
 
@@ -144,39 +195,49 @@ class MilestoneApp6State extends ChangeNotifier {
             deliveryCharge -
             discountAmount;
 
-    return total < 0 ? 0.0 : total;
+    return total < 0
+        ? 0.0
+        : total;
   }
 
   // ================================================================
-  // LOAD
+  // LOAD SETTINGS
   // ================================================================
 
   Future<void> load() async {
     final prefs =
-    await SharedPreferences.getInstance();
+    await SharedPreferences
+        .getInstance();
 
     final dark =
-        prefs.getBool(_themeKey) ?? false;
+        prefs.getBool(
+          _themeKey,
+        ) ??
+            false;
 
     _themeMode = dark
         ? ThemeMode.dark
         : ThemeMode.light;
 
     _onboardingDone =
-        prefs.getBool(_onboardingKey) ?? false;
+        prefs.getBool(
+          _onboardingKey,
+        ) ??
+            false;
 
     notifyListeners();
   }
 
   // ================================================================
-  // ONBOARDING
+  // FINISH ONBOARDING
   // ================================================================
 
   Future<void> finishOnboarding() async {
     _onboardingDone = true;
 
     final prefs =
-    await SharedPreferences.getInstance();
+    await SharedPreferences
+        .getInstance();
 
     await prefs.setBool(
       _onboardingKey,
@@ -198,7 +259,8 @@ class MilestoneApp6State extends ChangeNotifier {
         : ThemeMode.light;
 
     final prefs =
-    await SharedPreferences.getInstance();
+    await SharedPreferences
+        .getInstance();
 
     await prefs.setBool(
       _themeKey,
@@ -233,7 +295,8 @@ class MilestoneApp6State extends ChangeNotifier {
       return;
     }
 
-    final key = _cartKey(
+    final key =
+    _cartKey(
       food,
       size,
     );
@@ -242,7 +305,8 @@ class MilestoneApp6State extends ChangeNotifier {
     _cart[key];
 
     if (existing != null) {
-      existing.quantity += quantity;
+      existing.quantity +=
+          quantity;
     } else {
       _cart[key] =
           MilestoneApp6CartItem(
@@ -259,7 +323,7 @@ class MilestoneApp6State extends ChangeNotifier {
   }
 
   // ================================================================
-  // ADD FOOD WITH RESTAURANT CHECK
+  // ADD FOOD TO CART
   // ================================================================
 
   Future<bool> addFoodToCart({
@@ -276,7 +340,10 @@ class MilestoneApp6State extends ChangeNotifier {
     final price =
         unitPrice ?? food.price;
 
-    // Empty cart.
+    // --------------------------------------------------------------
+    // EMPTY CART
+    // --------------------------------------------------------------
+
     if (_cart.isEmpty) {
       addToCart(
         food,
@@ -288,19 +355,28 @@ class MilestoneApp6State extends ChangeNotifier {
       return true;
     }
 
+    // --------------------------------------------------------------
+    // FIRST CART ITEM
+    // --------------------------------------------------------------
+
     final firstItem =
         _cart.values.first;
 
     final currentRestaurant =
-    firstItem.food.restaurant.trim();
+    firstItem.food.restaurant
+        .trim();
 
     final newRestaurant =
     food.restaurant.trim();
 
-    // Same restaurant.
+    // --------------------------------------------------------------
+    // SAME RESTAURANT
+    // --------------------------------------------------------------
+
     if (currentRestaurant
         .toLowerCase() ==
-        newRestaurant.toLowerCase()) {
+        newRestaurant
+            .toLowerCase()) {
       addToCart(
         food,
         size: size,
@@ -311,20 +387,29 @@ class MilestoneApp6State extends ChangeNotifier {
       return true;
     }
 
-    // Different restaurant.
+    // --------------------------------------------------------------
+    // DIFFERENT RESTAURANT
+    // --------------------------------------------------------------
+
     final shouldReplace =
     await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (dialogContext) {
+      builder: (
+          dialogContext,
+          ) {
         final theme =
-        Theme.of(dialogContext);
+        Theme.of(
+          dialogContext,
+        );
 
         return AlertDialog(
           shape:
           RoundedRectangleBorder(
             borderRadius:
-            BorderRadius.circular(22),
+            BorderRadius.circular(
+              22,
+            ),
           ),
           title: Row(
             children: [
@@ -336,7 +421,9 @@ class MilestoneApp6State extends ChangeNotifier {
                   color: theme
                       .colorScheme
                       .primary
-                      .withOpacity(.10),
+                      .withOpacity(
+                    0.10,
+                  ),
                   shape:
                   BoxShape.circle,
                 ),
@@ -348,7 +435,9 @@ class MilestoneApp6State extends ChangeNotifier {
                       .primary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(
+                width: 12,
+              ),
               const Expanded(
                 child: Text(
                   'Replace Cart?',
@@ -389,7 +478,8 @@ class MilestoneApp6State extends ChangeNotifier {
                   '.\n\nDo you want to replace them with items from ',
                 ),
                 TextSpan(
-                  text: newRestaurant,
+                  text:
+                  newRestaurant,
                   style:
                   const TextStyle(
                     fontWeight:
@@ -409,7 +499,8 @@ class MilestoneApp6State extends ChangeNotifier {
                   dialogContext,
                 ).pop(false);
               },
-              child: const Text(
+              child:
+              const Text(
                 'Keep Existing',
               ),
             ),
@@ -419,7 +510,8 @@ class MilestoneApp6State extends ChangeNotifier {
                   dialogContext,
                 ).pop(true);
               },
-              child: const Text(
+              child:
+              const Text(
                 'Replace Cart',
               ),
             ),
@@ -433,6 +525,7 @@ class MilestoneApp6State extends ChangeNotifier {
     }
 
     _cart.clear();
+
     clearPromo();
 
     addToCart(
@@ -454,7 +547,10 @@ class MilestoneApp6State extends ChangeNotifier {
         String size = 'Small',
       }) {
     final key =
-    _cartKey(food, size);
+    _cartKey(
+      food,
+      size,
+    );
 
     final item =
     _cart[key];
@@ -487,7 +583,10 @@ class MilestoneApp6State extends ChangeNotifier {
         String size = 'Small',
       }) {
     final key =
-    _cartKey(food, size);
+    _cartKey(
+      food,
+      size,
+    );
 
     _cart.remove(key);
 
@@ -513,7 +612,7 @@ class MilestoneApp6State extends ChangeNotifier {
   }
 
   // ================================================================
-  // PROMO
+  // APPLY PROMO
   // ================================================================
 
   bool applyPromoCode(
@@ -523,10 +622,11 @@ class MilestoneApp6State extends ChangeNotifier {
     code.trim().toUpperCase();
 
     if (promo == 'FOOD10') {
-      _appliedPromoCode = 'FOOD10';
+      _appliedPromoCode =
+      'FOOD10';
 
       _promoDiscount =
-          cartSubtotal * .10;
+          cartSubtotal * 0.10;
 
       notifyListeners();
 
@@ -534,6 +634,7 @@ class MilestoneApp6State extends ChangeNotifier {
     }
 
     _appliedPromoCode = null;
+
     _promoDiscount = 0.0;
 
     notifyListeners();
@@ -549,7 +650,7 @@ class MilestoneApp6State extends ChangeNotifier {
     if (_appliedPromoCode ==
         'FOOD10') {
       _promoDiscount =
-          cartSubtotal * .10;
+          cartSubtotal * 0.10;
     }
   }
 
@@ -592,12 +693,17 @@ class MilestoneApp6State extends ChangeNotifier {
       String restaurantName,
       ) {
     if (_savedRestaurants
-        .contains(restaurantName)) {
+        .contains(
+      restaurantName,
+    )) {
       _savedRestaurants
-          .remove(restaurantName);
+          .remove(
+        restaurantName,
+      );
     } else {
-      _savedRestaurants
-          .add(restaurantName);
+      _savedRestaurants.add(
+        restaurantName,
+      );
     }
 
     notifyListeners();
@@ -607,34 +713,18 @@ class MilestoneApp6State extends ChangeNotifier {
       String restaurantName,
       ) {
     return _savedRestaurants
-        .contains(restaurantName);
+        .contains(
+      restaurantName,
+    );
   }
 
-  // ===============================================================
-// ORDERS
-// ===============================================================
-
-
-  /// ===============================================================
-  /// ADD ORDER
-  /// ===============================================================
-  ///
-  /// Creates ONE order containing ALL products.
-  ///
-  /// Example:
-  ///
-  /// items:
-  ///   Pizza × 1
-  ///   Pepsi × 1
-  ///   Burger × 2
-  ///
-  /// Result:
-  ///   ONE MilestoneApp6Order
-  ///
-  /// ===============================================================
+  // ================================================================
+  // ADD ORDER
+  // ================================================================
 
   void addOrder({
-    required List<MilestoneApp6CartItem> items,
+    required List<
+        MilestoneApp6CartItem> items,
     required String paymentType,
     String? restaurantImage,
     String? restaurantAddress,
@@ -643,24 +733,33 @@ class MilestoneApp6State extends ChangeNotifier {
       return;
     }
 
-    final firstFood = items.first.food;
+    final firstFood =
+        items.first.food;
 
-    final String restaurantName =
-    firstFood.restaurant.trim().isEmpty
+    final restaurantName =
+    firstFood.restaurant
+        .trim()
+        .isEmpty
         ? 'Restaurant'
-        : firstFood.restaurant.trim();
+        : firstFood.restaurant
+        .trim();
 
-    /// -------------------------------------------------------------
-    /// FIND RESTAURANT IMAGE
-    /// -------------------------------------------------------------
+    // --------------------------------------------------------------
+    // RESTAURANT IMAGE
+    // --------------------------------------------------------------
 
     String resolvedRestaurantImage =
         restaurantImage ?? '';
 
-    if (resolvedRestaurantImage.isEmpty) {
-      for (final restaurant in restaurants) {
-        if (restaurant.name.trim().toLowerCase() ==
-            restaurantName.toLowerCase()) {
+    if (resolvedRestaurantImage
+        .isEmpty) {
+      for (final restaurant
+      in restaurants) {
+        if (restaurant.name
+            .trim()
+            .toLowerCase() ==
+            restaurantName
+                .toLowerCase()) {
           resolvedRestaurantImage =
               restaurant.image;
           break;
@@ -668,63 +767,84 @@ class MilestoneApp6State extends ChangeNotifier {
       }
     }
 
-    /// If restaurant image is not found,
-    /// use first food image as safe fallback.
-    if (resolvedRestaurantImage.isEmpty) {
-      resolvedRestaurantImage = firstFood.image;
+    // --------------------------------------------------------------
+    // FALLBACK FOOD IMAGE
+    // --------------------------------------------------------------
+
+    if (resolvedRestaurantImage
+        .isEmpty) {
+      resolvedRestaurantImage =
+          firstFood.image;
     }
 
-    /// -------------------------------------------------------------
-    /// RESTAURANT ADDRESS
-    /// -------------------------------------------------------------
+    // --------------------------------------------------------------
+    // RESTAURANT ADDRESS
+    // --------------------------------------------------------------
 
-    final String resolvedRestaurantAddress =
-    restaurantAddress?.trim().isNotEmpty == true
-        ? restaurantAddress!.trim()
+    final resolvedRestaurantAddress =
+    restaurantAddress
+        ?.trim()
+        .isNotEmpty ==
+        true
+        ? restaurantAddress!
+        .trim()
         : 'Ahmedabad';
 
-    /// -------------------------------------------------------------
-    /// CREATE ONE ORDER
-    /// -------------------------------------------------------------
+    // --------------------------------------------------------------
+    // CREATE ORDER
+    // --------------------------------------------------------------
 
-    final order = MilestoneApp6Order(
+    final order =
+    MilestoneApp6Order(
       id: DateTime.now()
           .millisecondsSinceEpoch
           .toString(),
       items: items,
-      restaurantName: restaurantName,
-      restaurantImage: resolvedRestaurantImage,
-      restaurantAddress: resolvedRestaurantAddress,
-      paymentType: paymentType,
-      orderDate: DateTime.now(),
-      status: MilestoneApp6OrderStatus.placed,
+      restaurantName:
+      restaurantName,
+      restaurantImage:
+      resolvedRestaurantImage,
+      restaurantAddress:
+      resolvedRestaurantAddress,
+      paymentType:
+      paymentType,
+      orderDate:
+      DateTime.now(),
+      status:
+      MilestoneApp6OrderStatus
+          .placed,
     );
 
-    _orders.insert(0, order);
+    _orders.insert(
+      0,
+      order,
+    );
 
     notifyListeners();
   }
 
-  /// ===============================================================
-  /// UPDATE ORDER STATUS
-  /// ===============================================================
+  // ================================================================
+  // UPDATE ORDER STATUS
+  // ================================================================
 
   void updateOrderStatus(
       String orderId,
       MilestoneApp6OrderStatus status,
       ) {
-    final index = _orders.indexWhere(
-          (order) => order.id == orderId,
+    final index =
+    _orders.indexWhere(
+          (order) =>
+      order.id == orderId,
     );
 
     if (index == -1) {
       return;
     }
 
-    final order = _orders[index];
+    final order =
+    _orders[index];
 
-    /// Cancelled orders cannot move
-    /// to another status.
+    // Cancelled order cannot move.
     if (order.isCancelled) {
       return;
     }
@@ -734,69 +854,58 @@ class MilestoneApp6State extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ===============================================================
-  /// CANCEL ORDER
-  /// ===============================================================
+  // ================================================================
+  // CANCEL ORDER
+  // ================================================================
 
-  bool cancelOrder(String orderId) {
-    final index = _orders.indexWhere(
-          (order) => order.id == orderId,
+  bool cancelOrder(
+      String orderId,
+      ) {
+    final index =
+    _orders.indexWhere(
+          (order) =>
+      order.id == orderId,
     );
 
     if (index == -1) {
       return false;
     }
 
-    final order = _orders[index];
+    final order =
+    _orders[index];
 
-    /// Already cancelled.
     if (order.isCancelled) {
       return false;
     }
 
-    /// Delivered orders cannot be cancelled.
     if (order.isDelivered) {
       return false;
     }
 
-    /// Out-for-delivery orders cannot be cancelled.
     if (order.isOutForDelivery) {
       return false;
     }
 
     order.status =
-        MilestoneApp6OrderStatus.cancelled;
+        MilestoneApp6OrderStatus
+            .cancelled;
 
     notifyListeners();
 
     return true;
   }
 
-  /// ===============================================================
-  /// MARK DELIVERED
-  /// ===============================================================
+  // ================================================================
+  // MARK DELIVERED
+  // ================================================================
 
-  void markOrderDelivered(String orderId) {
+  void markOrderDelivered(
+      String orderId,
+      ) {
     updateOrderStatus(
       orderId,
-      MilestoneApp6OrderStatus.delivered,
+      MilestoneApp6OrderStatus
+          .delivered,
     );
-  }
-  // ================================================================
-  // ADDRESS
-  // ================================================================
-
-  void setAddress(
-      MilestoneApp6Address address,
-      ) {
-    _selectedAddress = address;
-
-    notifyListeners();
-  }
-
-  void clearAddress() {
-    _selectedAddress = null;
-
-    notifyListeners();
   }
 }
