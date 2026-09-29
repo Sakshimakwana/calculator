@@ -1,14 +1,40 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../core/constants/api_constants.dart';
 
-class MilestoneApp6RestaurantApi {
-  // ============================================================
-  // HEADERS
-  // ============================================================
+class MilestoneApp6NearbyRestaurantsResponse {
+  final List<Map<String, dynamic>> data;
 
+  final int perPage;
+  final int count;
+  final bool hasMorePages;
+  final int currentPage;
+  final int recordsLoaded;
+  final int lastPage;
+  final int total;
+
+  final String? previousPageUrl;
+  final String? nextPageUrl;
+
+  const MilestoneApp6NearbyRestaurantsResponse({
+    required this.data,
+    required this.perPage,
+    required this.count,
+    required this.hasMorePages,
+    required this.currentPage,
+    required this.recordsLoaded,
+    required this.lastPage,
+    required this.total,
+    this.previousPageUrl,
+    this.nextPageUrl,
+  });
+}
+
+class MilestoneApp6RestaurantApi {
   Map<String, String> _headers(String token) {
     return {
       'Authorization': 'Bearer $token',
@@ -17,58 +43,56 @@ class MilestoneApp6RestaurantApi {
     };
   }
 
-  // ============================================================
-  // GET NEARBY RESTAURANTS
-  // ============================================================
+  // ==============================================================
+  // PAGINATED NEARBY RESTAURANTS API
+  // ==============================================================
 
-  Future<List<Map<String, dynamic>>> fetchNearbyRestaurants({
+  Future<MilestoneApp6NearbyRestaurantsResponse>
+  fetchNearbyRestaurantsPage({
     required String token,
     required int addressId,
     int page = 1,
+    int perPage = 6,
     bool openNow = false,
-    bool includeMenus = false,
+    bool includeMenus = true,
   }) async {
     if (token.trim().isEmpty) {
-      throw Exception(
-        'Authentication token is missing.',
-      );
+      throw Exception('Authentication token is missing.');
     }
 
     if (addressId <= 0) {
-      throw Exception(
-        'Invalid selected address ID.',
-      );
+      throw Exception('Invalid selected address ID.');
     }
 
-    // ==========================================================
-    // BUILD QUERY
-    // ==========================================================
+    if (page <= 0) {
+      throw Exception('Invalid restaurant page.');
+    }
 
-    final queryParameters = <String, String>{
+    if (perPage <= 0) {
+      throw Exception('Invalid restaurant per page value.');
+    }
+
+    final Map<String, String> queryParameters = {
       'page': page.toString(),
+      'per_page': perPage.toString(),
       'address_id': addressId.toString(),
     };
 
-    // Only send open_now when required.
+    // Only send open_now when it is required.
     if (openNow) {
-      queryParameters['open_now'] = 'true';
+      queryParameters['open_now'] = '1';
     }
 
-    // Get restaurant categories + food items.
     if (includeMenus) {
       queryParameters['include'] = 'menus.menuItems';
     }
 
-    final uri = Uri.parse(
+    final Uri uri = Uri.parse(
       '${ApiConstants.baseUrl}'
           '${ApiConstants.nearbyRestaurants}',
     ).replace(
       queryParameters: queryParameters,
     );
-
-    // ==========================================================
-    // DEBUG
-    // ==========================================================
 
     debugPrint('');
     debugPrint('==========================================');
@@ -76,14 +100,12 @@ class MilestoneApp6RestaurantApi {
     debugPrint('==========================================');
     debugPrint('METHOD: GET');
     debugPrint('ADDRESS ID: $addressId');
+    debugPrint('PAGE: $page');
+    debugPrint('PER PAGE: $perPage');
     debugPrint('OPEN NOW: $openNow');
     debugPrint('INCLUDE MENUS: $includeMenus');
     debugPrint('URL: $uri');
     debugPrint('==========================================');
-
-    // ==========================================================
-    // API CALL
-    // ==========================================================
 
     late final http.Response response;
 
@@ -106,24 +128,18 @@ class MilestoneApp6RestaurantApi {
       );
     }
 
-    // ==========================================================
-    // RESPONSE
-    // ==========================================================
-
     debugPrint('');
     debugPrint('==========================================');
     debugPrint('   NEARBY RESTAURANTS RESPONSE            ');
     debugPrint('==========================================');
-    debugPrint(
-      'STATUS CODE: ${response.statusCode}',
-    );
+    debugPrint('STATUS CODE: ${response.statusCode}');
     debugPrint('RESPONSE BODY:');
     debugPrint(response.body);
     debugPrint('==========================================');
 
-    // ==========================================================
-    // STATUS
-    // ==========================================================
+    // ============================================================
+    // STATUS HANDLING
+    // ============================================================
 
     if (response.statusCode == 401) {
       throw Exception(
@@ -147,14 +163,23 @@ class MilestoneApp6RestaurantApi {
     }
 
     if (response.body.trim().isEmpty) {
-      return <Map<String, dynamic>>[];
+      return const MilestoneApp6NearbyRestaurantsResponse(
+        data: [],
+        perPage: 6,
+        count: 0,
+        hasMorePages: false,
+        currentPage: 1,
+        recordsLoaded: 0,
+        lastPage: 1,
+        total: 0,
+      );
     }
 
-    // ==========================================================
-    // DECODE
-    // ==========================================================
+    // ============================================================
+    // DECODE JSON
+    // ============================================================
 
-    final decoded = jsonDecode(response.body);
+    final dynamic decoded = jsonDecode(response.body);
 
     if (decoded is! Map) {
       throw Exception(
@@ -162,21 +187,138 @@ class MilestoneApp6RestaurantApi {
       );
     }
 
-    // ==========================================================
-    // DATA
-    // ==========================================================
+    // ============================================================
+    // RESTAURANT DATA
+    // ============================================================
 
-    final rawData = decoded['data'];
+    final dynamic rawData = decoded['data'];
 
-    if (rawData is! List) {
-      return <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> restaurants = [];
+
+    if (rawData is List) {
+      for (final item in rawData) {
+        if (item is Map) {
+          restaurants.add(
+            Map<String, dynamic>.from(item),
+          );
+        }
+      }
     }
 
-    return rawData
-        .whereType<Map>()
-        .map(
-          (item) => Map<String, dynamic>.from(item),
-    )
-        .toList();
+    // ============================================================
+    // PAGINATION
+    // ============================================================
+
+    final dynamic rawPagination = decoded['pagination'];
+
+    final Map<String, dynamic> pagination =
+    rawPagination is Map
+        ? Map<String, dynamic>.from(rawPagination)
+        : <String, dynamic>{};
+
+    final int responsePerPage =
+        int.tryParse(
+          pagination['per_page']?.toString() ?? '',
+        ) ??
+            perPage;
+
+    final int count =
+        int.tryParse(
+          pagination['count']?.toString() ?? '',
+        ) ??
+            restaurants.length;
+
+    final bool hasMorePages =
+        pagination['has_more_pages'] == true ||
+            pagination['has_more_pages']
+                ?.toString()
+                .toLowerCase() ==
+                'true' ||
+            pagination['has_more_pages']?.toString() == '1';
+
+    final int currentPage =
+        int.tryParse(
+          pagination['current_page']?.toString() ?? '',
+        ) ??
+            page;
+
+    final int recordsLoaded =
+        int.tryParse(
+          pagination['records_loaded']?.toString() ?? '',
+        ) ??
+            restaurants.length;
+
+    final int lastPage =
+        int.tryParse(
+          pagination['last_page']?.toString() ?? '',
+        ) ??
+            currentPage;
+
+    final int total =
+        int.tryParse(
+          pagination['total']?.toString() ?? '',
+        ) ??
+            recordsLoaded;
+
+    final String? previousPageUrl =
+    pagination['previous_page_url']?.toString();
+
+    final String? nextPageUrl =
+    pagination['next_page_url']?.toString();
+
+    debugPrint('');
+    debugPrint('==========================================');
+    debugPrint('        PAGINATION INFORMATION            ');
+    debugPrint('==========================================');
+    debugPrint('PER PAGE: $responsePerPage');
+    debugPrint('COUNT: $count');
+    debugPrint('CURRENT PAGE: $currentPage');
+    debugPrint('LAST PAGE: $lastPage');
+    debugPrint('TOTAL: $total');
+    debugPrint('RECORDS LOADED: $recordsLoaded');
+    debugPrint('HAS MORE PAGES: $hasMorePages');
+    debugPrint('NEXT PAGE URL: $nextPageUrl');
+    debugPrint('==========================================');
+
+    return MilestoneApp6NearbyRestaurantsResponse(
+      data: restaurants,
+      perPage: responsePerPage,
+      count: count,
+      hasMorePages: hasMorePages,
+      currentPage: currentPage,
+      recordsLoaded: recordsLoaded,
+      lastPage: lastPage,
+      total: total,
+      previousPageUrl: previousPageUrl,
+      nextPageUrl: nextPageUrl,
+    );
+  }
+
+  // ==============================================================
+  // OLD API METHOD
+  //
+  // Keep this method so your existing Categories screen and
+  // other code do not break.
+  // ==============================================================
+
+  Future<List<Map<String, dynamic>>> fetchNearbyRestaurants({
+    required String token,
+    required int addressId,
+    int page = 1,
+    int perPage = 6,
+    bool openNow = false,
+    bool includeMenus = true,
+  }) async {
+    final MilestoneApp6NearbyRestaurantsResponse response =
+    await fetchNearbyRestaurantsPage(
+      token: token,
+      addressId: addressId,
+      page: page,
+      perPage: perPage,
+      openNow: openNow,
+      includeMenus: includeMenus,
+    );
+
+    return response.data;
   }
 }
