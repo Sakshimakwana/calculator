@@ -1,4 +1,113 @@
+// ============================================================================
+// RESTAURANT MENU ITEM / FOOD
+// ============================================================================
+
+class MilestoneApp6MenuItem {
+  final int id;
+  final String name;
+  final String image;
+  final String price;
+  final bool availability;
+
+  const MilestoneApp6MenuItem({
+    this.id = 0,
+    required this.name,
+    this.image = '',
+    this.price = '',
+    this.availability = true,
+  });
+
+  factory MilestoneApp6MenuItem.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return MilestoneApp6MenuItem(
+      id: int.tryParse(
+        json['id']?.toString() ?? '',
+      ) ??
+          0,
+      name: json['name']?.toString() ?? '',
+      image:
+      json['image_url']?.toString() ??
+          json['image']?.toString() ??
+          '',
+      price: json['price']?.toString() ?? '',
+      availability:
+      json['availability'] == true ||
+          json['availability']?.toString() == '1' ||
+          json['availability']
+              ?.toString()
+              .toLowerCase() ==
+              'true',
+    );
+  }
+}
+
+// ============================================================================
+// RESTAURANT MENU / CATEGORY
+// ============================================================================
+
+class MilestoneApp6Menu {
+  final int id;
+  final String name;
+  final List<MilestoneApp6MenuItem> menuItems;
+
+  const MilestoneApp6Menu({
+    this.id = 0,
+    required this.name,
+    this.menuItems = const [],
+  });
+
+  // API category image.
+  //
+  // Backend does not currently send an image_url for the menu/category.
+  // Therefore we use the first menu item's image as the category image.
+  String get image {
+    if (menuItems.isNotEmpty) {
+      return menuItems.first.image;
+    }
+
+    return '';
+  }
+
+  factory MilestoneApp6Menu.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    final List<MilestoneApp6MenuItem> items = [];
+
+    final dynamic rawItems =
+        json['menu_items'] ??
+            json['menuItems'] ??
+            [];
+
+    if (rawItems is List) {
+      for (final item in rawItems) {
+        if (item is Map) {
+          items.add(
+            MilestoneApp6MenuItem.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          );
+        }
+      }
+    }
+
+    return MilestoneApp6Menu(
+      id: int.tryParse(
+        json['id']?.toString() ?? '',
+      ) ??
+          0,
+      name: json['name']?.toString() ?? '',
+      menuItems: items,
+    );
+  }
+}
+
+// ============================================================================
+// RESTAURANT
+// ============================================================================
+
 class MilestoneApp6Restaurant {
+  final int id;
   final String name;
   final String image;
   final String rating;
@@ -8,34 +117,105 @@ class MilestoneApp6Restaurant {
   final bool isOpen;
   final String distance;
   final String address;
+  final String latitude;
+  final String longitude;
+
+  final List<MilestoneApp6Menu> menus;
 
   const MilestoneApp6Restaurant({
+    this.id = 0,
     required this.name,
     required this.image,
     required this.rating,
     required this.time,
     required this.cuisine,
     required this.price,
-    this.isOpen = true,
-    this.distance = '',
-    this.address = '',
+    required this.isOpen,
+    required this.distance,
+    required this.address,
+    this.latitude = '',
+    this.longitude = '',
+    this.menus = const [],
   });
 
   factory MilestoneApp6Restaurant.fromJson(
       Map<String, dynamic> json,
       ) {
+    final String status =
+        json['status']
+            ?.toString()
+            .trim()
+            .toLowerCase() ??
+            '';
+
+    final List<MilestoneApp6Menu> menus = [];
+
+    final dynamic rawMenus = json['menus'];
+
+    if (rawMenus is List) {
+      for (final menu in rawMenus) {
+        if (menu is Map) {
+          menus.add(
+            MilestoneApp6Menu.fromJson(
+              Map<String, dynamic>.from(menu),
+            ),
+          );
+        }
+      }
+    }
+
     return MilestoneApp6Restaurant(
+      id: int.tryParse(
+        json['id']?.toString() ?? '',
+      ) ??
+          0,
+
       name: json['name']?.toString() ?? '',
-      image: json['image']?.toString() ?? '',
+
+      image:
+      json['image_url']?.toString() ??
+          json['image']?.toString() ??
+          '',
+
       rating: json['rating']?.toString() ?? '',
+
       time: json['time']?.toString() ?? '',
+
       cuisine: json['cuisine']?.toString() ?? '',
+
       price: json['price']?.toString() ?? '',
-      isOpen: json['is_open'] == true,
+
+      // Both OPEN and CLOSED restaurants are kept.
+      isOpen: status == 'open',
+
       distance: json['distance']?.toString() ?? '',
+
       address: json['address']?.toString() ?? '',
+
+      latitude:
+      json['latitude']?.toString() ?? '',
+
+      longitude:
+      json['longitude']?.toString() ?? '',
+
+      menus: menus,
     );
   }
+}
+
+// ============================================================================
+// HELPER
+// ============================================================================
+
+int _toInt(dynamic value) {
+  if (value is int) {
+    return value;
+  }
+
+  return int.tryParse(
+    value?.toString() ?? '',
+  ) ??
+      0;
 }
 
 // ============================================================================

@@ -1,20 +1,29 @@
 import 'dart:async';
-
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/data/milestone_app_6_food.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/address_storage.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_api.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-
-import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../state/milestone_app_6_state.dart';
 import '../theme/milestone_app_6_colors.dart';
 import '../widgets/milestone_app_6_category.dart';
-import '../widgets/milestone_app_6_food_card.dart';
 import '../widgets/milestone_app_6_image.dart';
 import '../widgets/milestone_app_6_animated_search_hint.dart';
+
+class _ApiFoodEntry {
+  final MilestoneApp6Restaurant restaurant;
+  final MilestoneApp6Menu menu;
+  final MilestoneApp6MenuItem item;
+
+  const _ApiFoodEntry({
+    required this.restaurant,
+    required this.menu,
+    required this.item,
+  });
+}
 
 class MilestoneApp6HomeScreen extends StatefulWidget {
   final MilestoneApp6State state;
@@ -35,19 +44,75 @@ class _MilestoneApp6HomeScreenState
   // RESTAURANT API
   // ==============================================================
 
+  bool _isLoadingRestaurants = false;
+
+  String? _restaurantError;
+
+  List<MilestoneApp6Restaurant> _nearbyRestaurants = [];
+
   final MilestoneApp6RestaurantApi _restaurantApi =
   MilestoneApp6RestaurantApi();
 
-  /// Restaurants received from API.
-  ///
-  /// This replaces the old static:
-  /// restaurants
-  /// newRestaurants
-  List<MilestoneApp6Restaurant> _nearbyRestaurants = [];
+  // ==============================================================
+// FILTERED API RESTAURANTS BY CATEGORY
+// ==============================================================
 
-  bool _isLoadingNearbyRestaurants = false;
+  List<MilestoneApp6Restaurant> get _filteredNearbyRestaurants {
+    final String selectedCategory =
+    _selectedCategory.trim().toLowerCase();
 
-  String? _nearbyRestaurantsError;
+    final String query =
+    _searchController.text.trim().toLowerCase();
+
+    return _nearbyRestaurants.where((restaurant) {
+      // ------------------------------------------------------------
+      // CATEGORY FILTER
+      // ------------------------------------------------------------
+
+      final bool matchesCategory =
+          selectedCategory.isEmpty ||
+              restaurant.menus.any(
+                    (menu) =>
+                menu.name.trim().toLowerCase() ==
+                    selectedCategory,
+              );
+
+      if (!matchesCategory) {
+        return false;
+      }
+
+      // ------------------------------------------------------------
+      // SEARCH FILTER
+      // ------------------------------------------------------------
+
+      if (query.isEmpty) {
+        return true;
+      }
+
+      // Search restaurant information
+      final bool restaurantMatches =
+          restaurant.name.toLowerCase().contains(query) ||
+              restaurant.address.toLowerCase().contains(query) ||
+              restaurant.cuisine.toLowerCase().contains(query);
+
+      // Search API categories and food items
+      final bool menuMatches =
+      restaurant.menus.any((menu) {
+        final bool categoryMatchesSearch =
+        menu.name.toLowerCase().contains(query);
+
+        final bool foodMatchesSearch =
+        menu.menuItems.any((item) {
+          return item.name.toLowerCase().contains(query);
+        });
+
+        return categoryMatchesSearch ||
+            foodMatchesSearch;
+      });
+
+      return restaurantMatches || menuMatches;
+    }).toList();
+  }
 
   // ==============================================================
   // ADDRESS
@@ -59,7 +124,7 @@ class _MilestoneApp6HomeScreenState
   // CATEGORY
   // ==============================================================
 
-  String _selectedCategory = 'All';
+  String _selectedCategory = '';
 
   // ==============================================================
   // SEARCH
@@ -158,82 +223,53 @@ class _MilestoneApp6HomeScreenState
   // ==============================================================
 
   Future<void> _loadNearbyRestaurants() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingRestaurants = true;
+      _restaurantError = null;
+    });
+
     try {
-      if (mounted) {
-        setState(() {
-          _isLoadingNearbyRestaurants = true;
-          _nearbyRestaurantsError = null;
-        });
+      // Get authentication token
+      final String? token = await AuthStorage.token;
+
+      if (token == null || token.trim().isEmpty) {
+        throw Exception('Authentication token is missing.');
       }
 
-      // ==========================================================
-      // GET LOGIN TOKEN
-      // ==========================================================
-
-      final token = AuthStorage.token;
-
-      if (token == null || token.isEmpty) {
-        if (!mounted) return;
-
-        context.go('/login');
-        return;
-      }
-
-      // ==========================================================
-      // GET SELECTED ADDRESS ID
-      // ==========================================================
-
-      final int? addressId =
-          AddressStorage.selectedAddressId;
+      // Get selected address ID
+      final int? addressId = await AddressStorage.selectedAddressId;
 
       if (addressId == null || addressId <= 0) {
-        if (!mounted) return;
-
-        context.go('/select-address');
-        return;
+        throw Exception('Please select an address first.');
       }
 
       debugPrint('');
-      debugPrint(
-        '==========================================',
-      );
-      debugPrint(
-        'HOME NEARBY RESTAURANTS',
-      );
-      debugPrint(
-        'SELECTED ADDRESS ID: $addressId',
-      );
-      debugPrint(
-        '==========================================',
-      );
+      debugPrint('==========================================');
+      debugPrint('      LOAD NEARBY RESTAURANTS             ');
+      debugPrint('==========================================');
+      debugPrint('SELECTED ADDRESS ID: $addressId');
+      debugPrint('==========================================');
 
-      // ==========================================================
-      // CALL NEARBY RESTAURANT API
-      // ==========================================================
-
-      final response =
+      // Call Nearby Restaurants API
+      final List<Map<String, dynamic>> response =
       await _restaurantApi.fetchNearbyRestaurants(
         token: token,
         addressId: addressId,
         page: 1,
         openNow: false,
+        includeMenus: true,
       );
 
-      debugPrint(
-        'RAW RESTAURANT COUNT: ${response.length}',
-      );
+      debugPrint('');
+      debugPrint('RAW RESTAURANT COUNT: ${response.length}');
 
-      // ==========================================================
-      // JSON -> MODEL
-      // ==========================================================
-
-      final List<MilestoneApp6Restaurant>
-      restaurants = response
+      // Convert API response into Restaurant models
+      final List<MilestoneApp6Restaurant> restaurants =
+      response
           .map(
-            (json) =>
-            MilestoneApp6Restaurant.fromJson(
-              json,
-            ),
+            (json) => MilestoneApp6Restaurant.fromJson(json),
       )
           .toList();
 
@@ -241,27 +277,114 @@ class _MilestoneApp6HomeScreenState
         'PARSED RESTAURANT COUNT: ${restaurants.length}',
       );
 
+      // Debug Restaurant → Category/Menu → Food
+      debugPrint('');
+      debugPrint('========== PARSED RESTAURANT DATA ==========');
+
+      for (final restaurant in restaurants) {
+        debugPrint(
+          'RESTAURANT: ${restaurant.name}',
+        );
+
+        debugPrint(
+          'STATUS: ${restaurant.isOpen ? 'OPEN' : 'CLOSED'}',
+        );
+
+        debugPrint(
+          'DISTANCE: ${restaurant.distance}',
+        );
+
+        debugPrint(
+          'ADDRESS: ${restaurant.address}',
+        );
+
+        for (final menu in restaurant.menus) {
+          debugPrint(
+            'CATEGORY: ${menu.name}',
+          );
+
+          for (final item in menu.menuItems) {
+            debugPrint(
+              'FOOD: ${item.name} - ${item.price}',
+            );
+
+            debugPrint(
+              'AVAILABLE: ${item.availability}',
+            );
+          }
+        }
+
+        debugPrint('--------------------------------------------');
+      }
+
+      debugPrint('============================================');
+
       if (!mounted) return;
 
       setState(() {
+        // Keep BOTH open and closed restaurants.
+        // Do NOT filter using restaurant.isOpen.
         _nearbyRestaurants = restaurants;
-        _isLoadingNearbyRestaurants = false;
-        _nearbyRestaurantsError = null;
+
+        _isLoadingRestaurants = false;
       });
     } catch (e) {
-      debugPrint(
-        'NEARBY RESTAURANT ERROR: $e',
-      );
+      debugPrint('');
+      debugPrint('==========================================');
+      debugPrint('   NEARBY RESTAURANT ERROR                ');
+      debugPrint('==========================================');
+      debugPrint(e.toString());
+      debugPrint('==========================================');
 
       if (!mounted) return;
 
       setState(() {
-        _isLoadingNearbyRestaurants = false;
-        _nearbyRestaurants = [];
-        _nearbyRestaurantsError = e.toString();
+        _isLoadingRestaurants = false;
+        _restaurantError = e.toString();
       });
     }
   }
+
+// ==============================================================
+// API CATEGORIES
+// ==============================================================
+
+  List<String> get _apiCategories {
+    final Map<String, String> categoryNames = {};
+
+    for (final restaurant in _nearbyRestaurants) {
+      for (final menu in restaurant.menus) {
+        final String name = menu.name.trim();
+
+        if (name.isEmpty) {
+          continue;
+        }
+
+        final String key = name.toLowerCase();
+
+        categoryNames.putIfAbsent(key, () => name);
+      }
+    }
+
+    return categoryNames.values.toList();
+  }
+
+  // ==============================================================
+// API FOOD ITEMS
+// ==============================================================
+
+  List<MilestoneApp6MenuItem> get _apiFoodItems {
+    final List<MilestoneApp6MenuItem> items = [];
+
+    for (final restaurant in _nearbyRestaurants) {
+      for (final menu in restaurant.menus) {
+        items.addAll(menu.menuItems);
+      }
+    }
+
+    return items;
+  }
+
 
   // ==============================================================
   // SEARCH LISTENER
@@ -410,117 +533,53 @@ class _MilestoneApp6HomeScreenState
       _selectedCategory = category;
     });
   }
-
   // ==============================================================
-  // FILTERED FOOD
-  // ==============================================================
+// FILTERED API RESTAURANT FOOD
+// ==============================================================
 
-  List<MilestoneApp6Food> get _filteredFoods {
-    Iterable<MilestoneApp6Food> result =
-        milestoneApp6Foods;
+  List<_ApiFoodEntry> _filteredRestaurantApiFoods(
+      MilestoneApp6Restaurant restaurant,
+      ) {
+    final List<_ApiFoodEntry> foods =
+    _restaurantApiFoods(restaurant);
 
-    // ------------------------------------------------------------
-    // CATEGORY
-    // ------------------------------------------------------------
+    final String selectedCategory =
+    _selectedCategory.trim().toLowerCase();
 
-    if (_selectedCategory != 'All') {
-      result = result.where(
-            (food) =>
-        food.category.toLowerCase() ==
-            _selectedCategory.toLowerCase(),
-      );
+    if (selectedCategory.isEmpty) {
+      return foods;
     }
 
-    // ------------------------------------------------------------
-    // SEARCH
-    // ------------------------------------------------------------
-
-    final String query =
-    _searchController.text
-        .trim()
-        .toLowerCase();
-
-    if (query.isNotEmpty) {
-      result = result.where(
-            (food) {
-          final String name =
-          food.name.toLowerCase();
-
-          final String category =
-          food.category.toLowerCase();
-
-          final String restaurant =
-          food.restaurant.toLowerCase();
-
-          return name.contains(query) ||
-              category.contains(query) ||
-              restaurant.contains(query);
-        },
-      );
-    }
-
-    return result.toList();
+    return foods.where((entry) {
+      return entry.menu.name.trim().toLowerCase() ==
+          selectedCategory;
+    }).toList();
   }
 
   // ==============================================================
-  // RESTAURANT FOOD
+  // API RESTAURANT FOOD
   // ==============================================================
 
-  List<MilestoneApp6Food> _restaurantFoods(
-      String restaurantName,
+// ==============================================================
+
+  List<_ApiFoodEntry> _restaurantApiFoods(
+      MilestoneApp6Restaurant restaurant,
       ) {
-    Iterable<MilestoneApp6Food> result =
-    milestoneApp6Foods.where(
-          (food) =>
-      food.restaurant
-          .trim()
-          .toLowerCase() ==
-          restaurantName
-              .trim()
-              .toLowerCase(),
-    );
+    final List<_ApiFoodEntry> result = [];
 
-    // ------------------------------------------------------------
-    // CATEGORY FILTER
-    // ------------------------------------------------------------
-
-    if (_selectedCategory != 'All') {
-      result = result.where(
-            (food) =>
-        food.category.toLowerCase() ==
-            _selectedCategory.toLowerCase(),
-      );
+    for (final menu in restaurant.menus) {
+      for (final item in menu.menuItems) {
+        result.add(
+          _ApiFoodEntry(
+            restaurant: restaurant,
+            menu: menu,
+            item: item,
+          ),
+        );
+      }
     }
 
-    // ------------------------------------------------------------
-    // SEARCH FILTER
-    // ------------------------------------------------------------
-
-    final String query =
-    _searchController.text
-        .trim()
-        .toLowerCase();
-
-    if (query.isNotEmpty) {
-      result = result.where(
-            (food) {
-          final String name =
-          food.name.toLowerCase();
-
-          final String category =
-          food.category.toLowerCase();
-
-          final String restaurant =
-          food.restaurant.toLowerCase();
-
-          return name.contains(query) ||
-              category.contains(query) ||
-              restaurant.contains(query);
-        },
-      );
-    }
-
-    return result.toList();
+    return result;
   }
 
   // ==============================================================
@@ -537,156 +596,156 @@ class _MilestoneApp6HomeScreenState
   // NEARBY RESTAURANTS HORIZONTAL
   // ==============================================================
 
-  Widget _buildNearbyRestaurantsHorizontal() {
-    // ------------------------------------------------------------
-    // LOADING
-    // ------------------------------------------------------------
-
-    if (_isLoadingNearbyRestaurants) {
-      return const SizedBox(
-        height: 350,
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    // ------------------------------------------------------------
-    // ERROR
-    // ------------------------------------------------------------
-
-    if (_nearbyRestaurantsError != null) {
-      return SizedBox(
-        height: 180,
-        child: Center(
-          child: Padding(
-            padding:
-            const EdgeInsets.symmetric(
-              horizontal: 30,
-            ),
-            child: Column(
-              mainAxisAlignment:
-              MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons
-                      .cloud_off_rounded,
-                  size: 42,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primary,
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text(
-                  'Unable to load restaurants.',
-                  textAlign:
-                  TextAlign.center,
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                TextButton(
-                  onPressed:
-                  _loadNearbyRestaurants,
-                  child: const Text(
-                    'Retry',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    // ------------------------------------------------------------
-    // EMPTY
-    // ------------------------------------------------------------
-
-    if (_nearbyRestaurants.isEmpty) {
-      return SizedBox(
-        height: 180,
-        child: Center(
-          child: Padding(
-            padding:
-            const EdgeInsets.symmetric(
-              horizontal: 30,
-            ),
-            child: Column(
-              mainAxisAlignment:
-              MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons
-                      .restaurant_outlined,
-                  size: 42,
-                  color: Theme.of(context)
-                      .hintColor,
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Text(
-                  'No nearby restaurants found.',
-                  textAlign:
-                  TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context)
-                        .hintColor,
-                    fontWeight:
-                    FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    // ------------------------------------------------------------
-    // RESTAURANTS
-    // ------------------------------------------------------------
-
-    return SizedBox(
-      height: 350,
-      child: ListView.separated(
-        padding:
-        const EdgeInsets.fromLTRB(
-          10,
-          0,
-          16,
-          0,
-        ),
-        scrollDirection:
-        Axis.horizontal,
-        physics:
-        const BouncingScrollPhysics(),
-        itemCount:
-        _nearbyRestaurants.length,
-        separatorBuilder:
-            (_, __) =>
-        const SizedBox(
-          width: 1,
-        ),
-        itemBuilder:
-            (context, index) {
-          final restaurant =
-          _nearbyRestaurants[index];
-
-          return SizedBox(
-            width: 340,
-            child: _restaurantItem(
-              restaurant: restaurant,
-              showFoodCards: false,
-            ),
-          );
-        },
-      ),
-    );
-  }
+  // Widget _buildNearbyRestaurantsHorizontal() {
+  //   // ------------------------------------------------------------
+  //   // LOADING
+  //   // ------------------------------------------------------------
+  //
+  //   if (_isLoadingRestaurants) {
+  //     return const SizedBox(
+  //       height: 350,
+  //       child: Center(
+  //         child: CircularProgressIndicator(),
+  //       ),
+  //     );
+  //   }
+  //
+  //   // ------------------------------------------------------------
+  //   // ERROR
+  //   // ------------------------------------------------------------
+  //
+  //   if (_restaurantError != null) {
+  //     return SizedBox(
+  //       height: 180,
+  //       child: Center(
+  //         child: Padding(
+  //           padding:
+  //           const EdgeInsets.symmetric(
+  //             horizontal: 30,
+  //           ),
+  //           child: Column(
+  //             mainAxisAlignment:
+  //             MainAxisAlignment.center,
+  //             children: [
+  //               Icon(
+  //                 Icons
+  //                     .cloud_off_rounded,
+  //                 size: 42,
+  //                 color: Theme.of(context)
+  //                     .colorScheme
+  //                     .primary,
+  //               ),
+  //               const SizedBox(
+  //                 height: 10,
+  //               ),
+  //               const Text(
+  //                 'Unable to load restaurants.',
+  //                 textAlign:
+  //                 TextAlign.center,
+  //               ),
+  //               const SizedBox(
+  //                 height: 10,
+  //               ),
+  //               TextButton(
+  //                 onPressed:
+  //                 _loadNearbyRestaurants,
+  //                 child: const Text(
+  //                   'Retry',
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     );
+  //   }
+  //
+  //   // ------------------------------------------------------------
+  //   // EMPTY
+  //   // ------------------------------------------------------------
+  //
+  //   if (_nearbyRestaurants.isEmpty) {
+  //     return SizedBox(
+  //       height: 180,
+  //       child: Center(
+  //         child: Padding(
+  //           padding:
+  //           const EdgeInsets.symmetric(
+  //             horizontal: 30,
+  //           ),
+  //           child: Column(
+  //             mainAxisAlignment:
+  //             MainAxisAlignment.center,
+  //             children: [
+  //               Icon(
+  //                 Icons
+  //                     .restaurant_outlined,
+  //                 size: 42,
+  //                 color: Theme.of(context)
+  //                     .hintColor,
+  //               ),
+  //               const SizedBox(
+  //                 height: 10,
+  //               ),
+  //               Text(
+  //                 'No nearby restaurants found.',
+  //                 textAlign:
+  //                 TextAlign.center,
+  //                 style: TextStyle(
+  //                   color: Theme.of(context)
+  //                       .hintColor,
+  //                   fontWeight:
+  //                   FontWeight.w500,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     );
+  //   }
+  //
+  //   // ------------------------------------------------------------
+  //   // RESTAURANTS
+  //   // ------------------------------------------------------------
+  //
+  //   return SizedBox(
+  //     height: 350,
+  //     child: ListView.separated(
+  //       padding:
+  //       const EdgeInsets.fromLTRB(
+  //         10,
+  //         0,
+  //         16,
+  //         0,
+  //       ),
+  //       scrollDirection:
+  //       Axis.horizontal,
+  //       physics:
+  //       const BouncingScrollPhysics(),
+  //       itemCount:
+  //       _filteredNearbyRestaurants.length,
+  //       separatorBuilder:
+  //           (_, __) =>
+  //       const SizedBox(
+  //         width: 1,
+  //       ),
+  //       itemBuilder:
+  //           (context, index) {
+  //         final restaurant =
+  //         _filteredNearbyRestaurants[index];
+  //
+  //         return SizedBox(
+  //           width: 340,
+  //           child: _restaurantItem(
+  //             restaurant: restaurant,
+  //             showFoodCards: false,
+  //           ),
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
 
   // ==============================================================
   // NEARBY RESTAURANTS VERTICAL
@@ -697,7 +756,7 @@ class _MilestoneApp6HomeScreenState
     // LOADING
     // ------------------------------------------------------------
 
-    if (_isLoadingNearbyRestaurants) {
+    if (_isLoadingRestaurants) {
       return const Padding(
         padding:
         EdgeInsets.symmetric(
@@ -713,7 +772,7 @@ class _MilestoneApp6HomeScreenState
     // ERROR
     // ------------------------------------------------------------
 
-    if (_nearbyRestaurantsError != null) {
+    if (_restaurantError != null) {
       return Padding(
         padding:
         const EdgeInsets.symmetric(
@@ -783,9 +842,38 @@ class _MilestoneApp6HomeScreenState
     // RESTAURANTS
     // ------------------------------------------------------------
 
+    final List<MilestoneApp6Restaurant>
+    restaurantsToShow =
+        _filteredNearbyRestaurants;
+
+    if (restaurantsToShow.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: 35,
+          horizontal: 30,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.restaurant_menu_rounded,
+              size: 42,
+              color: Theme.of(context).hintColor,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No restaurants found for "$_selectedCategory".',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).hintColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
-      children:
-      _nearbyRestaurants.map(
+      children: restaurantsToShow.map(
             (restaurant) {
           return _newRestaurantItem(
             restaurant: restaurant,
@@ -1154,222 +1242,159 @@ class _MilestoneApp6HomeScreenState
   }) {
     return AnimatedBuilder(
       animation: widget.state,
-      builder:
-          (context, child) {
-        final ThemeData theme =
-        Theme.of(context);
-
+      builder: (context, child) {
+        final ThemeData theme = Theme.of(context);
         final bool isDark =
-            theme.brightness ==
-                Brightness.dark;
+            theme.brightness == Brightness.dark;
 
-        final List<MilestoneApp6Food>
-        restaurantFoods =
-        _restaurantFoods(
-          restaurant.name,
-        );
+        final bool isClosed = !restaurant.isOpen;
 
-        final bool isClosed =
-        !restaurant.isOpen;
+        final List<_ApiFoodEntry> restaurantFoods =
+        _filteredRestaurantApiFoods(restaurant);
+
+        // When a category/search is selected, don't show a restaurant
+        // that has no matching API food/menu item.
+        if (restaurantFoods.isEmpty &&
+            (_selectedCategory.toLowerCase() != 'all' ||
+                _searchController.text.trim().isNotEmpty)) {
+          return const SizedBox.shrink();
+        }
+
+        final Color cardColor = isClosed
+            ? (isDark
+            ? const Color(0xFF1C1C1C)
+            : const Color(0xFFF5F5F5))
+            : (isDark
+            ? const Color(0xFF171717)
+            : theme.colorScheme.surface);
+
+        final Color titleColor = isClosed
+            ? (isDark
+            ? const Color(0xFF858585)
+            : const Color(0xFF555555))
+            : (isDark ? Colors.white : Colors.black);
+
+        final Color secondaryColor = isClosed
+            ? (isDark
+            ? const Color(0xFF777777)
+            : const Color(0xFF888888))
+            : (isDark
+            ? const Color(0xFFB5B5B5)
+            : const Color(0xFF666666));
 
         return Container(
-          margin:
-          const EdgeInsets.fromLTRB(
+          margin: const EdgeInsets.fromLTRB(
             16,
             0,
             16,
             24,
           ),
-          decoration:
-          BoxDecoration(
-            color: isClosed
-                ? (isDark
-                ? const Color(
-              0xFF1C1C1C,
-            )
-                : const Color(
-              0xFFF5F5F5,
-            ))
-                : (isDark
-                ? const Color(
-              0xFF171717,
-            )
-                : theme.colorScheme
-                .surface),
-            borderRadius:
-            BorderRadius.circular(
-              20,
-            ),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
             border: isDark
                 ? Border.all(
-              color: Colors.white
-                  .withOpacity(0.06),
+              color: Colors.white.withOpacity(0.06),
             )
                 : null,
             boxShadow: [
               BoxShadow(
                 color: isDark
-                    ? Colors.black
-                    .withOpacity(.35)
-                    : Colors.black
-                    .withOpacity(.07),
-                blurRadius:
-                isDark ? 16 : 14,
-                offset:
-                const Offset(0, 5),
+                    ? Colors.black.withOpacity(.35)
+                    : Colors.black.withOpacity(.07),
+                blurRadius: isDark ? 16 : 14,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
-          clipBehavior:
-          Clip.antiAlias,
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
-            borderRadius:
-            BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(20),
             onTap: () {
               context.push(
-                '/restaurant/${Uri.encodeComponent(
-                  restaurant.name,
-                )}',
+                '/restaurant/${Uri.encodeComponent(restaurant.name)}',
               );
             },
             child: Column(
-              mainAxisSize:
-              MainAxisSize.min,
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --------------------------------------------------
-                // IMAGE
-                // --------------------------------------------------
+                // ------------------------------------------------------
+                // RESTAURANT IMAGE
+                // ------------------------------------------------------
 
                 SizedBox(
                   height: 200,
                   width: double.infinity,
                   child: isClosed
                       ? ColorFiltered(
-                    colorFilter:
-                    const ColorFilter
-                        .matrix([
-                      0.2126,
-                      0.7152,
-                      0.0722,
-                      0,
-                      0,
-                      0.2126,
-                      0.7152,
-                      0.0722,
-                      0,
-                      0,
-                      0.2126,
-                      0.7152,
-                      0.0722,
-                      0,
-                      0,
-                      0,
-                      0,
-                      0,
-                      1,
-                      0,
+                    colorFilter: const ColorFilter.matrix([
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0,      0,      0,      1, 0,
                     ]),
-                    child:
-                    MilestoneApp6Image(
-                      url:
-                      restaurant.image,
+                    child: MilestoneApp6Image(
+                      url: restaurant.image,
                       fit: BoxFit.cover,
-                      borderRadius:
-                      BorderRadius.zero,
+                      borderRadius: BorderRadius.zero,
                     ),
                   )
                       : MilestoneApp6Image(
-                    url:
-                    restaurant.image,
+                    url: restaurant.image,
                     fit: BoxFit.cover,
-                    borderRadius:
-                    BorderRadius.zero,
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
 
-                // --------------------------------------------------
-                // INFORMATION
-                // --------------------------------------------------
+                // ------------------------------------------------------
+                // RESTAURANT INFORMATION
+                // ------------------------------------------------------
 
                 Padding(
-                  padding:
-                  const EdgeInsets.fromLTRB(
+                  padding: const EdgeInsets.fromLTRB(
                     14,
                     11,
                     14,
                     14,
                   ),
                   child: Column(
-                    mainAxisSize:
-                    MainAxisSize.min,
-                    crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         restaurant.name,
                         maxLines: 1,
-                        overflow:
-                        TextOverflow
-                            .ellipsis,
-                        style:
-                        TextStyle(
-                          color: isClosed
-                              ? (isDark
-                              ? const Color(
-                            0xFF858585,
-                          )
-                              : const Color(
-                            0xFF555555,
-                          ))
-                              : (isDark
-                              ? Colors.white
-                              : Colors.black),
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: titleColor,
                           fontSize: 20,
-                          fontWeight:
-                          FontWeight.w700,
+                          fontWeight: FontWeight.w700,
                           height: 1.15,
                         ),
                       ),
 
-                      const SizedBox(
-                        height: 5,
-                      ),
+                      const SizedBox(height: 5),
 
                       Row(
-                        mainAxisSize:
-                        MainAxisSize.min,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            restaurant.isOpen
-                                ? 'Open'
-                                : 'Closed',
-                            style:
-                            TextStyle(
-                              color: restaurant
-                                  .isOpen
-                                  ? const Color(
-                                0xFF00A651,
-                              )
-                                  : const Color(
-                                0xFFE53935,
-                              ),
+                            restaurant.isOpen ? 'Open' : 'Closed',
+                            style: TextStyle(
+                              color: restaurant.isOpen
+                                  ? const Color(0xFF00A651)
+                                  : const Color(0xFFE53935),
                               fontSize: 15,
-                              fontWeight:
-                              FontWeight.w600,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
 
-                          const SizedBox(
-                            width: 6,
-                          ),
+                          const SizedBox(width: 6),
 
                           Text(
                             '•',
-                            style:
-                            TextStyle(
+                            style: TextStyle(
                               color: isDark
                                   ? Colors.white54
                                   : Colors.black54,
@@ -1377,161 +1402,96 @@ class _MilestoneApp6HomeScreenState
                             ),
                           ),
 
-                          const SizedBox(
-                            width: 6,
-                          ),
+                          const SizedBox(width: 6),
 
-                          if (restaurant
-                              .distance
-                              .isNotEmpty)
+                          if (restaurant.distance.isNotEmpty)
                             Text(
-                              restaurant
-                                  .distance,
-                              style:
-                              TextStyle(
+                              restaurant.distance,
+                              style: TextStyle(
                                 color: isClosed
-                                    ? const Color(
-                                  0xFF888888,
-                                )
+                                    ? const Color(0xFF888888)
                                     : (isDark
-                                    ? const Color(
-                                  0xFFBDBDBD,
-                                )
-                                    : const Color(
-                                  0xFF555555,
-                                )),
+                                    ? const Color(0xFFBDBDBD)
+                                    : const Color(0xFF555555)),
                                 fontSize: 14,
-                                fontWeight:
-                                FontWeight.w500,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                         ],
                       ),
 
-                      const SizedBox(
-                        height: 6,
-                      ),
+                      const SizedBox(height: 6),
 
-                      if (restaurant
-                          .cuisine
-                          .isNotEmpty)
+                      if (restaurant.cuisine.isNotEmpty)
                         Text(
                           restaurant.cuisine,
                           maxLines: 1,
-                          overflow:
-                          TextOverflow
-                              .ellipsis,
-                          style:
-                          TextStyle(
-                            color: isClosed
-                                ? const Color(
-                              0xFF888888,
-                            )
-                                : (isDark
-                                ? const Color(
-                              0xFFB5B5B5,
-                            )
-                                : const Color(
-                              0xFF666666,
-                            )),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: secondaryColor,
                             fontSize: 15,
-                            fontWeight:
-                            FontWeight.w500,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
 
-                      if (restaurant
-                          .address
-                          .isNotEmpty) ...[
-                        const SizedBox(
-                          height: 3,
-                        ),
-                        Text(
-                          restaurant.address,
-                          maxLines: 1,
-                          overflow:
-                          TextOverflow
-                              .ellipsis,
-                          style:
-                          TextStyle(
-                            color: isClosed
-                                ? const Color(
-                              0xFF888888,
-                            )
-                                : (isDark
-                                ? const Color(
-                              0xFFB5B5B5,
-                            )
-                                : const Color(
-                              0xFF666666,
-                            )),
-                            fontSize: 14,
-                            fontWeight:
-                            FontWeight.w500,
-                          ),
+                      if (restaurant.address.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.location_on_rounded,
+                              size: 15,
+                              color: isDark
+                                  ? const Color(0xFF9E9E9E)
+                                  : const Color(0xFF777777),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                restaurant.address,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: secondaryColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
 
                       // ------------------------------------------------
-                      // FOOD CARDS
+                      // API FOOD CARDS
                       // ------------------------------------------------
 
                       if (showFoodCards &&
-                          restaurantFoods
-                              .isNotEmpty) ...[
-                        const SizedBox(
-                          height: 14,
-                        ),
+                          restaurantFoods.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+
                         SizedBox(
-                          height: 280,
-                          child:
-                          ListView.separated(
-                            padding:
-                            const EdgeInsets
-                                .only(
+                          height: 250,
+                          child: ListView.separated(
+                            padding: const EdgeInsets.only(
                               bottom: 5,
                             ),
-                            scrollDirection:
-                            Axis.horizontal,
+                            scrollDirection: Axis.horizontal,
                             physics:
                             const BouncingScrollPhysics(),
-                            itemCount:
-                            restaurantFoods
-                                .length,
-                            separatorBuilder:
-                                (_, __) =>
-                            const SizedBox(
-                              width: 12,
-                            ),
-                            itemBuilder:
-                                (
-                                context,
-                                index,
-                                ) {
-                              final food =
-                              restaurantFoods[
-                              index];
+                            itemCount: restaurantFoods.length,
+                            separatorBuilder: (_, __) =>
+                            const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              final _ApiFoodEntry entry =
+                              restaurantFoods[index];
 
                               return SizedBox(
                                 width: 190,
-                                child:
-                                MilestoneApp6FoodCard(
-                                  food: food,
-                                  state:
-                                  widget.state,
-                                  restaurantIsOpen:
-                                  restaurant
-                                      .isOpen,
-                                  onTap:
-                                  restaurant
-                                      .isOpen
-                                      ? () {
-                                    context
-                                        .push(
-                                      '/food/${food.id}',
-                                    );
-                                  }
-                                      : null,
+                                child: _buildApiFoodCard(
+                                  entry: entry,
+                                  restaurant: restaurant,
                                 ),
                               );
                             },
@@ -1540,27 +1500,20 @@ class _MilestoneApp6HomeScreenState
                       ],
 
                       // ------------------------------------------------
-                      // NO FOOD
+                      // NO API FOOD
                       // ------------------------------------------------
 
                       if (showFoodCards &&
-                          restaurantFoods
-                              .isEmpty)
+                          restaurantFoods.isEmpty)
                         Padding(
-                          padding:
-                          const EdgeInsets
-                              .only(
+                          padding: const EdgeInsets.only(
                             top: 10,
                             bottom: 4,
                           ),
                           child: Text(
                             'Explore the menu to discover delicious dishes.',
-                            style: theme
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                              color:
-                              theme.hintColor,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.hintColor,
                             ),
                           ),
                         ),
@@ -1572,6 +1525,167 @@ class _MilestoneApp6HomeScreenState
           ),
         );
       },
+    );
+  }
+
+  // ==============================================================
+  // API FOOD CARD
+  // ==============================================================
+
+  Widget _buildApiFoodCard({
+    required _ApiFoodEntry entry,
+    required MilestoneApp6Restaurant restaurant,
+  }) {
+    final ThemeData theme = Theme.of(context);
+    final bool isDark =
+        theme.brightness == Brightness.dark;
+
+    final MilestoneApp6MenuItem item = entry.item;
+
+    final bool isAvailable =
+        item.availability && restaurant.isOpen;
+
+    final Color cardColor = isDark
+        ? const Color(0xFF202020)
+        : Colors.white;
+
+    final Color titleColor = isDark
+        ? Colors.white
+        : const Color(0xFF171717);
+
+    final Color secondaryColor = isDark
+        ? const Color(0xFFBDBDBD)
+        : const Color(0xFF666666);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: isDark
+            ? Border.all(
+          color: Colors.white.withOpacity(0.06),
+        )
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              isDark ? 0.25 : 0.06,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: isAvailable
+            ? () {
+          context.push('/food/${item.id}');
+        }
+            : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 125,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  MilestoneApp6Image(
+                    url: item.image,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.zero,
+                  ),
+
+                  if (!isAvailable)
+                    Container(
+                      color: Colors.black.withOpacity(0.45),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Unavailable',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                12,
+                10,
+                12,
+                12,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Text(
+                    entry.menu.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: secondaryColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+                  const SizedBox(height: 7),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.price.isEmpty
+                              ? '₹0'
+                              : '₹${item.price}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: titleColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+
+                      Icon(
+                        isAvailable
+                            ? Icons.check_circle_rounded
+                            : Icons.cancel_rounded,
+                        size: 18,
+                        color: isAvailable
+                            ? const Color(0xFF00A651)
+                            : const Color(0xFFE53935),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1818,7 +1932,7 @@ class _MilestoneApp6HomeScreenState
         // RESTAURANT API LOADING
         // ==========================================================
 
-        if (_isLoadingNearbyRestaurants)
+        if (_isLoadingRestaurants)
           const SliverToBoxAdapter(
             child: Padding(
               padding:
@@ -1843,23 +1957,23 @@ class _MilestoneApp6HomeScreenState
         // ==========================================================
         // POPULAR RESTAURANTS
         // ==========================================================
-
-        SliverToBoxAdapter(
-          child: _sectionTitle(
-            context,
-            'Popular Restaurants',
-                () {
-              context.push(
-                '/restaurants',
-              );
-            },
-          ),
-        ),
-
-        SliverToBoxAdapter(
-          child:
-          _buildNearbyRestaurantsHorizontal(),
-        ),
+        //
+        // SliverToBoxAdapter(
+        //   child: _sectionTitle(
+        //     context,
+        //     'Popular Restaurants',
+        //         () {
+        //       context.push(
+        //         '/restaurants',
+        //       );
+        //     },
+        //   ),
+        // ),
+        //
+        // SliverToBoxAdapter(
+        //   child:
+        //   _buildNearbyRestaurantsHorizontal(),
+        // ),
 
         // ==========================================================
         // ALL RESTAURANTS
@@ -1886,10 +2000,8 @@ class _MilestoneApp6HomeScreenState
         // EMPTY SEARCH
         // ==========================================================
 
-        if (_filteredFoods.isEmpty &&
-            _searchController.text
-                .trim()
-                .isNotEmpty)
+        if (_searchController.text.trim().isNotEmpty &&
+            _filteredNearbyRestaurants.isEmpty)
           SliverToBoxAdapter(
             child:
             _buildEmptyFoodState(
@@ -1915,56 +2027,84 @@ class _MilestoneApp6HomeScreenState
   // ==============================================================
 
   Widget _buildCategoryRow() {
-    final MilestoneApp6Category
-    allCategory =
-    MilestoneApp6Category(
-      'All',
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500',
-    );
+    final List<String> categories = _apiCategories;
 
-    final List<MilestoneApp6Category>
-    categories = [
-      allCategory,
-      ...milestoneApp6Categories,
-    ];
+    // No API categories
+    if (categories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // If selected category no longer exists after API refresh,
+    // select the first API category.
+    if (!_selectedCategory.isNotEmpty ||
+        !categories.any(
+              (category) =>
+          category.toLowerCase() ==
+              _selectedCategory.toLowerCase(),
+        )) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        final String firstCategory = categories.first;
+
+        if (_selectedCategory != firstCategory) {
+          setState(() {
+            _selectedCategory = firstCategory;
+          });
+        }
+      });
+    }
 
     return ListView.separated(
-      padding:
-      const EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 6,
       ),
-      scrollDirection:
-      Axis.horizontal,
-      physics:
-      const BouncingScrollPhysics(),
-      itemCount:
-      categories.length,
-      separatorBuilder:
-          (_, __) =>
-      const SizedBox(
-        width: 10,
-      ),
-      itemBuilder:
-          (context, index) {
-        final category =
-        categories[index];
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      itemCount: categories.length,
+      separatorBuilder: (_, __) {
+        return const SizedBox(width: 10);
+      },
+      itemBuilder: (context, index) {
+        final String categoryName = categories[index];
 
         final bool selected =
-            _selectedCategory ==
-                category.name;
+            _selectedCategory.toLowerCase() ==
+                categoryName.toLowerCase();
+
+        final MilestoneApp6Menu? selectedMenu =
+        _findCategoryMenu(categoryName);
 
         return MilestoneApp6CategoryChip(
-          category: category,
+          category: MilestoneApp6Category(
+            categoryName,
+            selectedMenu?.image ?? '',
+          ),
           selected: selected,
           onTap: () {
-            _selectCategory(
-              category.name,
-            );
+            setState(() {
+              _selectedCategory = categoryName;
+            });
           },
         );
       },
     );
+  }
+
+  MilestoneApp6Menu? _findCategoryMenu(
+      String categoryName,
+      ) {
+    for (final restaurant in _nearbyRestaurants) {
+      for (final menu in restaurant.menus) {
+        if (menu.name.trim().toLowerCase() ==
+            categoryName.trim().toLowerCase()) {
+          return menu;
+        }
+      }
+    }
+
+    return null;
   }
 
   // ==============================================================

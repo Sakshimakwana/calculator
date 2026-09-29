@@ -29,67 +29,67 @@ class MilestoneApp6Food {
     this.isAvailable = true,
   });
 }
-
-// ============================================================================
-// CATEGORIES
-// ============================================================================
-
-const milestoneApp6Categories = <MilestoneApp6Category>[
-  MilestoneApp6Category(
-    'Pizza',
-    'https://images.unsplash.com/photo-1579751626657-72bc17010498?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Burger',
-    'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Sushi',
-    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Dessert',
-    'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Pasta',
-    'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Salad',
-    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Drinks',
-    'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Tacos',
-    'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Asian',
-    'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Breakfast',
-    'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400',
-  ),
-
-  MilestoneApp6Category(
-    'Sandwich',
-    'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=400',
-  ),
-];
+//
+// // ============================================================================
+// // CATEGORIES
+// // ============================================================================
+//
+// const milestoneApp6Categories = <MilestoneApp6Category>[
+//   MilestoneApp6Category(
+//     'Pizza',
+//     'https://images.unsplash.com/photo-1579751626657-72bc17010498?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Burger',
+//     'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Sushi',
+//     'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Dessert',
+//     'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Pasta',
+//     'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Salad',
+//     'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Drinks',
+//     'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Tacos',
+//     'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Asian',
+//     'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Breakfast',
+//     'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400',
+//   ),
+//
+//   MilestoneApp6Category(
+//     'Sandwich',
+//     'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=400',
+//   ),
+// ];
 
 
 const milestoneApp6Foods = <MilestoneApp6Food>[

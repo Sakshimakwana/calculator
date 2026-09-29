@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-
 import '../core/constants/api_constants.dart';
 
 class MilestoneApp6RestaurantApi {
@@ -28,6 +26,7 @@ class MilestoneApp6RestaurantApi {
     required int addressId,
     int page = 1,
     bool openNow = false,
+    bool includeMenus = false,
   }) async {
     if (token.trim().isEmpty) {
       throw Exception(
@@ -42,7 +41,7 @@ class MilestoneApp6RestaurantApi {
     }
 
     // ==========================================================
-    // BUILD URL
+    // BUILD QUERY
     // ==========================================================
 
     final queryParameters = <String, String>{
@@ -50,18 +49,25 @@ class MilestoneApp6RestaurantApi {
       'address_id': addressId.toString(),
     };
 
+    // Only send open_now when required.
     if (openNow) {
       queryParameters['open_now'] = 'true';
     }
 
+    // Get restaurant categories + food items.
+    if (includeMenus) {
+      queryParameters['include'] = 'menus.menuItems';
+    }
+
     final uri = Uri.parse(
-      '${ApiConstants.baseUrl}${ApiConstants.nearbyRestaurants}',
+      '${ApiConstants.baseUrl}'
+          '${ApiConstants.nearbyRestaurants}',
     ).replace(
       queryParameters: queryParameters,
     );
 
     // ==========================================================
-    // DEBUG REQUEST
+    // DEBUG
     // ==========================================================
 
     debugPrint('');
@@ -71,6 +77,7 @@ class MilestoneApp6RestaurantApi {
     debugPrint('METHOD: GET');
     debugPrint('ADDRESS ID: $addressId');
     debugPrint('OPEN NOW: $openNow');
+    debugPrint('INCLUDE MENUS: $includeMenus');
     debugPrint('URL: $uri');
     debugPrint('==========================================');
 
@@ -100,7 +107,7 @@ class MilestoneApp6RestaurantApi {
     }
 
     // ==========================================================
-    // DEBUG RESPONSE
+    // RESPONSE
     // ==========================================================
 
     debugPrint('');
@@ -115,7 +122,7 @@ class MilestoneApp6RestaurantApi {
     debugPrint('==========================================');
 
     // ==========================================================
-    // STATUS CODE
+    // STATUS
     // ==========================================================
 
     if (response.statusCode == 401) {
@@ -139,16 +146,12 @@ class MilestoneApp6RestaurantApi {
       );
     }
 
-    // ==========================================================
-    // EMPTY RESPONSE
-    // ==========================================================
-
     if (response.body.trim().isEmpty) {
       return <Map<String, dynamic>>[];
     }
 
     // ==========================================================
-    // DECODE JSON
+    // DECODE
     // ==========================================================
 
     final decoded = jsonDecode(response.body);
@@ -160,7 +163,7 @@ class MilestoneApp6RestaurantApi {
     }
 
     // ==========================================================
-    // GET DATA
+    // DATA
     // ==========================================================
 
     final rawData = decoded['data'];
@@ -168,10 +171,6 @@ class MilestoneApp6RestaurantApi {
     if (rawData is! List) {
       return <Map<String, dynamic>>[];
     }
-
-    // ==========================================================
-    // CONVERT DATA
-    // ==========================================================
 
     return rawData
         .whereType<Map>()
