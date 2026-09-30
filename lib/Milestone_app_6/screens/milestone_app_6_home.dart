@@ -2461,8 +2461,8 @@ class _MilestoneApp6HomeScreenState
   }
 
   // ==============================================================
-  // CATEGORY ROW
-  // ==============================================================
+// CATEGORY ROW
+// ==============================================================
 
   Widget _buildCategoryRow() {
     final List<String> apiCategories = _apiCategories;
@@ -2471,7 +2471,6 @@ class _MilestoneApp6HomeScreenState
       return const SizedBox.shrink();
     }
 
-    // "All" is frontend-only.
     final List<String> categories = [
       'All',
       ...apiCategories,
@@ -2485,8 +2484,7 @@ class _MilestoneApp6HomeScreenState
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       itemCount: categories.length,
-      separatorBuilder: (_, __) =>
-      const SizedBox(width: 10),
+      separatorBuilder: (_, __) => const SizedBox(width: 10),
       itemBuilder: (context, index) {
         final String categoryName = categories[index];
 
@@ -2498,23 +2496,40 @@ class _MilestoneApp6HomeScreenState
             : _selectedCategory.toLowerCase() ==
             categoryName.toLowerCase();
 
-        final MilestoneApp6Menu? selectedMenu =
-        isAll
-            ? null
-            : _findCategoryMenu(categoryName);
+        // ----------------------------------------------------------
+        // ALL CATEGORY
+        // Use a fixed network image.
+        // ----------------------------------------------------------
+        String categoryImage =
+            'https://images.unsplash.com/photo-1547592180-85f173990554?w=300';
+
+        // ----------------------------------------------------------
+        // OTHER CATEGORIES
+        // Use image coming from API.
+        // ----------------------------------------------------------
+        if (!isAll) {
+          final MilestoneApp6Menu? selectedMenu =
+          _findCategoryMenu(categoryName);
+
+          if (selectedMenu != null &&
+              selectedMenu.menuItems.isNotEmpty) {
+            final String apiImage =
+            selectedMenu.menuItems.first.image.trim();
+
+            if (apiImage.isNotEmpty) {
+              categoryImage = apiImage;
+            }
+          }
+        }
 
         return MilestoneApp6CategoryChip(
           category: MilestoneApp6Category(
             categoryName,
-            selectedMenu != null &&
-                selectedMenu.menuItems.isNotEmpty
-                ? selectedMenu.menuItems.first.image
-                : '',
+            categoryImage,
           ),
           selected: selected,
           onTap: () {
             setState(() {
-              // All = empty category = show all restaurants.
               if (isAll) {
                 _selectedCategory = '';
               } else {
