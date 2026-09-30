@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../core/constants/api_constants.dart';
+import '../models/restaurant_menu_model.dart';
 
 class MilestoneApp6NearbyRestaurantsResponse {
   final List<Map<String, dynamic>> data;
@@ -35,6 +36,10 @@ class MilestoneApp6NearbyRestaurantsResponse {
 }
 
 class MilestoneApp6RestaurantApi {
+  // ==============================================================
+  // COMMON HEADERS
+  // ==============================================================
+
   Map<String, String> _headers(String token) {
     return {
       'Authorization': 'Bearer $token',
@@ -56,21 +61,37 @@ class MilestoneApp6RestaurantApi {
     bool openNow = false,
     bool includeMenus = true,
   }) async {
+    // ------------------------------------------------------------
+    // VALIDATION
+    // ------------------------------------------------------------
+
     if (token.trim().isEmpty) {
-      throw Exception('Authentication token is missing.');
+      throw Exception(
+        'Authentication token is missing.',
+      );
     }
 
     if (addressId <= 0) {
-      throw Exception('Invalid selected address ID.');
+      throw Exception(
+        'Invalid selected address ID.',
+      );
     }
 
     if (page <= 0) {
-      throw Exception('Invalid restaurant page.');
+      throw Exception(
+        'Invalid restaurant page.',
+      );
     }
 
     if (perPage <= 0) {
-      throw Exception('Invalid restaurant per page value.');
+      throw Exception(
+        'Invalid restaurant per page value.',
+      );
     }
+
+    // ------------------------------------------------------------
+    // QUERY PARAMETERS
+    // ------------------------------------------------------------
 
     final Map<String, String> queryParameters = {
       'page': page.toString(),
@@ -78,14 +99,20 @@ class MilestoneApp6RestaurantApi {
       'address_id': addressId.toString(),
     };
 
-    // Only send open_now when it is required.
+    // Only send open_now when required.
     if (openNow) {
       queryParameters['open_now'] = '1';
     }
 
+    // Keep this because existing code may still use
+    // includeMenus: true.
     if (includeMenus) {
       queryParameters['include'] = 'menus.menuItems';
     }
+
+    // ------------------------------------------------------------
+    // BUILD URL
+    // ------------------------------------------------------------
 
     final Uri uri = Uri.parse(
       '${ApiConstants.baseUrl}'
@@ -93,6 +120,10 @@ class MilestoneApp6RestaurantApi {
     ).replace(
       queryParameters: queryParameters,
     );
+
+    // ------------------------------------------------------------
+    // DEBUG - REQUEST
+    // ------------------------------------------------------------
 
     debugPrint('');
     debugPrint('==========================================');
@@ -106,6 +137,10 @@ class MilestoneApp6RestaurantApi {
     debugPrint('INCLUDE MENUS: $includeMenus');
     debugPrint('URL: $uri');
     debugPrint('==========================================');
+
+    // ------------------------------------------------------------
+    // API REQUEST
+    // ------------------------------------------------------------
 
     late final http.Response response;
 
@@ -128,18 +163,24 @@ class MilestoneApp6RestaurantApi {
       );
     }
 
+    // ------------------------------------------------------------
+    // DEBUG - RESPONSE
+    // ------------------------------------------------------------
+
     debugPrint('');
     debugPrint('==========================================');
     debugPrint('   NEARBY RESTAURANTS RESPONSE            ');
     debugPrint('==========================================');
-    debugPrint('STATUS CODE: ${response.statusCode}');
+    debugPrint(
+      'STATUS CODE: ${response.statusCode}',
+    );
     debugPrint('RESPONSE BODY:');
     debugPrint(response.body);
     debugPrint('==========================================');
 
-    // ============================================================
+    // ------------------------------------------------------------
     // STATUS HANDLING
-    // ============================================================
+    // ------------------------------------------------------------
 
     if (response.statusCode == 401) {
       throw Exception(
@@ -162,24 +203,30 @@ class MilestoneApp6RestaurantApi {
       );
     }
 
+    // ------------------------------------------------------------
+    // EMPTY RESPONSE
+    // ------------------------------------------------------------
+
     if (response.body.trim().isEmpty) {
-      return const MilestoneApp6NearbyRestaurantsResponse(
-        data: [],
-        perPage: 6,
+      return MilestoneApp6NearbyRestaurantsResponse(
+        data: const [],
+        perPage: perPage,
         count: 0,
         hasMorePages: false,
-        currentPage: 1,
+        currentPage: page,
         recordsLoaded: 0,
-        lastPage: 1,
+        lastPage: page,
         total: 0,
       );
     }
 
-    // ============================================================
+    // ------------------------------------------------------------
     // DECODE JSON
-    // ============================================================
+    // ------------------------------------------------------------
 
-    final dynamic decoded = jsonDecode(response.body);
+    final dynamic decoded = jsonDecode(
+      response.body,
+    );
 
     if (decoded is! Map) {
       throw Exception(
@@ -187,11 +234,15 @@ class MilestoneApp6RestaurantApi {
       );
     }
 
-    // ============================================================
-    // RESTAURANT DATA
-    // ============================================================
+    final Map<String, dynamic> responseJson =
+    Map<String, dynamic>.from(decoded);
 
-    final dynamic rawData = decoded['data'];
+    // ------------------------------------------------------------
+    // RESTAURANT DATA
+    // ------------------------------------------------------------
+
+    final dynamic rawData =
+    responseJson['data'];
 
     final List<Map<String, dynamic>> restaurants = [];
 
@@ -205,15 +256,18 @@ class MilestoneApp6RestaurantApi {
       }
     }
 
-    // ============================================================
+    // ------------------------------------------------------------
     // PAGINATION
-    // ============================================================
+    // ------------------------------------------------------------
 
-    final dynamic rawPagination = decoded['pagination'];
+    final dynamic rawPagination =
+    responseJson['pagination'];
 
     final Map<String, dynamic> pagination =
     rawPagination is Map
-        ? Map<String, dynamic>.from(rawPagination)
+        ? Map<String, dynamic>.from(
+      rawPagination,
+    )
         : <String, dynamic>{};
 
     final int responsePerPage =
@@ -234,7 +288,9 @@ class MilestoneApp6RestaurantApi {
                 ?.toString()
                 .toLowerCase() ==
                 'true' ||
-            pagination['has_more_pages']?.toString() == '1';
+            pagination['has_more_pages']
+                ?.toString() ==
+                '1';
 
     final int currentPage =
         int.tryParse(
@@ -266,19 +322,43 @@ class MilestoneApp6RestaurantApi {
     final String? nextPageUrl =
     pagination['next_page_url']?.toString();
 
+    // ------------------------------------------------------------
+    // DEBUG - PAGINATION
+    // ------------------------------------------------------------
+
     debugPrint('');
     debugPrint('==========================================');
     debugPrint('        PAGINATION INFORMATION            ');
     debugPrint('==========================================');
-    debugPrint('PER PAGE: $responsePerPage');
-    debugPrint('COUNT: $count');
-    debugPrint('CURRENT PAGE: $currentPage');
-    debugPrint('LAST PAGE: $lastPage');
-    debugPrint('TOTAL: $total');
-    debugPrint('RECORDS LOADED: $recordsLoaded');
-    debugPrint('HAS MORE PAGES: $hasMorePages');
-    debugPrint('NEXT PAGE URL: $nextPageUrl');
+    debugPrint(
+      'PER PAGE: $responsePerPage',
+    );
+    debugPrint(
+      'COUNT: $count',
+    );
+    debugPrint(
+      'CURRENT PAGE: $currentPage',
+    );
+    debugPrint(
+      'LAST PAGE: $lastPage',
+    );
+    debugPrint(
+      'TOTAL: $total',
+    );
+    debugPrint(
+      'RECORDS LOADED: $recordsLoaded',
+    );
+    debugPrint(
+      'HAS MORE PAGES: $hasMorePages',
+    );
+    debugPrint(
+      'NEXT PAGE URL: $nextPageUrl',
+    );
     debugPrint('==========================================');
+
+    // ------------------------------------------------------------
+    // RETURN RESTAURANT RESPONSE
+    // ------------------------------------------------------------
 
     return MilestoneApp6NearbyRestaurantsResponse(
       data: restaurants,
@@ -295,10 +375,200 @@ class MilestoneApp6RestaurantApi {
   }
 
   // ==============================================================
+  // RESTAURANT MENU API
+  //
+  // GET:
+  // /restaurants/{restaurantId}/menus
+  // ==============================================================
+
+  Future<RestaurantMenuResponse> fetchRestaurantMenus({
+    required String token,
+    required int restaurantId,
+  }) async {
+    // ------------------------------------------------------------
+    // VALIDATION
+    // ------------------------------------------------------------
+
+    if (token.trim().isEmpty) {
+      throw Exception(
+        'Authentication token is missing.',
+      );
+    }
+
+    if (restaurantId <= 0) {
+      throw Exception(
+        'Invalid restaurant ID.',
+      );
+    }
+
+    // ------------------------------------------------------------
+    // BUILD MENU API URL
+    // ------------------------------------------------------------
+
+    final Uri uri = Uri.parse(
+      '${ApiConstants.baseUrl}'
+          '${ApiConstants.restaurantMenus(restaurantId)}',
+    );
+
+    // ------------------------------------------------------------
+    // DEBUG - MENU REQUEST
+    // ------------------------------------------------------------
+
+    debugPrint('');
+    debugPrint('==========================================');
+    debugPrint('          RESTAURANT MENU API             ');
+    debugPrint('==========================================');
+    debugPrint('METHOD: GET');
+    debugPrint('RESTAURANT ID: $restaurantId');
+    debugPrint('URL: $uri');
+    debugPrint('==========================================');
+
+    // ------------------------------------------------------------
+    // API REQUEST
+    // ------------------------------------------------------------
+
+    late final http.Response response;
+
+    try {
+      response = await http
+          .get(
+        uri,
+        headers: _headers(token),
+      )
+          .timeout(
+        const Duration(seconds: 30),
+      );
+    } on TimeoutException {
+      throw Exception(
+        'Restaurant menu API request timed out.',
+      );
+    } catch (e) {
+      throw Exception(
+        'Unable to connect to restaurant menu server.\n$e',
+      );
+    }
+
+    // ------------------------------------------------------------
+    // DEBUG - MENU RESPONSE
+    // ------------------------------------------------------------
+
+    debugPrint('');
+    debugPrint('==========================================');
+    debugPrint('       RESTAURANT MENU RESPONSE           ');
+    debugPrint('==========================================');
+    debugPrint(
+      'STATUS CODE: ${response.statusCode}',
+    );
+    debugPrint('RESPONSE BODY:');
+    debugPrint(response.body);
+    debugPrint('==========================================');
+
+    // ------------------------------------------------------------
+    // STATUS HANDLING
+    // ------------------------------------------------------------
+
+    if (response.statusCode == 401) {
+      throw Exception(
+        'Session expired. Please login again.',
+      );
+    }
+
+    if (response.statusCode == 404) {
+      throw Exception(
+        'Restaurant menu not found.\n'
+            'Restaurant ID: $restaurantId',
+      );
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to fetch restaurant menus.\n'
+            'Status: ${response.statusCode}\n'
+            '${response.body}',
+      );
+    }
+
+    // ------------------------------------------------------------
+    // EMPTY RESPONSE
+    // ------------------------------------------------------------
+
+    if (response.body.trim().isEmpty) {
+      return RestaurantMenuResponse(
+        success: false,
+        message: 'Empty menu response.',
+        data: const [],
+      );
+    }
+
+    // ------------------------------------------------------------
+    // DECODE JSON
+    // ------------------------------------------------------------
+
+    final dynamic decoded = jsonDecode(
+      response.body,
+    );
+
+    if (decoded is! Map) {
+      throw Exception(
+        'Invalid restaurant menu response format.',
+      );
+    }
+
+    final Map<String, dynamic> responseJson =
+    Map<String, dynamic>.from(decoded);
+
+    // ------------------------------------------------------------
+    // PARSE MENU RESPONSE
+    // ------------------------------------------------------------
+
+    final RestaurantMenuResponse result =
+    RestaurantMenuResponse.fromJson(
+      responseJson,
+    );
+
+    // ------------------------------------------------------------
+    // DEBUG - MENU DATA
+    // ------------------------------------------------------------
+
+    debugPrint('');
+    debugPrint('==========================================');
+    debugPrint('        MENU PARSING RESULT               ');
+    debugPrint('==========================================');
+    debugPrint(
+      'SUCCESS: ${result.success}',
+    );
+    debugPrint(
+      'MESSAGE: ${result.message}',
+    );
+    debugPrint(
+      'CATEGORIES: ${result.data.length}',
+    );
+
+    for (final menu in result.data) {
+      debugPrint(
+        'CATEGORY: ${menu.name}',
+      );
+
+      debugPrint(
+        'FOOD COUNT: ${menu.menuItems.length}',
+      );
+
+      for (final item in menu.menuItems) {
+        debugPrint(
+          'FOOD: ${item.name} - ${item.price}',
+        );
+      }
+    }
+
+    debugPrint('==========================================');
+
+    return result;
+  }
+
+  // ==============================================================
   // OLD API METHOD
   //
-  // Keep this method so your existing Categories screen and
-  // other code do not break.
+  // Keep this method so existing code does not break.
   // ==============================================================
 
   Future<List<Map<String, dynamic>>> fetchNearbyRestaurants({

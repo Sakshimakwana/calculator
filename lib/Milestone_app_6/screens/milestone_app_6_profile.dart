@@ -1,863 +1,993 @@
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 
+import '../../core/storage/address_storage.dart';
 import '../../core/storage/auth_storage.dart';
+import '../../services/milestone_app_6_restaurant_api.dart';
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../state/milestone_app_6_state.dart';
 import '../theme/milestone_app_6_colors.dart';
 
 class MilestoneApp6ProfileScreen extends StatelessWidget {
-  final MilestoneApp6State state;
-
-  const MilestoneApp6ProfileScreen({
-    super.key,
-    required this.state,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: state,
-      builder: (context, child) {
-        final dark = state.themeMode == ThemeMode.dark;
-
-        return Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              onPressed: () {
-                context.go('/home');
-              },
-              icon: const Icon(
-                Icons.arrow_back,
-              ),
-            ),
-            title: const Text(
-              'Profile',
-            ),
-          ),
-
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              18,
-              20,
-              30,
-            ),
-            children: [
-              // ==========================================================
-              // PROFILE
-              // ==========================================================
-
-              const CircleAvatar(
-                radius: 44,
-                backgroundColor: Color(0xFFFFE1D7),
-                child: Icon(
-                  Icons.person,
-                  size: 54,
-                  color: MilestoneApp6Colors.orange,
-                ),
-              ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
-              // User name from API login response
-              Text(
-                AuthStorage.fullName.isNotEmpty
-                    ? AuthStorage.fullName
-                    : 'User',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-
-              const SizedBox(
-                height: 3,
-              ),
-
-              // User email from API login response
-              Text(
-                AuthStorage.email.isNotEmpty
-                    ? AuthStorage.email
-                    : 'No email available',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Theme.of(context).hintColor,
-                  fontSize: 12,
-                ),
-              ),
-
-              const SizedBox(
-                height: 4,
-              ),
-
-              // User phone from API login response
-              if (AuthStorage.phoneNumber.isNotEmpty)
-                Text(
-                  AuthStorage.phoneNumber,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context).hintColor,
-                    fontSize: 12,
-                  ),
-                ),
-
-              const SizedBox(
-                height: 28,
-              ),
-
-              // ==========================================================
-              // MY ORDERS
-              // ==========================================================
-
-              _item(
-                context,
-                Icons.receipt_long_outlined,
-                'My Orders',
-                trailingText: state.orders.isNotEmpty
-                    ? '${state.orders.length}'
-                    : null,
-                onTap: () {
-                  context.push('/my-orders');
-                },
-              ),
-
-              // ==========================================================
-              // FAVORITE PRODUCTS
-              // ==========================================================
-
-              _item(
-                context,
-                Icons.favorite_border,
-                'Favorite Products',
-                trailingText: state.saved.isNotEmpty
-                    ? '${state.saved.length}'
-                    : null,
-                onTap: () {
-                  _showFavoriteProducts(context);
-                },
-              ),
-
-              // ==========================================================
-              // SAVED RESTAURANTS
-              // ==========================================================
-
-              _item(
-                context,
-                Icons.restaurant_outlined,
-                'Saved Restaurants',
-                trailingText: state.savedRestaurants.isNotEmpty
-                    ? '${state.savedRestaurants.length}'
-                    : null,
-                onTap: () {
-                  _showFavoriteRestaurants(context);
-                },
-              ),
-
-              // ==========================================================
-              // PAYMENT METHODS
-              // ==========================================================
-
-              _item(
-                context,
-                Icons.credit_card_outlined,
-                'Payment Methods',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Payment Methods coming soon.',
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              // ==========================================================
-              // THEME
-              // ==========================================================
-
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                secondary: const Icon(
-                  Icons.dark_mode_outlined,
-                ),
-                title: const Text(
-                  'Theme',
-                ),
-                subtitle: Text(
-                  dark ? 'Dark' : 'Light',
-                ),
-                value: dark,
-                onChanged: state.setDarkMode,
-              ),
-
-              // ==========================================================
-              // SETTINGS
-              // ==========================================================
-
-              _item(
-                context,
-                Icons.settings_outlined,
-                'Settings',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Settings coming soon.',
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              // ==========================================================
-              // LOGOUT
-              // ==========================================================
-
-              _item(
-                context,
-                Icons.logout,
-                'Logout',
-                onTap: () {
-                  _showLogoutDialog(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // ================================================================
-  // PROFILE ITEM
-  // ================================================================
-
-  Widget _item(
-      BuildContext context,
-      IconData icon,
-      String title, {
-        VoidCallback? onTap,
-        String? trailingText,
-      }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-
-      leading: Icon(
-        icon,
-        color: MilestoneApp6Colors.orange,
-      ),
-
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (trailingText != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 3,
-              ),
-              decoration: BoxDecoration(
-                color: MilestoneApp6Colors.orange.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                trailingText,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: MilestoneApp6Colors.orange,
-                ),
-              ),
-            ),
-            const SizedBox(
-              width: 8,
-            ),
-          ],
-
-          const Icon(
-            Icons.chevron_right,
-            size: 20,
-          ),
-        ],
-      ),
-
-      onTap: onTap,
-    );
-  }
-
-  // ================================================================
-  // FAVORITE PRODUCTS
-  // ================================================================
-
-  void _showFavoriteProducts(
-      BuildContext context,
-      ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        return AnimatedBuilder(
-          animation: state,
-          builder: (context, child) {
-            final foods = milestoneApp6Foods
-                .where(
-                  (food) => state.saved.contains(food.id),
-            )
-                .toList();
-
-            return SafeArea(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.72,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    20,
-                    10,
-                    20,
-                    20,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Favorite Products',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 16,
-                      ),
-
-                      Expanded(
-                        child: foods.isEmpty
-                            ? _emptyState(
-                          icon: Icons.favorite_border,
-                          title: 'No favorite products',
-                          subtitle:
-                          'Products you favorite will appear here.',
-                        )
-                            : ListView.separated(
-                          itemCount: foods.length,
-                          separatorBuilder: (_, __) {
-                            return const SizedBox(
-                              height: 10,
-                            );
-                          },
-                          itemBuilder: (context, index) {
-                            return _favoriteFoodCard(
-                              context,
-                              foods[index],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // ================================================================
-  // FAVORITE PRODUCT CARD
-  // ================================================================
-
-  Widget _favoriteFoodCard(
-      BuildContext context,
-      MilestoneApp6Food food,
-      ) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
-        ),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              food.image,
-              width: 65,
-              height: 65,
-              fit: BoxFit.cover,
-              errorBuilder: (
-                  context,
-                  error,
-                  stackTrace,
-                  ) {
-                return Container(
-                  width: 65,
-                  height: 65,
-                  color: theme.dividerColor,
-                  child: const Icon(
-                    Icons.restaurant,
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(
-            width: 12,
-          ),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  food.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 4,
-                ),
-
-                Text(
-                  '₹${food.price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          IconButton(
-            onPressed: () {
-              state.toggleSaved(food.id);
-
-              Navigator.of(context).pop();
-            },
-            icon: const Icon(
-              Icons.favorite_rounded,
-              color: Colors.red,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================================================================
-  // SAVED RESTAURANTS
-  // ================================================================
-
-  void _showFavoriteRestaurants(
-      BuildContext context,
-      ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        return AnimatedBuilder(
-          animation: state,
-          builder: (context, child) {
-            final savedRestaurants = restaurants.where(
-                  (restaurant) {
-                return state.isRestaurantSaved(
-                  restaurant.name,
-                );
-              },
-            ).toList();
-
-            return SafeArea(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.68,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    20,
-                    10,
-                    20,
-                    20,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Saved Restaurants',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 16,
-                      ),
-
-                      Expanded(
-                        child: savedRestaurants.isEmpty
-                            ? _emptyState(
-                          icon: Icons.restaurant_outlined,
-                          title: 'No saved restaurants',
-                          subtitle:
-                          'Restaurants you favorite will appear here.',
-                        )
-                            : ListView.separated(
-                          itemCount: savedRestaurants.length,
-                          separatorBuilder: (_, __) {
-                            return const SizedBox(
-                              height: 10,
-                            );
-                          },
-                          itemBuilder: (context, index) {
-                            return _restaurantFavoriteCard(
-                              context,
-                              savedRestaurants[index],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // ================================================================
-  // RESTAURANT FAVORITE CARD
-  // ================================================================
-
-  Widget _restaurantFavoriteCard(
-      BuildContext context,
-      MilestoneApp6Restaurant restaurant,
-      ) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
-        ),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              restaurant.image,
-              width: 62,
-              height: 62,
-              fit: BoxFit.cover,
-              errorBuilder: (
-                  context,
-                  error,
-                  stackTrace,
-                  ) {
-                return Container(
-                  width: 62,
-                  height: 62,
-                  color: theme.dividerColor,
-                  child: const Icon(
-                    Icons.restaurant,
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(
-            width: 12,
-          ),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  restaurant.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 4,
-                ),
-
-                Text(
-                  restaurant.cuisine,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: theme.hintColor,
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 4,
-                ),
-
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      color: Colors.amber,
-                      size: 15,
-                    ),
-
-                    const SizedBox(
-                      width: 3,
-                    ),
-
-                    Text(
-                      restaurant.rating,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      width: 8,
-                    ),
-
-                    Text(
-                      restaurant.time,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.hintColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          IconButton(
-            onPressed: () {
-              state.toggleRestaurantSaved(
-                restaurant.name,
-              );
-
-              Navigator.of(context).pop();
-            },
-            icon: const Icon(
-              Icons.favorite_rounded,
-              color: Colors.red,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================================================================
-  // EMPTY STATE
-  // ================================================================
-
-  Widget _emptyState({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 60,
-              color: Colors.grey,
-            ),
-
-            const SizedBox(
-              height: 12,
-            ),
-
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-
-            const SizedBox(
-              height: 5,
-            ),
-
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ================================================================
-  // LOGOUT CONFIRMATION
-  // ================================================================
-
-  Future<void> _showLogoutDialog(
-      BuildContext context,
-      ) async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text(
-            'Logout',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-
-          content: const Text(
-            'Are you sure you want to logout?',
-          ),
-
-          actions: [
-            // --------------------------------------------------------
-            // CANCEL
-            // --------------------------------------------------------
-
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text(
-                'Cancel',
-              ),
-            ),
-
-            // --------------------------------------------------------
-            // LOGOUT
-            // --------------------------------------------------------
-
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: const Text(
-                'Logout',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldLogout != true) {
-      return;
-    }
-
-    await _logout(context);
-  }
-
-  // ================================================================
-  // LOGOUT API
-  // ================================================================
-
-  Future<void> _logout(
-      BuildContext context,
-      ) async {
-    final authController = context.read<AuthController>();
-
-    // Show loading dialog while API is running
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (loadingContext) {
-        return const PopScope(
-          canPop: false,
-          child: AlertDialog(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(),
-                ),
-                SizedBox(
-                  width: 20,
-                ),
-                Expanded(
-                  child: Text(
-                    'Logging out...',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    // Call Logout API
-    await authController.logout();
-
-    if (!context.mounted) {
-      return;
-    }
-
-    // Close loading dialog
-    Navigator.of(context).pop();
-
-    // Check local authentication state
-
-
-    // Go to login
-    context.go('/login');
-  }
+final MilestoneApp6State state;
+
+const MilestoneApp6ProfileScreen({
+super.key,
+required this.state,
+});
+
+@override
+Widget build(BuildContext context) {
+return AnimatedBuilder(
+animation: state,
+builder: (context, child) {
+final dark = state.themeMode == ThemeMode.dark;
+
+return Scaffold(
+appBar: AppBar(
+leading: IconButton(
+onPressed: () {
+context.go('/home');
+},
+icon: const Icon(
+Icons.arrow_back,
+),
+),
+title: const Text(
+'Profile',
+),
+),
+
+body: ListView(
+padding: const EdgeInsets.fromLTRB(
+20,
+18,
+20,
+30,
+),
+children: [
+// ==========================================================
+// PROFILE
+// ==========================================================
+
+const CircleAvatar(
+radius: 44,
+backgroundColor: Color(0xFFFFE1D7),
+child: Icon(
+Icons.person,
+size: 54,
+color: MilestoneApp6Colors.orange,
+),
+),
+
+const SizedBox(
+height: 12,
+),
+
+// User name from API login response
+Text(
+AuthStorage.fullName.isNotEmpty
+? AuthStorage.fullName
+    : 'User',
+textAlign: TextAlign.center,
+style: const TextStyle(
+fontSize: 18,
+fontWeight: FontWeight.w700,
+),
+),
+
+const SizedBox(
+height: 3,
+),
+
+// User email from API login response
+Text(
+AuthStorage.email.isNotEmpty
+? AuthStorage.email
+    : 'No email available',
+textAlign: TextAlign.center,
+style: TextStyle(
+color: Theme.of(context).hintColor,
+fontSize: 12,
+),
+),
+
+const SizedBox(
+height: 4,
+),
+
+// User phone from API login response
+if (AuthStorage.phoneNumber.isNotEmpty)
+Text(
+AuthStorage.phoneNumber,
+textAlign: TextAlign.center,
+style: TextStyle(
+color: Theme.of(context).hintColor,
+fontSize: 12,
+),
+),
+
+const SizedBox(
+height: 28,
+),
+
+// ==========================================================
+// MY ORDERS
+// ==========================================================
+
+_item(
+context,
+Icons.receipt_long_outlined,
+'My Orders',
+trailingText: state.orders.isNotEmpty
+? '${state.orders.length}'
+    : null,
+onTap: () {
+context.push('/my-orders');
+},
+),
+
+// ==========================================================
+// FAVORITE PRODUCTS
+// ==========================================================
+
+_item(
+context,
+Icons.favorite_border,
+'Favorite Products',
+trailingText: state.saved.isNotEmpty
+? '${state.saved.length}'
+    : null,
+onTap: () {
+_showFavoriteProducts(context);
+},
+),
+
+// ==========================================================
+// SAVED RESTAURANTS
+// ==========================================================
+
+_item(
+context,
+Icons.restaurant_outlined,
+'Saved Restaurants',
+trailingText: state.savedRestaurants.isNotEmpty
+? '${state.savedRestaurants.length}'
+    : null,
+onTap: () {
+_showFavoriteRestaurants(context);
+},
+),
+
+// ==========================================================
+// PAYMENT METHODS
+// ==========================================================
+
+_item(
+context,
+Icons.credit_card_outlined,
+'Payment Methods',
+onTap: () {
+ScaffoldMessenger.of(context).showSnackBar(
+const SnackBar(
+content: Text(
+'Payment Methods coming soon.',
+),
+),
+);
+},
+),
+
+// ==========================================================
+// THEME
+// ==========================================================
+
+SwitchListTile(
+contentPadding: EdgeInsets.zero,
+secondary: const Icon(
+Icons.dark_mode_outlined,
+),
+title: const Text(
+'Theme',
+),
+subtitle: Text(
+dark ? 'Dark' : 'Light',
+),
+value: dark,
+onChanged: state.setDarkMode,
+),
+
+// ==========================================================
+// SETTINGS
+// ==========================================================
+
+_item(
+context,
+Icons.settings_outlined,
+'Settings',
+onTap: () {
+ScaffoldMessenger.of(context).showSnackBar(
+const SnackBar(
+content: Text(
+'Settings coming soon.',
+),
+),
+);
+},
+),
+
+// ==========================================================
+// LOGOUT
+// ==========================================================
+
+_item(
+context,
+Icons.logout,
+'Logout',
+onTap: () {
+_showLogoutDialog(context);
+},
+),
+],
+),
+);
+},
+);
+}
+
+// ================================================================
+// PROFILE ITEM
+// ================================================================
+
+Widget _item(
+BuildContext context,
+IconData icon,
+String title, {
+VoidCallback? onTap,
+String? trailingText,
+}) {
+return ListTile(
+contentPadding: EdgeInsets.zero,
+
+leading: Icon(
+icon,
+color: MilestoneApp6Colors.orange,
+),
+
+title: Text(
+title,
+style: const TextStyle(
+fontSize: 13,
+fontWeight: FontWeight.w500,
+),
+),
+
+trailing: Row(
+mainAxisSize: MainAxisSize.min,
+children: [
+if (trailingText != null) ...[
+Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 8,
+vertical: 3,
+),
+decoration: BoxDecoration(
+color: MilestoneApp6Colors.orange.withOpacity(0.12),
+borderRadius: BorderRadius.circular(10),
+),
+child: Text(
+trailingText,
+style: const TextStyle(
+fontSize: 11,
+fontWeight: FontWeight.w700,
+color: MilestoneApp6Colors.orange,
+),
+),
+),
+const SizedBox(
+width: 8,
+),
+],
+
+const Icon(
+Icons.chevron_right,
+size: 20,
+),
+],
+),
+
+onTap: onTap,
+);
+}
+
+// ================================================================
+// FAVORITE PRODUCTS
+// ================================================================
+
+void _showFavoriteProducts(
+BuildContext context,
+) {
+showModalBottomSheet(
+context: context,
+isScrollControlled: true,
+showDragHandle: true,
+builder: (sheetContext) {
+return AnimatedBuilder(
+animation: state,
+builder: (context, child) {
+final foods = milestoneApp6Foods
+    .where(
+(food) => state.saved.contains(food.id),
+)
+    .toList();
+
+return SafeArea(
+child: SizedBox(
+height: MediaQuery.of(context).size.height * 0.72,
+child: Padding(
+padding: const EdgeInsets.fromLTRB(
+20,
+10,
+20,
+20,
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+const Text(
+'Favorite Products',
+style: TextStyle(
+fontSize: 22,
+fontWeight: FontWeight.w800,
+),
+),
+
+const SizedBox(
+height: 16,
+),
+
+Expanded(
+child: foods.isEmpty
+? _emptyState(
+icon: Icons.favorite_border,
+title: 'No favorite products',
+subtitle:
+'Products you favorite will appear here.',
+)
+    : ListView.separated(
+itemCount: foods.length,
+separatorBuilder: (_, __) {
+return const SizedBox(
+height: 10,
+);
+},
+itemBuilder: (context, index) {
+return _favoriteFoodCard(
+context,
+foods[index],
+);
+},
+),
+),
+],
+),
+),
+),
+);
+},
+);
+},
+);
+}
+
+// ================================================================
+// FAVORITE PRODUCT CARD
+// ================================================================
+
+Widget _favoriteFoodCard(
+BuildContext context,
+MilestoneApp6Food food,
+) {
+final theme = Theme.of(context);
+
+return Container(
+padding: const EdgeInsets.all(10),
+decoration: BoxDecoration(
+color: theme.cardColor,
+borderRadius: BorderRadius.circular(14),
+border: Border.all(
+color: theme.dividerColor.withOpacity(0.25),
+),
+),
+child: Row(
+children: [
+ClipRRect(
+borderRadius: BorderRadius.circular(10),
+child: Image.network(
+food.image,
+width: 65,
+height: 65,
+fit: BoxFit.cover,
+errorBuilder: (
+context,
+error,
+stackTrace,
+) {
+return Container(
+width: 65,
+height: 65,
+color: theme.dividerColor,
+child: const Icon(
+Icons.restaurant,
+),
+);
+},
+),
+),
+
+const SizedBox(
+width: 12,
+),
+
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+food.name,
+maxLines: 1,
+overflow: TextOverflow.ellipsis,
+style: const TextStyle(
+fontSize: 14,
+fontWeight: FontWeight.w800,
+),
+),
+
+const SizedBox(
+height: 4,
+),
+
+Text(
+'₹${food.price.toStringAsFixed(2)}',
+style: const TextStyle(
+fontSize: 14,
+fontWeight: FontWeight.w900,
+),
+),
+],
+),
+),
+
+IconButton(
+onPressed: () {
+state.toggleSaved(food.id);
+
+Navigator.of(context).pop();
+},
+icon: const Icon(
+Icons.favorite_rounded,
+color: Colors.red,
+),
+),
+],
+),
+);
+}
+
+// ================================================================
+// SAVED RESTAURANTS
+// ================================================================
+
+Future<List<MilestoneApp6Restaurant>> _fetchSavedRestaurants() async {
+final Set<String> savedNames = state.savedRestaurants
+    .map((name) => name.trim().toLowerCase())
+    .where((name) => name.isNotEmpty)
+    .toSet();
+
+if (savedNames.isEmpty) {
+return <MilestoneApp6Restaurant>[];
+}
+
+final String? token = await AuthStorage.token;
+if (token == null || token.trim().isEmpty) {
+throw Exception(
+'Authentication token is missing. Please login again.',
+);
+}
+
+final int? addressId = await AddressStorage.selectedAddressId;
+if (addressId == null || addressId <= 0) {
+throw Exception('Please select an address first.');
+}
+
+final MilestoneApp6RestaurantApi restaurantApi =
+MilestoneApp6RestaurantApi();
+
+final List<MilestoneApp6Restaurant> savedRestaurants =
+<MilestoneApp6Restaurant>[];
+
+int page = 1;
+const int perPage = 20;
+
+while (true) {
+final response = await restaurantApi.fetchNearbyRestaurantsPage(
+token: token,
+addressId: addressId,
+page: page,
+perPage: perPage,
+openNow: false,
+includeMenus: false,
+);
+
+final List<MilestoneApp6Restaurant> restaurants =
+response.data
+    .map(
+(json) => MilestoneApp6Restaurant.fromJson(json),
+)
+    .toList();
+
+for (final restaurant in restaurants) {
+if (savedNames.contains(
+restaurant.name.trim().toLowerCase(),
+)) {
+savedRestaurants.add(restaurant);
+}
+}
+
+if (!response.hasMorePages ||
+response.currentPage >= response.lastPage) {
+break;
+}
+
+final int nextPage = response.currentPage + 1;
+
+if (nextPage <= page) {
+break;
+}
+
+page = nextPage;
+}
+
+return savedRestaurants;
+}
+
+void _showFavoriteRestaurants(
+BuildContext context,
+) {
+final Future<List<MilestoneApp6Restaurant>> savedRestaurantsFuture =
+_fetchSavedRestaurants();
+
+showModalBottomSheet(
+context: context,
+isScrollControlled: true,
+showDragHandle: true,
+builder: (sheetContext) {
+return FutureBuilder<List<MilestoneApp6Restaurant>>(
+future: savedRestaurantsFuture,
+builder: (context, snapshot) {
+return SafeArea(
+child: SizedBox(
+height: MediaQuery.of(context).size.height * 0.68,
+child: Padding(
+padding: const EdgeInsets.fromLTRB(
+20,
+10,
+20,
+20,
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+const Text(
+'Saved Restaurants',
+style: TextStyle(
+fontSize: 22,
+fontWeight: FontWeight.w800,
+),
+),
+
+const SizedBox(
+height: 16,
+),
+
+Expanded(
+child: _buildSavedRestaurantsContent(
+context,
+snapshot,
+),
+),
+],
+),
+),
+),
+);
+},
+);
+},
+);
+}
+
+Widget _buildSavedRestaurantsContent(
+BuildContext context,
+AsyncSnapshot<List<MilestoneApp6Restaurant>> snapshot,
+) {
+if (snapshot.connectionState == ConnectionState.waiting) {
+return const Center(
+child: CircularProgressIndicator(),
+);
+}
+
+if (snapshot.hasError) {
+return Center(
+child: Padding(
+padding: const EdgeInsets.all(20),
+child: Column(
+mainAxisSize: MainAxisSize.min,
+children: [
+const Icon(
+Icons.error_outline_rounded,
+size: 50,
+color: Colors.red,
+),
+const SizedBox(height: 12),
+const Text(
+'Unable to load saved restaurants',
+textAlign: TextAlign.center,
+style: TextStyle(
+fontSize: 16,
+fontWeight: FontWeight.w700,
+),
+),
+const SizedBox(height: 8),
+Text(
+snapshot.error
+    .toString()
+    .replaceFirst('Exception: ', ''),
+textAlign: TextAlign.center,
+style: TextStyle(
+color: Theme.of(context).hintColor,
+fontSize: 12,
+),
+),
+],
+),
+),
+);
+}
+
+final List<MilestoneApp6Restaurant> savedRestaurants =
+snapshot.data ?? <MilestoneApp6Restaurant>[];
+
+if (savedRestaurants.isEmpty) {
+return _emptyState(
+icon: Icons.restaurant_outlined,
+title: 'No saved restaurants',
+subtitle:
+'Saved restaurants available for your selected address will appear here.',
+);
+}
+
+return ListView.separated(
+itemCount: savedRestaurants.length,
+separatorBuilder: (_, __) {
+return const SizedBox(
+height: 10,
+);
+},
+itemBuilder: (context, index) {
+return _restaurantFavoriteCard(
+context,
+savedRestaurants[index],
+);
+},
+);
+}
+
+// ================================================================
+// RESTAURANT FAVORITE CARD
+// ================================================================
+
+Widget _restaurantFavoriteCard(
+BuildContext context,
+MilestoneApp6Restaurant restaurant,
+) {
+final theme = Theme.of(context);
+
+return Container(
+padding: const EdgeInsets.all(12),
+decoration: BoxDecoration(
+color: theme.cardColor,
+borderRadius: BorderRadius.circular(14),
+border: Border.all(
+color: theme.dividerColor.withOpacity(0.25),
+),
+),
+child: Row(
+children: [
+ClipRRect(
+borderRadius: BorderRadius.circular(12),
+child: Image.network(
+restaurant.image,
+width: 62,
+height: 62,
+fit: BoxFit.cover,
+errorBuilder: (
+context,
+error,
+stackTrace,
+) {
+return Container(
+width: 62,
+height: 62,
+color: theme.dividerColor,
+child: const Icon(
+Icons.restaurant,
+),
+);
+},
+),
+),
+
+const SizedBox(
+width: 12,
+),
+
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+restaurant.name,
+maxLines: 1,
+overflow: TextOverflow.ellipsis,
+style: const TextStyle(
+fontSize: 15,
+fontWeight: FontWeight.w800,
+),
+),
+
+const SizedBox(
+height: 4,
+),
+
+Text(
+restaurant.cuisine,
+maxLines: 1,
+overflow: TextOverflow.ellipsis,
+style: TextStyle(
+fontSize: 11,
+color: theme.hintColor,
+),
+),
+
+const SizedBox(
+height: 4,
+),
+
+Row(
+children: [
+const Icon(
+Icons.star_rounded,
+color: Colors.amber,
+size: 15,
+),
+
+const SizedBox(
+width: 3,
+),
+
+Text(
+restaurant.rating,
+style: const TextStyle(
+fontSize: 11,
+fontWeight: FontWeight.w600,
+),
+),
+
+const SizedBox(
+width: 8,
+),
+
+Text(
+restaurant.time,
+style: TextStyle(
+fontSize: 11,
+color: theme.hintColor,
+),
+),
+],
+),
+],
+),
+),
+
+IconButton(
+onPressed: () {
+state.toggleRestaurantSaved(
+restaurant.name,
+);
+
+Navigator.of(context).pop();
+},
+icon: const Icon(
+Icons.favorite_rounded,
+color: Colors.red,
+),
+),
+],
+),
+);
+}
+
+// ================================================================
+// EMPTY STATE
+// ================================================================
+
+Widget _emptyState({
+required IconData icon,
+required String title,
+required String subtitle,
+}) {
+return Center(
+child: Padding(
+padding: const EdgeInsets.all(20),
+child: Column(
+mainAxisSize: MainAxisSize.min,
+children: [
+Icon(
+icon,
+size: 60,
+color: Colors.grey,
+),
+
+const SizedBox(
+height: 12,
+),
+
+Text(
+title,
+textAlign: TextAlign.center,
+style: const TextStyle(
+fontSize: 17,
+fontWeight: FontWeight.w700,
+),
+),
+
+const SizedBox(
+height: 5,
+),
+
+Text(
+subtitle,
+textAlign: TextAlign.center,
+style: const TextStyle(
+fontSize: 12,
+),
+),
+],
+),
+),
+);
+}
+
+// ================================================================
+// LOGOUT CONFIRMATION
+// ================================================================
+
+Future<void> _showLogoutDialog(
+BuildContext context,
+) async {
+final shouldLogout = await showDialog<bool>(
+context: context,
+builder: (dialogContext) {
+return AlertDialog(
+title: const Text(
+'Logout',
+style: TextStyle(
+fontWeight: FontWeight.w800,
+),
+),
+
+content: const Text(
+'Are you sure you want to logout?',
+),
+
+actions: [
+// --------------------------------------------------------
+// CANCEL
+// --------------------------------------------------------
+
+TextButton(
+onPressed: () {
+Navigator.of(dialogContext).pop(false);
+},
+child: const Text(
+'Cancel',
+),
+),
+
+// --------------------------------------------------------
+// LOGOUT
+// --------------------------------------------------------
+
+FilledButton(
+onPressed: () {
+Navigator.of(dialogContext).pop(true);
+},
+child: const Text(
+'Logout',
+),
+),
+],
+);
+},
+);
+
+if (shouldLogout != true) {
+return;
+}
+
+await _logout(context);
+}
+
+// ================================================================
+// LOGOUT API
+// ================================================================
+
+Future<void> _logout(
+BuildContext context,
+) async {
+final authController = context.read<AuthController>();
+
+// Show loading dialog while API is running
+showDialog(
+context: context,
+barrierDismissible: false,
+builder: (loadingContext) {
+return const PopScope(
+canPop: false,
+child: AlertDialog(
+content: Row(
+children: [
+SizedBox(
+width: 24,
+height: 24,
+child: CircularProgressIndicator(),
+),
+SizedBox(
+width: 20,
+),
+Expanded(
+child: Text(
+'Logging out...',
+),
+),
+],
+),
+),
+);
+},
+);
+
+// Call Logout API
+await authController.logout();
+
+if (!context.mounted) {
+return;
+}
+
+// Close loading dialog
+Navigator.of(context).pop();
+
+// Check local authentication state
+
+
+// Go to login
+context.go('/login');
+}
 }

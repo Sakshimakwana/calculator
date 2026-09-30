@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/data/milestone_app_6_food.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/address_storage.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
@@ -13,6 +16,8 @@ import '../widgets/milestone_app_6_category.dart';
 import '../widgets/milestone_app_6_image.dart';
 import '../widgets/milestone_app_6_animated_search_hint.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:app_matic_tech_flutter_app/core/constants/api_constants.dart';
+import 'package:app_matic_tech_flutter_app/models/restaurant_menu_model.dart';
 
 class _ApiFoodEntry {
   final MilestoneApp6Restaurant restaurant;
@@ -301,7 +306,7 @@ class _MilestoneApp6HomeScreenState
         includeMenus: true,
       );
 
-      final List<MilestoneApp6Restaurant>
+      List<MilestoneApp6Restaurant>
       restaurants =
       response.data
           .map(
@@ -311,6 +316,12 @@ class _MilestoneApp6HomeScreenState
             ),
       )
           .toList();
+
+      restaurants =
+      await _loadMenusForRestaurants(
+        token,
+        restaurants,
+      );
 
       if (!mounted) return;
 
@@ -363,6 +374,163 @@ class _MilestoneApp6HomeScreenState
       });
     }
   }
+  Future<RestaurantMenuResponse> _loadRestaurantMenus(
+      String token,
+      int restaurantId,
+      ) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.restaurantMenus(restaurantId)}',
+    );
+
+    debugPrint(
+      'MENU API REQUEST: $uri',
+    );
+
+    final response = await http
+        .get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    )
+        .timeout(
+      const Duration(seconds: 30),
+    );
+
+    debugPrint(
+      'MENU API STATUS: ${response.statusCode}',
+    );
+
+    if (response.statusCode == 401) {
+      throw Exception(
+        'Unauthorized while loading menu for restaurant $restaurantId.',
+      );
+    }
+
+    if (response.statusCode == 404) {
+      throw Exception(
+        'Menu not found for restaurant $restaurantId.',
+      );
+    }
+
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw Exception(
+        'Failed to load menu for restaurant $restaurantId. '
+            'Status: ${response.statusCode}',
+      );
+    }
+
+    if (response.body.trim().isEmpty) {
+      return RestaurantMenuResponse(
+        success: true,
+        message: 'No menu data.',
+        data: const [],
+      );
+    }
+
+    final dynamic decoded =
+    jsonDecode(response.body);
+
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception(
+        'Invalid menu API response for restaurant $restaurantId.',
+      );
+    }
+
+    return RestaurantMenuResponse.fromJson(
+      decoded,
+    );
+  }
+
+  Future<MilestoneApp6Restaurant> _loadMenusForRestaurant(
+      String token,
+      MilestoneApp6Restaurant restaurant,
+      ) async {
+    if (restaurant.id <= 0) {
+      debugPrint(
+        'MENU API SKIPPED: invalid restaurant id for ${restaurant.name}',
+      );
+      return restaurant;
+    }
+
+    try {
+      final RestaurantMenuResponse menuResponse =
+      await _loadRestaurantMenus(
+        token,
+        restaurant.id,
+      );
+
+      final List<MilestoneApp6Menu> menus =
+      menuResponse.data.map((apiMenu) {
+        final List<MilestoneApp6MenuItem> items =
+        apiMenu.menuItems.map((apiItem) {
+          return MilestoneApp6MenuItem(
+            id: apiItem.id,
+            name: apiItem.name,
+            image: apiItem.imageUrl,
+            price: apiItem.price.toString(),
+            availability: apiItem.availability,
+          );
+        }).toList();
+
+        return MilestoneApp6Menu(
+          id: apiMenu.id,
+          name: apiMenu.name,
+          menuItems: items,
+        );
+      }).toList();
+
+      debugPrint(
+        'MENU LOADED: ${restaurant.name} -> ${menus.length} categories',
+      );
+
+      for (final menu in menus) {
+        debugPrint(
+          'CATEGORY: ${menu.name}',
+        );
+
+        for (final item in menu.menuItems) {
+          debugPrint(
+            'FOOD: ${item.name} - ${item.price}',
+          );
+        }
+      }
+
+      return restaurant.copyWith(
+        menus: menus,
+      );
+    } catch (e) {
+      debugPrint(
+        'MENU API ERROR for ${restaurant.name} (${restaurant.id}): $e',
+      );
+
+      // Keep the restaurant visible even if its menu API fails.
+      return restaurant;
+    }
+  }
+
+  Future<List<MilestoneApp6Restaurant>> _loadMenusForRestaurants(
+      String token,
+      List<MilestoneApp6Restaurant> restaurants,
+      ) async {
+    final List<MilestoneApp6Restaurant> result = [];
+
+    for (final restaurant in restaurants) {
+      final updatedRestaurant =
+      await _loadMenusForRestaurant(
+        token,
+        restaurant,
+      );
+
+      result.add(updatedRestaurant);
+    }
+
+    return result;
+  }
+
   // =============================================================
 // LOAD NEXT RESTAURANT PAGE
 // ==============================================================
@@ -405,13 +573,19 @@ class _MilestoneApp6HomeScreenState
         includeMenus: true,
       );
 
-      final List<MilestoneApp6Restaurant> newRestaurants =
+      List<MilestoneApp6Restaurant> newRestaurants =
       response.data
           .map(
             (json) =>
             MilestoneApp6Restaurant.fromJson(json),
       )
           .toList();
+
+      newRestaurants =
+      await _loadMenusForRestaurants(
+        token,
+        newRestaurants,
+      );
 
       if (!mounted) return;
 
@@ -832,7 +1006,7 @@ class _MilestoneApp6HomeScreenState
   //       physics:
   //       const BouncingScrollPhysics(),
   //       itemCount:
-   //      _filteredNearbyRestaurants.length,
+  //      _filteredNearbyRestaurants.length,
   //       separatorBuilder:
   //           (_, __) =>
   //       const SizedBox(
@@ -1143,9 +1317,10 @@ class _MilestoneApp6HomeScreenState
 
         onTap: () {
           context.push(
-            '/restaurant/${Uri.encodeComponent(
-              restaurant.name,
-            )}',
+            '/restaurant-info',
+            extra: <String, dynamic>{
+              'restaurant': restaurant,
+            },
           );
         },
 
@@ -2331,7 +2506,10 @@ class _MilestoneApp6HomeScreenState
         return MilestoneApp6CategoryChip(
           category: MilestoneApp6Category(
             categoryName,
-            selectedMenu?.image ?? '',
+            selectedMenu != null &&
+                selectedMenu.menuItems.isNotEmpty
+                ? selectedMenu.menuItems.first.image
+                : '',
           ),
           selected: selected,
           onTap: () {

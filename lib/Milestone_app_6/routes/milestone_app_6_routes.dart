@@ -369,41 +369,41 @@ class MilestoneApp6Routes {
             // ============================================================
             // RESTAURANT BY NAME
             // ============================================================
-
-            GoRoute(
-              path: '/restaurant/:name',
-              builder: (
-                  context,
-                  routeState,
-                  ) {
-                final encodedName =
-                    routeState.pathParameters['name'] ??
-                        '';
-
-                final name =
-                Uri.decodeComponent(
-                  encodedName,
-                );
-
-                final restaurant =
-                restaurants.firstWhere(
-                      (item) =>
-                  item.name
-                      .trim()
-                      .toLowerCase() ==
-                      name
-                          .trim()
-                          .toLowerCase(),
-                  orElse: () =>
-                  restaurants.first,
-                );
-
-                return MilestoneApp6RestaurantInfoScreen(
-                  restaurant: restaurant,
-                  state: state,
-                );
-              },
-            ),
+            //
+            // GoRoute(
+            //   path: '/restaurant/:name',
+            //   builder: (
+            //       context,
+            //       routeState,
+            //       ) {
+            //     final encodedName =
+            //         routeState.pathParameters['name'] ??
+            //             '';
+            //
+            //     final name =
+            //     Uri.decodeComponent(
+            //       encodedName,
+            //     );
+            //
+            //     final restaurant =
+            //     restaurants.firstWhere(
+            //           (item) =>
+            //       item.name
+            //           .trim()
+            //           .toLowerCase() ==
+            //           name
+            //               .trim()
+            //               .toLowerCase(),
+            //       orElse: () =>
+            //       restaurants.first,
+            //     );
+            //
+            //     return MilestoneApp6RestaurantInfoScreen(
+            //       restaurant: restaurant,
+            //       state: state,
+            //     );
+            //   },
+            // ),
 
             // ============================================================
             // RESTAURANT INFO
@@ -415,11 +415,9 @@ class MilestoneApp6Routes {
                   context,
                   routeState,
                   ) {
-                final extra =
-                    routeState.extra;
+                final extra = routeState.extra;
 
-                if (extra
-                is! Map<String, dynamic>) {
+                if (extra is! Map<String, dynamic>) {
                   return const NoTransitionPage<void>(
                     child: Scaffold(
                       body: Center(
@@ -431,11 +429,9 @@ class MilestoneApp6Routes {
                   );
                 }
 
-                final restaurant =
-                extra['restaurant'];
+                final restaurant = extra['restaurant'];
 
-                if (restaurant
-                is! MilestoneApp6Restaurant) {
+                if (restaurant is! MilestoneApp6Restaurant) {
                   return const NoTransitionPage<void>(
                     child: Scaffold(
                       body: Center(

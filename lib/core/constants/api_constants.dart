@@ -1,7 +1,8 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'https://tomato-backend-hpby.onrender.com/api';
+  static const String baseUrl =
+      'https://tomato-backend-hpby.onrender.com/api';
 
   static const String register = '/register';
 
@@ -13,9 +14,16 @@ class ApiConstants {
 
   static const String storeAddress = '/addresses/store';
 
-  static String updateAddress(int id) => '/addresses/$id/update';
+  static String updateAddress(int id) =>
+      '/addresses/$id/update';
 
-  static String deleteAddress(int id) => '/addresses/$id/destroy';
+  static String deleteAddress(int id) =>
+      '/addresses/$id/destroy';
 
-  static const String nearbyRestaurants = '/restaurants/nearby';
+  static const String nearbyRestaurants =
+      '/restaurants/nearby';
+
+  static String restaurantMenus(int restaurantId) {
+    return '/restaurants/$restaurantId/menus';
+  }
 }
