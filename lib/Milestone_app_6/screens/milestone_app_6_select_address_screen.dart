@@ -4,7 +4,7 @@ import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/services/milestone_app_6_address_api.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../modelss/milestone_app_6_address_model.dart';
+import '../../models/milestone_app_6_address_model.dart';
 
 
 class MilestoneApp6SelectAddressScreen

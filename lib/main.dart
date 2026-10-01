@@ -1,4 +1,6 @@
+import 'package:app_matic_tech_flutter_app/controllers/cart_controller.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/address_storage.dart';
+import 'package:app_matic_tech_flutter_app/repositories/cart_repository.dart';
 import 'package:flutter/material.dart';
 import 'Milestone_app_6/routes/milestone_app_6_routes.dart';
 import 'Milestone_app_6/state/milestone_app_6_state.dart';
@@ -24,16 +26,29 @@ Future<void> main() async {
   MilestoneApp6Routes(state);
 
   runApp(
-   ChangeNotifierProvider(create: (_) => AuthController(
-       AuthRepository(
-           ApiService(DioClient.dio)
-       ),
-   ),
-   child: MilestoneApp6App(
-       state: state,
-       routes: routes),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthController>(
+          create: (_) => AuthController(
+            AuthRepository(
+              ApiService(DioClient.dio),
+            ),
+          ),
+        ),
 
-   )
+        ChangeNotifierProvider<CartController>(
+          create: (_) => CartController(
+            CartRepository(
+              ApiService(DioClient.dio),
+            ),
+          ),
+        ),
+      ],
+      child: MilestoneApp6App(
+        state: state,
+        routes: routes,
+      ),
+    ),
   );
 }
 

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/modelss/milestone_app_6_address_model.dart';
+import 'package:app_matic_tech_flutter_app/models/milestone_app_6_address_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../core/constants/api_constants.dart';

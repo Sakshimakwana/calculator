@@ -26,4 +26,10 @@ class ApiConstants {
   static String restaurantMenus(int restaurantId) {
     return '/restaurants/$restaurantId/menus';
   }
+
+  static const String fetchCart = '/cart';
+
+  static const String storeCart = '/carts/store';
+
+  static String updateCart(int cartId) => '/carts/$cartId/update';
 }

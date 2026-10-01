@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_order.dart';
-import '../modelss/milestone_app_6_address_model.dart';
+import '../../models/milestone_app_6_address_model.dart';
 import '../state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
 

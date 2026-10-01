@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:provider/provider.dart';
 
+import 'package:app_matic_tech_flutter_app/controllers/cart_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +12,8 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/data/milestone_app_6_
 import 'package:app_matic_tech_flutter_app/models/restaurant_menu_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_image.dart';
+
+import '../../models/cart_response_model.dart';
 
 class MilestoneApp6RestaurantInfoScreen extends StatefulWidget {
   final MilestoneApp6Restaurant restaurant;
@@ -696,149 +700,385 @@ class _MilestoneApp6RestaurantInfoScreenState
       ),
     );
   }
-
   Widget _buildFoodCard(
-    BuildContext context,
-    ThemeData theme,
-    RestaurantMenuItem item,
-  ) {
-    final bool available = item.availability && widget.restaurant.isOpen;
+      BuildContext context,
+      ThemeData theme,
+      RestaurantMenuItem item,
+      ) {
+    final bool available =
+        item.availability && widget.restaurant.isOpen;
 
-    final bool isDark = theme.brightness == Brightness.dark;
+    final bool isDark =
+        theme.brightness == Brightness.dark;
 
-    final Color cardColor =
-        isDark ? const Color(0xFF202020) : theme.colorScheme.surface;
+    final Color cardColor = isDark
+        ? const Color(0xFF202020)
+        : theme.colorScheme.surface;
 
-    final Color titleColor = isDark ? Colors.white : const Color(0xFF171717);
+    final Color titleColor = isDark
+        ? Colors.white
+        : const Color(0xFF171717);
 
-    final Color secondaryColor =
-        isDark ? const Color(0xFFBDBDBD) : const Color(0xFF666666);
+    final Color secondaryColor = isDark
+        ? const Color(0xFFBDBDBD)
+        : const Color(0xFF666666);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark
-            ? Border.all(
-                color: Colors.white.withOpacity(.06),
-              )
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(
-              isDark ? .25 : .06,
-            ),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: available
-            ? () {
-                context.push(
-                  '/food/${item.id}',
-                );
-              }
-            : null,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 125,
-              width: double.infinity,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  MilestoneApp6Image(
-                    url: item.imageUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  if (!available)
-                    Container(
-                      color: Colors.black.withOpacity(.45),
-                      alignment: Alignment.center,
-                      child: Text(
-                        widget.restaurant.isOpen
-                            ? 'Unavailable'
-                            : 'Restaurant Closed',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  12,
-                  10,
-                  12,
-                  12,
+    return Consumer<CartController>(
+      builder: (context, cartController, child) {
+        // ==========================================================
+        // FIND THIS FOOD IN API CART
+        // ==========================================================
+
+        CartItemModel? cartItem;
+
+        for (final itemInCart in cartController.cartItems) {
+          if (itemInCart.menuItem.id == item.id) {
+            cartItem = itemInCart;
+            break;
+          }
+        }
+
+        final int quantity = cartItem?.quantity ?? 0;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: isDark
+                ? Border.all(
+              color: Colors.white.withOpacity(.06),
+            )
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(
+                  isDark ? .25 : .06,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ======================================================
+              // FOOD IMAGE
+              // ======================================================
+
+              SizedBox(
+                height: 125,
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Text(
-                      item.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: titleColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      item.price <= 0 ? '₹0' : '₹${_formatPrice(item.price)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: titleColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    SizedBox(
+                    MilestoneApp6Image(
+                      url: item.imageUrl,
                       width: double.infinity,
-                      height: 34,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: available
-                              ? theme.colorScheme.primary
-                              : Colors.grey.withOpacity(.25),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            available ? 'Add to cart' : 'Unavailable',
-                            style: TextStyle(
-                              color: available ? Colors.white : secondaryColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      fit: BoxFit.cover,
+                      borderRadius: BorderRadius.zero,
+                    ),
+
+                    if (!available)
+                      Container(
+                        color: Colors.black.withOpacity(.45),
+                        alignment: Alignment.center,
+                        child: Text(
+                          widget.restaurant.isOpen
+                              ? 'Unavailable'
+                              : 'Restaurant Closed',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+
+              // ======================================================
+              // FOOD DETAILS
+              // ======================================================
+
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    12,
+                    10,
+                    12,
+                    10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      // ==================================================
+                      // FOOD NAME
+                      // ==================================================
+
+                      Text(
+                        item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // ==================================================
+                      // PRICE
+                      // ==================================================
+
+                      Text(
+                        item.price <= 0
+                            ? '₹0'
+                            : '₹${_formatPrice(item.price)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+
+                      const SizedBox(height: 7),
+
+                      // ==================================================
+                      // ADD / QUANTITY
+                      // ==================================================
+
+                      if (quantity == 0)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 34,
+                          child: ElevatedButton(
+                            onPressed:
+                            !available ||
+                                cartController
+                                    .isAddingToCart
+                                ? null
+                                : () async {
+                              await _addMenuItemToCart(
+                                context,
+                                item,
+                              );
+                            },
+                            style:
+                            ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              elevation: 0,
+                              minimumSize: Size.zero,
+                              tapTargetSize:
+                              MaterialTapTargetSize
+                                  .shrinkWrap,
+                              backgroundColor:
+                              theme.colorScheme.primary,
+                              disabledBackgroundColor:
+                              Colors.grey
+                                  .withOpacity(.25),
+                              shape:
+                              RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(
+                                  10,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              available
+                                  ? cartController
+                                  .isAddingToCart
+                                  ? 'Adding...'
+                                  : 'Add to cart'
+                                  : 'Unavailable',
+                              maxLines: 1,
+                              overflow:
+                              TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: available
+                                    ? Colors.white
+                                    : secondaryColor,
+                                fontSize: 11,
+                                fontWeight:
+                                FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                      // ==================================================
+                      // QUANTITY CONTROL
+                      // ==================================================
+
+                        Container(
+                          width: double.infinity,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            borderRadius:
+                            BorderRadius.circular(10),
+                            border: Border.all(
+                              color: theme
+                                  .colorScheme.primary
+                                  .withOpacity(.50),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment
+                                .spaceBetween,
+                            children: [
+                              // ------------------------------------------
+                              // MINUS
+                              // ------------------------------------------
+
+                              SizedBox(
+                                width: 38,
+                                height: 34,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  onPressed:
+                                  cartController
+                                      .isUpdatingCart
+                                      ? null
+                                      : () async {
+                                    if (cartItem ==
+                                        null) {
+                                      return;
+                                    }
+
+                                    if (cartItem!
+                                        .quantity <=
+                                        1) {
+                                      return;
+                                    }
+
+                                    await context
+                                        .read<
+                                        CartController>()
+                                        .updateCartQuantity(
+                                      cartId:
+                                      cartItem!
+                                          .id,
+                                      quantity:
+                                      cartItem!
+                                          .quantity -
+                                          1,
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.remove,
+                                    size: 17,
+                                  ),
+                                ),
+                              ),
+
+                              // ------------------------------------------
+                              // QUANTITY
+                              // ------------------------------------------
+
+                              Text(
+                                '$quantity',
+                                style: TextStyle(
+                                  color: titleColor,
+                                  fontSize: 13,
+                                  fontWeight:
+                                  FontWeight.w800,
+                                ),
+                              ),
+
+                              // ------------------------------------------
+                              // PLUS
+                              // ------------------------------------------
+
+                              SizedBox(
+                                width: 38,
+                                height: 34,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  onPressed:
+                                  cartController
+                                      .isUpdatingCart
+                                      ? null
+                                      : () async {
+                                    if (cartItem ==
+                                        null) {
+                                      return;
+                                    }
+
+                                    await context
+                                        .read<
+                                        CartController>()
+                                        .updateCartQuantity(
+                                      cartId:
+                                      cartItem!
+                                          .id,
+                                      quantity:
+                                      cartItem!
+                                          .quantity +
+                                          1,
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.add,
+                                    size: 17,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
+  }
+  Future<void> _addMenuItemToCart(
+      BuildContext context,
+      RestaurantMenuItem item,
+      ) async {
+    final cartController =
+    context.read<CartController>();
+
+    final bool added =
+    await cartController.addToCart(
+      menuItemId: item.id,
+      quantity: 1,
+      restaurantId: widget.restaurant.id,
+    );
+
+    if (!context.mounted || !added) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            '${item.name} added to cart',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration:
+          const Duration(milliseconds: 1200),
+        ),
+      );
   }
 
   String _formatPrice(double price) {

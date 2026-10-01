@@ -6,7 +6,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../modelss/milestone_app_6_address_form.dart';
-import '../modelss/milestone_app_6_address_model.dart';
+import '../../models/milestone_app_6_address_model.dart';
 import '../state/milestone_app_6_state.dart';
 
 class MilestoneApp6AddressScreen
