@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:provider/provider.dart';
-
 import 'package:app_matic_tech_flutter_app/controllers/cart_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +11,6 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/data/milestone_app_6_
 import 'package:app_matic_tech_flutter_app/models/restaurant_menu_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_image.dart';
-
 import '../../models/cart_response_model.dart';
 
 class MilestoneApp6RestaurantInfoScreen extends StatefulWidget {
@@ -35,12 +33,22 @@ class _MilestoneApp6RestaurantInfoScreenState
   bool _isLoading = true;
   String? _errorMessage;
 
+// Only the food item currently being added shows "Adding...".
+  int? _addingMenuItemId;
+  int? _updatingCartItemId;
+
   List<RestaurantMenu> _menus = [];
 
   @override
   void initState() {
     super.initState();
+
     _loadRestaurantMenu();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CartController>().fetchCart();
+    });
   }
 
   Future<void> _loadRestaurantMenu() async {
@@ -690,7 +698,6 @@ class _MilestoneApp6RestaurantInfoScreenState
 
                   return _buildFoodCard(
                     context,
-                    theme,
                     item,
                   );
                 },
@@ -700,39 +707,26 @@ class _MilestoneApp6RestaurantInfoScreenState
       ),
     );
   }
+
   Widget _buildFoodCard(
-      BuildContext context,
-      ThemeData theme,
-      RestaurantMenuItem item,
-      ) {
-    final bool available =
-        item.availability && widget.restaurant.isOpen;
+    BuildContext context,
+    RestaurantMenuItem item,
+  ) {
+    final bool available = item.availability && widget.restaurant.isOpen;
 
-    final bool isDark =
-        theme.brightness == Brightness.dark;
-
-    final Color cardColor = isDark
-        ? const Color(0xFF202020)
-        : theme.colorScheme.surface;
-
-    final Color titleColor = isDark
-        ? Colors.white
-        : const Color(0xFF171717);
-
-    final Color secondaryColor = isDark
-        ? const Color(0xFFBDBDBD)
-        : const Color(0xFF666666);
+    final bool isAdding = _addingMenuItemId == item.id;
 
     return Consumer<CartController>(
-      builder: (context, cartController, child) {
-        // ==========================================================
-        // FIND THIS FOOD IN API CART
-        // ==========================================================
-
+      builder: (
+        context,
+        cartController,
+        child,
+      ) {
         CartItemModel? cartItem;
 
-        for (final itemInCart in cartController.cartItems) {
-          if (itemInCart.menuItem.id == item.id) {
+        for (final CartItemModel itemInCart in cartController.cartItems) {
+          if (itemInCart.menuItem.id == item.id &&
+              itemInCart.restaurantId == widget.restaurant.id) {
             cartItem = itemInCart;
             break;
           }
@@ -740,303 +734,118 @@ class _MilestoneApp6RestaurantInfoScreenState
 
         final int quantity = cartItem?.quantity ?? 0;
 
+        final bool isInCart = quantity > 0;
+
         return Container(
           decoration: BoxDecoration(
-            color: cardColor,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: isDark
-                ? Border.all(
-              color: Colors.white.withOpacity(.06),
-            )
-                : null,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(
-                  isDark ? .25 : .06,
-                ),
-                blurRadius: 10,
+                color: Colors.black.withOpacity(.04),
+                blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           clipBehavior: Clip.antiAlias,
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ======================================================
-              // FOOD IMAGE
-              // ======================================================
-
               SizedBox(
                 height: 125,
                 width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    MilestoneApp6Image(
-                      url: item.imageUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      borderRadius: BorderRadius.zero,
-                    ),
-
-                    if (!available)
-                      Container(
-                        color: Colors.black.withOpacity(.45),
-                        alignment: Alignment.center,
-                        child: Text(
-                          widget.restaurant.isOpen
-                              ? 'Unavailable'
-                              : 'Restaurant Closed',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
+                child: MilestoneApp6Image(
+                  url: item.imageUrl,
+                  fit: BoxFit.cover,
+                  borderRadius: BorderRadius.zero,
                 ),
               ),
-
-              // ======================================================
-              // FOOD DETAILS
-              // ======================================================
-
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    12,
                     10,
-                    12,
+                    9,
+                    10,
                     10,
                   ),
                   child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ==================================================
-                      // FOOD NAME
-                      // ==================================================
-
                       Text(
                         item.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: titleColor,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-
-                      const Spacer(),
-
-                      // ==================================================
-                      // PRICE
-                      // ==================================================
-
+                      const SizedBox(height: 6),
                       Text(
-                        item.price <= 0
-                            ? '₹0'
-                            : '₹${_formatPrice(item.price)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: titleColor,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                        '₹${_formatPrice(item.price)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-
-                      const SizedBox(height: 7),
-
-                      // ==================================================
-                      // ADD / QUANTITY
-                      // ==================================================
-
-                      if (quantity == 0)
-                        SizedBox(
-                          width: double.infinity,
-                          height: 34,
-                          child: ElevatedButton(
-                            onPressed:
-                            !available ||
-                                cartController
-                                    .isAddingToCart
-                                ? null
-                                : () async {
-                              await _addMenuItemToCart(
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 34,
+                        child: isInCart
+                            ? _buildQuantityControl(
                                 context,
-                                item,
-                              );
-                            },
-                            style:
-                            ElevatedButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              elevation: 0,
-                              minimumSize: Size.zero,
-                              tapTargetSize:
-                              MaterialTapTargetSize
-                                  .shrinkWrap,
-                              backgroundColor:
-                              theme.colorScheme.primary,
-                              disabledBackgroundColor:
-                              Colors.grey
-                                  .withOpacity(.25),
-                              shape:
-                              RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.circular(
-                                  10,
+                                cartItem!,
+                                cartController,
+                              )
+                            : ElevatedButton(
+                                onPressed: available && !isAdding
+                                    ? () {
+                                        _addMenuItemToCart(
+                                          context,
+                                          item,
+                                        );
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0,
+                                  backgroundColor: isAdding
+                                      ? Colors.grey.shade300
+                                      : const Color(
+                                          0xFF9B4F3A,
+                                        ),
+                                  disabledBackgroundColor: isAdding
+                                      ? const Color(0xFFF0E2DD)
+                                      : Colors.grey.shade300,
+                                  disabledForegroundColor: isAdding
+                                      ? const Color(0xFF6B3A2D)
+                                      : Colors.white,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      10,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            child: Text(
-                              available
-                                  ? cartController
-                                  .isAddingToCart
-                                  ? 'Adding...'
-                                  : 'Add to cart'
-                                  : 'Unavailable',
-                              maxLines: 1,
-                              overflow:
-                              TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: available
-                                    ? Colors.white
-                                    : secondaryColor,
-                                fontSize: 11,
-                                fontWeight:
-                                FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                      // ==================================================
-                      // QUANTITY CONTROL
-                      // ==================================================
-
-                        Container(
-                          width: double.infinity,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            borderRadius:
-                            BorderRadius.circular(10),
-                            border: Border.all(
-                              color: theme
-                                  .colorScheme.primary
-                                  .withOpacity(.50),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment
-                                .spaceBetween,
-                            children: [
-                              // ------------------------------------------
-                              // MINUS
-                              // ------------------------------------------
-
-                              SizedBox(
-                                width: 38,
-                                height: 34,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed:
-                                  cartController
-                                      .isUpdatingCart
-                                      ? null
-                                      : () async {
-                                    if (cartItem ==
-                                        null) {
-                                      return;
-                                    }
-
-                                    if (cartItem!
-                                        .quantity <=
-                                        1) {
-                                      return;
-                                    }
-
-                                    await context
-                                        .read<
-                                        CartController>()
-                                        .updateCartQuantity(
-                                      cartId:
-                                      cartItem!
-                                          .id,
-                                      quantity:
-                                      cartItem!
-                                          .quantity -
-                                          1,
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.remove,
-                                    size: 17,
+                                child: Text(
+                                  isAdding
+                                      ? 'Adding...'
+                                      : available
+                                          ? 'Add to cart'
+                                          : 'Unavailable',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: isAdding
+                                        ? const Color(0xFF6B3A2D)
+                                        : available
+                                            ? Colors.white
+                                            : const Color(0xFF666666),
                                   ),
                                 ),
                               ),
-
-                              // ------------------------------------------
-                              // QUANTITY
-                              // ------------------------------------------
-
-                              Text(
-                                '$quantity',
-                                style: TextStyle(
-                                  color: titleColor,
-                                  fontSize: 13,
-                                  fontWeight:
-                                  FontWeight.w800,
-                                ),
-                              ),
-
-                              // ------------------------------------------
-                              // PLUS
-                              // ------------------------------------------
-
-                              SizedBox(
-                                width: 38,
-                                height: 34,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed:
-                                  cartController
-                                      .isUpdatingCart
-                                      ? null
-                                      : () async {
-                                    if (cartItem ==
-                                        null) {
-                                      return;
-                                    }
-
-                                    await context
-                                        .read<
-                                        CartController>()
-                                        .updateCartQuantity(
-                                      cartId:
-                                      cartItem!
-                                          .id,
-                                      quantity:
-                                      cartItem!
-                                          .quantity +
-                                          1,
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.add,
-                                    size: 17,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1047,38 +856,347 @@ class _MilestoneApp6RestaurantInfoScreenState
       },
     );
   }
-  Future<void> _addMenuItemToCart(
-      BuildContext context,
-      RestaurantMenuItem item,
-      ) async {
-    final cartController =
-    context.read<CartController>();
 
-    final bool added =
-    await cartController.addToCart(
-      menuItemId: item.id,
-      quantity: 1,
-      restaurantId: widget.restaurant.id,
+  Widget _buildQuantityControl(
+    BuildContext context,
+    CartItemModel cartItem,
+    CartController cartController,
+  ) {
+    final bool isUpdating = _updatingCartItemId == cartItem.id;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(.45),
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: isUpdating || cartItem.quantity <= 1
+                  ? null
+                  : () {
+                      _updateFoodQuantity(
+                        context,
+                        cartItem,
+                        cartItem.quantity - 1,
+                      );
+                    },
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(10),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.remove,
+                  size: 17,
+                  color: isUpdating || cartItem.quantity <= 1
+                      ? Theme.of(context).disabledColor
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 20,
+            color: Theme.of(context).dividerColor.withOpacity(.35),
+          ),
+          SizedBox(
+            width: 48,
+            child: Center(
+              child: isUpdating
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      '${cartItem.quantity}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 20,
+            color: Theme.of(context).dividerColor.withOpacity(.35),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: isUpdating
+                  ? null
+                  : () {
+                      _updateFoodQuantity(
+                        context,
+                        cartItem,
+                        cartItem.quantity + 1,
+                      );
+                    },
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(10),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.add,
+                  size: 17,
+                  color: isUpdating
+                      ? Theme.of(context).disabledColor
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
 
-    if (!context.mounted || !added) {
+  Future<void> _updateFoodQuantity(
+    BuildContext context,
+    CartItemModel cartItem,
+    int quantity,
+  ) async {
+    if (quantity < 1 || _updatingCartItemId != null) {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            '${item.name} added to cart',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          behavior: SnackBarBehavior.floating,
-          duration:
-          const Duration(milliseconds: 1200),
-        ),
+    setState(() {
+      _updatingCartItemId = cartItem.id;
+    });
+
+    try {
+      await context.read<CartController>().updateCartQuantity(
+            cartId: cartItem.id,
+            quantity: quantity,
+          );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _updatingCartItemId = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _addMenuItemToCart(
+    BuildContext context,
+    RestaurantMenuItem item,
+  ) async {
+    if (_addingMenuItemId != null) {
+      return;
+    }
+
+    final cartController = context.read<CartController>();
+
+// Always use the latest API cart before checking
+// whether another restaurant is already in the cart.
+    await cartController.fetchCart();
+
+    if (!mounted) return;
+
+// ==============================================================
+// CHECK EXISTING RESTAURANT
+// ==============================================================
+
+    if (cartController.cartItems.isNotEmpty) {
+      final int existingRestaurantId =
+          cartController.cartItems.first.restaurantId;
+
+      if (existingRestaurantId != widget.restaurant.id) {
+        final String existingRestaurant =
+            cartController.cartItems.first.restaurant.name.trim().isEmpty
+                ? 'another restaurant'
+                : cartController.cartItems.first.restaurant.name;
+
+        final bool? shouldReplace = await _showReplaceCartDialog(
+          context,
+          currentRestaurant: existingRestaurant,
+          newRestaurant: widget.restaurant.name,
+        );
+
+        if (!mounted || shouldReplace != true) {
+          return;
+        }
+
+// ==========================================================
+// REPLACE CART
+// Delete every existing cart row through the
+// verified DELETE /carts/{cartId}/destroy API.
+// ==========================================================
+
+        final bool cleared = await cartController.clearCart();
+
+        if (!mounted) return;
+
+        if (!cleared) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  cartController.errorMessage ??
+                      'Unable to replace the existing cart.',
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+
+          return;
+        }
+      }
+    }
+
+// ==============================================================
+// ADD NEW PRODUCT
+// ==============================================================
+
+    setState(() {
+      _addingMenuItemId = item.id;
+    });
+
+    try {
+      final bool added = await cartController.addToCart(
+        menuItemId: item.id,
+        quantity: 1,
+        restaurantId: widget.restaurant.id,
       );
+
+      if (!mounted) return;
+
+      if (added) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                '${item.name} added to cart',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(
+                milliseconds: 1200,
+              ),
+            ),
+          );
+      } else {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                cartController.errorMessage ?? 'Unable to add item to cart.',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _addingMenuItemId = null;
+        });
+      }
+    }
+  }
+
+  Future<bool?> _showReplaceCartDialog(
+    BuildContext context, {
+    required String currentRestaurant,
+    required String newRestaurant,
+  }) {
+    final theme = Theme.of(context);
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.shopping_cart_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Replace Cart?',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: 14,
+                height: 1.5,
+              ),
+              children: [
+                const TextSpan(
+                  text: 'Your cart contains items from ',
+                ),
+                TextSpan(
+                  text: currentRestaurant,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const TextSpan(
+                  text: '.\n\nDo you want to replace them with items from ',
+                ),
+                TextSpan(
+                  text: newRestaurant,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const TextSpan(
+                  text: '?',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop(false);
+              },
+              child: const Text(
+                'Keep Existing',
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop(true);
+              },
+              child: const Text(
+                'Replace Cart',
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _formatPrice(double price) {

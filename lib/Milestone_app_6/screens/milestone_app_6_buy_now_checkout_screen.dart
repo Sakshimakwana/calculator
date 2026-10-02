@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:provider/provider.dart';
+import '../../controllers/cart_controller.dart';
+import '../../models/cart_response_model.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
@@ -141,38 +143,47 @@ class _MilestoneApp6CheckoutScreenState
     _createOrderItems();
   }
 
+  MilestoneApp6CartItem _convertApiCartItem(CartItemModel item) {
+    return MilestoneApp6CartItem(
+      food: MilestoneApp6Food(
+        id: item.menuItem.id.toString(),
+        name: item.menuItem.name,
+        category: '',
+        restaurant: item.restaurant.name,
+        image: item.menuItem.imageUrl,
+        price: item.menuItem.price,
+        description: '',
+      ),
+      size: '',
+      unitPrice: item.menuItem.price,
+      quantity: item.quantity,
+    );
+  }
+
   /// ==============================================================
   /// CREATE ORDER ITEMS
   /// ==============================================================
 
   void _createOrderItems() {
-    // --------------------------------------------------------------
-    // BUY NOW
-    // --------------------------------------------------------------
-
     if (widget.isBuyNow) {
-      final buyNowItem = widget.resolvedBuyNowItem;
+      final buyNowItem = widget.buyNowItem;
 
       if (buyNowItem == null) {
-        _orderedItems = <MilestoneApp6CartItem>[];
+        _orderedItems = [];
         return;
       }
 
-      _orderedItems = <MilestoneApp6CartItem>[
+      _orderedItems = [
         _copyCartItem(buyNowItem),
       ];
 
       return;
     }
 
-    // --------------------------------------------------------------
-    // CART CHECKOUT
-    // --------------------------------------------------------------
+    final cartController = context.read<CartController>();
 
-    _orderedItems = state.cart.values
-        .map(
-          (item) => _copyCartItem(item),
-    )
+    _orderedItems = cartController.cartItems
+        .map((item) => _convertApiCartItem(item))
         .toList();
   }
 
@@ -180,15 +191,14 @@ class _MilestoneApp6CheckoutScreenState
   /// COPY CART ITEM
   /// ==============================================================
 
-  MilestoneApp6CartItem _copyCartItem(
-      MilestoneApp6CartItem item,
-      ) {
+  MilestoneApp6CartItem _copyCartItem(MilestoneApp6CartItem item) {
     return MilestoneApp6CartItem(
       food: item.food,
       size: item.size,
       unitPrice: item.unitPrice,
       quantity: item.quantity,
     );
+
   }
 
   /// ==============================================================

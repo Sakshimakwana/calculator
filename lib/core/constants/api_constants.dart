@@ -32,4 +32,11 @@ class ApiConstants {
   static const String storeCart = '/carts/store';
 
   static String updateCart(int cartId) => '/carts/$cartId/update';
+
+  static String deleteCart(int cartId) { return '/carts/$cartId/destroy';}
+
+  static const String clearCart = '/cart';
+
+  static const String storeOrder = '/orders/store';
+
 }

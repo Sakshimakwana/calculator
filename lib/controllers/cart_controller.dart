@@ -1,7 +1,6 @@
-import 'package:app_matic_tech_flutter_app/models/cart_response_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-
+import '../models/cart_response_model.dart';
 import '../repositories/cart_repository.dart';
 
 class CartController extends ChangeNotifier {
@@ -12,50 +11,22 @@ class CartController extends ChangeNotifier {
   bool isLoading = false;
   bool isAddingToCart = false;
   bool isUpdatingCart = false;
+  bool isDeletingCart = false;
 
   String? errorMessage;
 
   List<CartItemModel> cartItems = [];
 
-  // =========================================================
-  // FETCH CART
-  // =========================================================
-
   Future<bool> fetchCart() async {
-    isLoading = true;
-    errorMessage = null;
-
-    notifyListeners();
-
-    print('');
-    print('========================================');
-    print('           FETCH CART STARTED');
-    print('========================================');
-    print('Calling: GET /cart');
-
     try {
-      final response = await repository.fetchCart();
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final response =
+      await repository.fetchCart();
 
       cartItems = response.data;
-
-      print('');
-      print('========================================');
-      print('           FETCH CART SUCCESS');
-      print('========================================');
-      print('Success: ${response.success}');
-      print('Message: ${response.message}');
-      print('Cart Items: ${cartItems.length}');
-
-      for (final item in cartItems) {
-        print(
-          'Food: ${item.menuItem.name} | '
-              'Quantity: ${item.quantity} | '
-              'Restaurant: ${item.restaurant.name}',
-        );
-      }
-
-      print('========================================');
-      print('');
 
       isLoading = false;
       notifyListeners();
@@ -63,159 +34,70 @@ class CartController extends ChangeNotifier {
       return response.success;
     } on DioException catch (e) {
       isLoading = false;
-
-      print('');
-      print('========================================');
-      print('            FETCH CART FAILED');
-      print('========================================');
-      print('Status Code: ${e.response?.statusCode}');
-      print('Error: ${e.message}');
-      print('Response: ${e.response?.data}');
-      print('========================================');
-      print('');
-
       errorMessage =
-      e.response?.data is Map
-          ? e.response?.data['message']?.toString() ??
-          'Failed to fetch cart'
-          : 'Failed to fetch cart';
-
+          e.response?.data?.toString() ??
+              e.message ??
+              'Unable to load cart.';
       notifyListeners();
-
       return false;
     } catch (e) {
       isLoading = false;
-
-      print('');
-      print('========================================');
-      print('        FETCH CART UNKNOWN ERROR');
-      print('========================================');
-      print('Error: $e');
-      print('========================================');
-      print('');
-
-      errorMessage = 'Something went wrong while fetching cart.';
-
+      errorMessage = e.toString();
       notifyListeners();
-
       return false;
     }
   }
-
-  // =========================================================
-  // ADD TO CART
-  // =========================================================
 
   Future<bool> addToCart({
     required int menuItemId,
     required int quantity,
     required int restaurantId,
   }) async {
-    isAddingToCart = true;
-    errorMessage = null;
-
-    notifyListeners();
-
-    print('');
-    print('========================================');
-    print('          ADD TO CART STARTED');
-    print('========================================');
-    print('Menu Item ID: $menuItemId');
-    print('Quantity: $quantity');
-    print('Restaurant ID: $restaurantId');
-    print('Calling: POST /carts/store');
-
     try {
-      final response = await repository.addToCart(
+      isAddingToCart = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await repository.addToCart(
         menuItemId: menuItemId,
         quantity: quantity,
         restaurantId: restaurantId,
       );
 
-      print('');
-      print('========================================');
-      print('          ADD TO CART SUCCESS');
-      print('========================================');
-      print('Cart ID: ${response.id}');
-      print('Food: ${response.menuItem.name}');
-      print('Quantity: ${response.quantity}');
-      print('Restaurant: ${response.restaurant.name}');
-      print('========================================');
-      print('');
-
       isAddingToCart = false;
-
       notifyListeners();
 
-      // Get latest cart from backend
       await fetchCart();
 
       return true;
     } on DioException catch (e) {
       isAddingToCart = false;
-
-      print('');
-      print('========================================');
-      print('           ADD TO CART FAILED');
-      print('========================================');
-      print('Status Code: ${e.response?.statusCode}');
-      print('Error: ${e.message}');
-      print('Response: ${e.response?.data}');
-      print('========================================');
-      print('');
-
-      final responseData = e.response?.data;
-
-      if (responseData is Map) {
-        errorMessage =
-            responseData['message']?.toString() ??
-                'Failed to add item to cart';
-      } else {
-        errorMessage =
-        'Failed to add item to cart. Please try again.';
-      }
-
+      errorMessage =
+          e.response?.data?.toString() ??
+              e.message ??
+              'Unable to add item to cart.';
       notifyListeners();
-
       return false;
     } catch (e) {
       isAddingToCart = false;
-
-      print('');
-      print('========================================');
-      print('       ADD TO CART UNKNOWN ERROR');
-      print('========================================');
-      print('Error: $e');
-      print('========================================');
-      print('');
-
-      errorMessage =
-      'Something went wrong while adding to cart.';
-
+      errorMessage = e.toString();
       notifyListeners();
-
       return false;
     }
   }
+
   Future<bool> updateCartQuantity({
     required int cartId,
     required int quantity,
   }) async {
+    if (quantity < 1) {
+      return false;
+    }
+
     try {
       isUpdatingCart = true;
       errorMessage = null;
       notifyListeners();
-
-      debugPrint('');
-      debugPrint('========================================');
-      debugPrint('       UPDATE CART QUANTITY');
-      debugPrint('========================================');
-      debugPrint('Cart ID: $cartId');
-      debugPrint('Quantity: $quantity');
-      debugPrint(
-        'Endpoint: PUT /carts/$cartId/update',
-      );
-      debugPrint('========================================');
 
       await repository.updateCartQuantity(
         cartId: cartId,
@@ -225,32 +107,105 @@ class CartController extends ChangeNotifier {
       isUpdatingCart = false;
       notifyListeners();
 
-      // Get latest cart from backend.
       await fetchCart();
 
       return true;
     } on DioException catch (e) {
       isUpdatingCart = false;
+      errorMessage =
+          e.response?.data?.toString() ??
+              e.message ??
+              'Unable to update cart.';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      isUpdatingCart = false;
+      errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ================================================================
+  // DELETE ONE PRODUCT
+  // ================================================================
+
+  Future<bool> deleteCart({
+    required int cartId,
+  }) async {
+    try {
+      isDeletingCart = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await repository.deleteCart(
+        cartId: cartId,
+      );
+
+      isDeletingCart = false;
+      notifyListeners();
+
+      await fetchCart();
+
+      return true;
+    } on DioException catch (e) {
+      isDeletingCart = false;
+      errorMessage =
+          e.response?.data?.toString() ??
+              e.message ??
+              'Unable to delete cart item.';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      isDeletingCart = false;
+      errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ================================================================
+  // CLEAR ALL PRODUCTS
+  //
+  // The verified backend endpoint available in the supplied
+  // Postman collection is DELETE /carts/{cartId}/destroy.
+  // Therefore clear-all is implemented by deleting every current
+  // cart row through that same single-item DELETE API.
+  // ================================================================
+
+  // ================================================================
+// CLEAR ALL PRODUCTS
+// DELETE /cart
+// ================================================================
+
+  Future<bool> clearCart() async {
+    try {
+      isDeletingCart = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await repository.clearCart();
+
+      cartItems.clear();
+
+      isDeletingCart = false;
+      notifyListeners();
+
+      return true;
+    } on DioException catch (e) {
+      isDeletingCart = false;
 
       errorMessage =
-          e.response?.data?['message']?.toString() ??
+          e.response?.data?.toString() ??
               e.message ??
-              'Failed to update cart quantity';
-
-      debugPrint(
-        'UPDATE CART ERROR: $errorMessage',
-      );
+              'Unable to clear cart.';
 
       notifyListeners();
 
       return false;
     } catch (e) {
-      isUpdatingCart = false;
+      isDeletingCart = false;
       errorMessage = e.toString();
-
-      debugPrint(
-        'UPDATE CART ERROR: $e',
-      );
 
       notifyListeners();
 

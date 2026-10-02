@@ -1,4 +1,5 @@
 import 'package:app_matic_tech_flutter_app/models/cart_response_model.dart';
+import 'package:dio/dio.dart';
 
 import '../core/constants/api_constants.dart';
 import '../core/network/api_service.dart';
@@ -66,5 +67,37 @@ class CartRepository {
       Map<String, dynamic>.from(data['data']),
     );
   }
+  Future<void> deleteCart({
+    required int cartId,
+  }) async {
+    await apiService.delete(
+      ApiConstants.deleteCart(cartId),
+    );
+  }
+  // ==============================
+  // CLEAR CART
+  // ==============================
 
+  Future<void> clearCart() async {
+    try {
+      final response = await apiService.delete(
+        ApiConstants.clearCart,
+      );
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 204) {
+        return;
+      }
+
+      throw Exception(
+        'Clear cart failed: ${response.statusCode}',
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data ??
+            e.message ??
+            'Unable to clear cart',
+      );
+    }
+  }
 }
