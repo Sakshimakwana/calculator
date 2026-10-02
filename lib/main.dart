@@ -1,16 +1,20 @@
 import 'package:app_matic_tech_flutter_app/controllers/cart_controller.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/address_storage.dart';
 import 'package:app_matic_tech_flutter_app/repositories/cart_repository.dart';
+import 'package:app_matic_tech_flutter_app/repositories/order_repository.dart';
 import 'package:flutter/material.dart';
 import 'Milestone_app_6/routes/milestone_app_6_routes.dart';
 import 'Milestone_app_6/state/milestone_app_6_state.dart';
 import 'Milestone_app_6/theme/milestone_app_6_theme.dart';
 import 'package:provider/provider.dart';
+import 'controllers/order_controller.dart';
 import 'core/network/api_service.dart';
 import 'core/network/dio_client.dart';
 import 'core/storage/auth_storage.dart';
 import 'repositories/auth_repository.dart';
 import 'controllers/auth_controller.dart';
+import 'controllers/order_controller.dart';
+import 'repositories/order_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +43,13 @@ Future<void> main() async {
         ChangeNotifierProvider<CartController>(
           create: (_) => CartController(
             CartRepository(
+              ApiService(DioClient.dio),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrderController(
+            OrderRepository(
               ApiService(DioClient.dio),
             ),
           ),

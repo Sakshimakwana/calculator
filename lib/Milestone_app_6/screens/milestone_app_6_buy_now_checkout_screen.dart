@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/cart_controller.dart';
+import '../../controllers/order_controller.dart';
 import '../../models/cart_response_model.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
 import '../widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_image.dart';
+
 
 /// ================================================================
 /// CHECKOUT ARGUMENTS
@@ -16,6 +18,8 @@ import '../widgets/milestone_app_6_image.dart';
 class MilestoneApp6CheckoutArgs {
   final MilestoneApp6State state;
   final MilestoneApp6CartItem? buyNowItem;
+
+
 
   const MilestoneApp6CheckoutArgs({
     required this.state,
@@ -1387,26 +1391,161 @@ class _MilestoneApp6CheckoutScreenState
       return;
     }
 
+    // ============================================================
+    // GET SELECTED ADDRESS
+    // ============================================================
+
+    final selectedAddress = state.selectedAddress;
+
+    if (selectedAddress == null) {
+      _showSnackBar(
+        'Please add a delivery address first.',
+      );
+      return;
+    }
+
+    // ============================================================
+    // GET ADDRESS ID
+    // ============================================================
+
+    final int? addressId = int.tryParse(
+      selectedAddress.id.toString(),
+    );
+
+    if (addressId == null || addressId <= 0) {
+      _showSnackBar(
+        'Invalid delivery address.',
+      );
+      return;
+    }
+
+    debugPrint('');
+    debugPrint('========================================');
+    debugPrint('          PAY NOW CLICKED');
+    debugPrint('========================================');
+    debugPrint('ADDRESS ID: $addressId');
+    debugPrint(
+      'ADDRESS: ${selectedAddress.fullAddress}',
+    );
+    debugPrint(
+      'ITEM COUNT: ${_orderedItems.length}',
+    );
+    debugPrint(
+      'TOTAL: ${totalPayment.toStringAsFixed(2)}',
+    );
+    debugPrint('========================================');
+
+    // ============================================================
+    // CHECK ITEMS
+    // ============================================================
+
+    if (_orderedItems.isEmpty) {
+      _showSnackBar(
+        'There are no items to checkout.',
+      );
+      return;
+    }
+
+    // ============================================================
+    // START PROCESSING
+    // ============================================================
+
     setState(() {
       _isProcessingPayment = true;
     });
 
     try {
+      // ==========================================================
+      // PAYMENT TYPE
+      // ==========================================================
+
       final String paymentType =
           _selectedPaymentType ?? 'Full Payment';
 
-      // ------------------------------------------------------------
-      // CREATE ORDER
-      // ------------------------------------------------------------
+      // ==========================================================
+      // ORDER CONTROLLER
+      // ==========================================================
 
-      state.addOrder(
-        items: _orderedItems,
-        paymentType: paymentType,
+      final orderController =
+      context.read<OrderController>();
+
+      // ==========================================================
+      // CREATE ORDER USING API
+      // ==========================================================
+
+      debugPrint('');
+      debugPrint('========================================');
+      debugPrint('          CALLING ORDER API');
+      debugPrint('========================================');
+      debugPrint('METHOD: POST');
+      debugPrint('ENDPOINT: /orders/store');
+      debugPrint('ADDRESS ID: $addressId');
+      debugPrint('========================================');
+
+      final bool orderCreated =
+      await orderController.placeOrder(
+        addressId: addressId,
+        deliveryInstructions: null,
       );
 
-      // ------------------------------------------------------------
-      // CREATE SAFE SNAPSHOT
-      // ------------------------------------------------------------
+      // ==========================================================
+      // CHECK WIDGET
+      // ==========================================================
+
+      if (!mounted) {
+        return;
+      }
+
+      // ==========================================================
+      // ORDER API FAILED
+      // ==========================================================
+
+      if (!orderCreated) {
+        debugPrint('');
+        debugPrint('========================================');
+        debugPrint('          ORDER API FAILED');
+        debugPrint('========================================');
+        debugPrint(
+          'ERROR: ${orderController.errorMessage}',
+        );
+        debugPrint('========================================');
+
+        _showSnackBar(
+          orderController.errorMessage ??
+              'Unable to place order.',
+        );
+
+        return;
+      }
+
+      // ==========================================================
+      // GET BACKEND ORDER ID
+      // ==========================================================
+
+      final int? backendOrderId =
+          orderController.orderId;
+
+      debugPrint('');
+      debugPrint('========================================');
+      debugPrint('          ORDER CREATED SUCCESSFULLY');
+      debugPrint('========================================');
+      debugPrint(
+        'ORDER ID: $backendOrderId',
+      );
+      debugPrint(
+        'STATUS: ${orderController.orderData?['status']}',
+      );
+      debugPrint(
+        'BACKEND TOTAL: ${orderController.orderData?['total']}',
+      );
+      debugPrint(
+        'ADDRESS ID: ${orderController.orderData?['address_id']}',
+      );
+      debugPrint('========================================');
+
+      // ==========================================================
+      // CREATE SAFE ORDER ITEM SNAPSHOT
+      // ==========================================================
 
       final List<MilestoneApp6CartItem> orderItems =
       _orderedItems
@@ -1415,6 +1554,7 @@ class _MilestoneApp6CheckoutScreenState
       )
           .toList();
 
+      // Save local values before clearing anything.
       final double subtotalValue = subtotal;
       final double shippingValue = shipping;
       final double discountValue = discount;
@@ -1422,37 +1562,69 @@ class _MilestoneApp6CheckoutScreenState
       final double minimumValue = minimumPayment;
       final double paidValue = amountPaidNow;
 
-      // ------------------------------------------------------------
-      // CLEAR CART ONLY AFTER ORDER IS CREATED
-      // ------------------------------------------------------------
+      // ==========================================================
+      // CLEAR API CART
+      // ==========================================================
 
       if (!widget.isBuyNow) {
-        state.clearCart();
+        debugPrint('');
+        debugPrint('========================================');
+        debugPrint('          CLEARING API CART');
+        debugPrint('========================================');
+
+        final bool cartCleared =
+        await context
+            .read<CartController>()
+            .clearCart();
+
+        debugPrint(
+          'API CART CLEARED: $cartCleared',
+        );
+
+        if (!cartCleared) {
+          debugPrint(
+            'WARNING: Order was created but cart '
+                'could not be cleared.',
+          );
+        }
       }
+
+      // ==========================================================
+      // CHECK WIDGET
+      // ==========================================================
 
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      // ==========================================================
+      // SUCCESS MESSAGE
+      // ==========================================================
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Your order confirmed successfully!',
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Your order confirmed successfully!',
+            ),
+            behavior: SnackBarBehavior.floating,
           ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+        );
 
-      // ------------------------------------------------------------
+      // ==========================================================
       // ORDER DETAILS
-      // ------------------------------------------------------------
+      // ==========================================================
 
       context.push(
         '/order-details',
         extra: {
           'state': state,
+
+          // Real backend order ID
+          'orderId': backendOrderId,
+
+          // Existing checkout data
           'items': orderItems,
           'paymentType': paymentType,
           'subtotal': subtotalValue,
@@ -1463,7 +1635,15 @@ class _MilestoneApp6CheckoutScreenState
           'amountPaidNow': paidValue,
         },
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('');
+      debugPrint('========================================');
+      debugPrint('          ORDER API ERROR');
+      debugPrint('========================================');
+      debugPrint('ERROR: $e');
+      debugPrint('STACK TRACE: $stackTrace');
+      debugPrint('========================================');
+
       if (mounted) {
         _showSnackBar(
           'Something went wrong while placing your order.',
