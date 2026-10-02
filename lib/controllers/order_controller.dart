@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../models/order_info_model.dart';
 import '../repositories/order_repository.dart';
 
 class OrderController extends ChangeNotifier {
@@ -101,6 +102,54 @@ class OrderController extends ChangeNotifier {
       debugPrint(
         'PLACE ORDER ERROR: $e',
       );
+
+      notifyListeners();
+
+      return false;
+    }
+  }
+
+  OrderInfoModel? orderInfo;
+
+  bool isLoadingOrderInfo = false;
+
+  String? orderInfoErrorMessage;
+
+  Future<bool> fetchOrderInfo(int orderId,) async {
+    try {
+      isLoadingOrderInfo = true;
+      orderInfoErrorMessage = null;
+
+      notifyListeners();
+
+      final response =
+      await repository.fetchOrderInfo(
+        orderId,
+      );
+
+      orderInfo = response.data;
+
+      isLoadingOrderInfo = false;
+
+      notifyListeners();
+
+      return response.success;
+    } on DioException catch (e) {
+      isLoadingOrderInfo = false;
+
+      orderInfoErrorMessage =
+          e.response?.data?.toString() ??
+              e.message ??
+              'Unable to load order details.';
+
+      notifyListeners();
+
+      return false;
+    } catch (e) {
+      isLoadingOrderInfo = false;
+
+      orderInfoErrorMessage =
+          e.toString();
 
       notifyListeners();
 

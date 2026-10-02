@@ -10,7 +10,6 @@ import '../state/milestone_app_6_state.dart';
 import '../widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_image.dart';
 
-
 /// ================================================================
 /// CHECKOUT ARGUMENTS
 /// ================================================================
@@ -298,8 +297,8 @@ class _MilestoneApp6CheckoutScreenState
   /// ==============================================================
 
   double get amountPaidNow {
-    if (_selectedPaymentType == 'Minimum Payment') {
-      return minimumPayment;
+    if (_selectedPaymentType == 'Cash on Delivery') {
+      return 0.0;
     }
 
     return totalPayment;
@@ -1035,24 +1034,21 @@ class _MilestoneApp6CheckoutScreenState
         children: [
           const Text(
             'Payment Method',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
           _paymentOption(
             context,
-            title: 'Full Payment',
-            subtitle: 'Pay the complete order amount',
-            icon: Icons.payments_outlined,
+            title: 'Online Payment',
+            subtitle: 'Pay securely online using Razorpay',
+            icon: Icons.account_balance_wallet_outlined,
           ),
           const SizedBox(height: 10),
           _paymentOption(
             context,
-            title: 'Minimum Payment',
-            subtitle: 'Pay minimum 1% now',
-            icon: Icons.account_balance_wallet_outlined,
+            title: 'Cash on Delivery',
+            subtitle: 'Pay when your order is delivered',
+            icon: Icons.payments_outlined,
           ),
         ],
       ),
@@ -1165,7 +1161,9 @@ class _MilestoneApp6CheckoutScreenState
           const SizedBox(width: 9),
           Expanded(
             child: Text(
-              'Your payment information is secure and protected.',
+              _selectedPaymentType == 'Cash on Delivery'
+                  ? 'You will pay cash when your order is delivered.'
+                  : 'Your online payment information is secure and protected.',
               style: TextStyle(
                 fontSize: 11,
                 color: theme.hintColor,
@@ -1184,8 +1182,8 @@ class _MilestoneApp6CheckoutScreenState
   Widget _bottomPayBar(BuildContext context) {
     final theme = Theme.of(context);
 
-    final bool isMinimum =
-        _selectedPaymentType == 'Minimum Payment';
+    final bool isCashOnDelivery =
+        _selectedPaymentType == 'Cash on Delivery';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
@@ -1208,7 +1206,7 @@ class _MilestoneApp6CheckoutScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isMinimum ? 'Pay Now' : 'Total',
+                isCashOnDelivery ? 'Place Order' : 'Pay Now',
                 style: TextStyle(
                   color: theme.hintColor,
                   fontSize: 11,
@@ -1216,7 +1214,9 @@ class _MilestoneApp6CheckoutScreenState
               ),
               const SizedBox(height: 2),
               Text(
-                '\$${amountPaidNow.toStringAsFixed(2)}',
+                isCashOnDelivery
+                    ? '\$${totalPayment.toStringAsFixed(2)}'
+                    : '\$${(_selectedPaymentType == 'Cash on Delivery' ? totalPayment : amountPaidNow).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.w900,
@@ -1294,9 +1294,11 @@ class _MilestoneApp6CheckoutScreenState
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
-          title: const Text(
-            'Confirm Payment',
-            style: TextStyle(
+          title: Text(
+            _selectedPaymentType == 'Cash on Delivery'
+                ? 'Confirm Order'
+                : 'Confirm Payment',
+            style: const TextStyle(
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1305,7 +1307,9 @@ class _MilestoneApp6CheckoutScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Amount to pay',
+                _selectedPaymentType == 'Cash on Delivery'
+                    ? 'Amount to pay on delivery'
+                    : 'Amount to pay now',
                 style: TextStyle(
                   color: theme.hintColor,
                   fontSize: 12,
@@ -1344,8 +1348,10 @@ class _MilestoneApp6CheckoutScreenState
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Are you sure you want to continue with this payment?',
+              Text(
+                _selectedPaymentType == 'Cash on Delivery'
+                    ? 'Are you sure you want to place this order with Cash on Delivery?'
+                    : 'Are you sure you want to continue with this online payment?',
                 style: TextStyle(
                   fontSize: 13,
                   height: 1.4,
@@ -1364,7 +1370,11 @@ class _MilestoneApp6CheckoutScreenState
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
-              child: const Text('Confirm Pay'),
+              child: Text(
+                _selectedPaymentType == 'Cash on Delivery'
+                    ? 'Confirm Order'
+                    : 'Confirm Pay',
+              ),
             ),
           ],
         );
@@ -1460,7 +1470,7 @@ class _MilestoneApp6CheckoutScreenState
       // ==========================================================
 
       final String paymentType =
-          _selectedPaymentType ?? 'Full Payment';
+          _selectedPaymentType ?? 'Online Payment';
 
       // ==========================================================
       // ORDER CONTROLLER

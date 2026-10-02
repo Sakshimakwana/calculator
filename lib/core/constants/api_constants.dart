@@ -31,12 +31,30 @@ class ApiConstants {
 
   static const String storeCart = '/carts/store';
 
-  static String updateCart(int cartId) => '/carts/$cartId/update';
+  static String updateCart(int cartId) =>
+      '/carts/$cartId/update';
 
-  static String deleteCart(int cartId) { return '/carts/$cartId/destroy';}
+  static String deleteCart(int cartId) =>
+      '/carts/$cartId/destroy';
 
   static const String clearCart = '/cart';
 
-  static const String storeOrder = '/orders/store';
+  // ============================================================
+  // ORDERS
+  // ============================================================
 
+  static const String placeOrder =
+      '/orders/store';
+
+  static const String storeOrder =
+      '/orders/store';
+
+  static String orderInfo(int orderId) =>
+      '/orders/$orderId';
+
+  static String generateInvoice(int orderId) =>
+      '/orders/$orderId/invoice';
+
+  static String cancelOrder(int orderId) =>
+      '/orders/$orderId/cancel';
 }

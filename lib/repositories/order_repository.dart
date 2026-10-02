@@ -1,32 +1,54 @@
-import 'package:dio/dio.dart';
-
 import '../core/constants/api_constants.dart';
 import '../core/network/api_service.dart';
+import '../models/order_info_model.dart';
 
 class OrderRepository {
   final ApiService apiService;
 
   OrderRepository(this.apiService);
 
+  // ============================================================
+  // PLACE ORDER
+  // POST /orders/store
+  // ============================================================
+
   Future<Map<String, dynamic>> placeOrder({
     required int addressId,
     String? deliveryInstructions,
   }) async {
     final response = await apiService.post(
-      ApiConstants.storeOrder,
+      ApiConstants.placeOrder,
       data: {
         'address_id': addressId,
-        if (deliveryInstructions != null &&
-            deliveryInstructions.trim().isNotEmpty)
-          'delivery_instructions':
-          deliveryInstructions.trim(),
+        'delivery_instructions':
+        deliveryInstructions,
       },
     );
 
-    final data = Map<String, dynamic>.from(
+    return Map<String, dynamic>.from(
+      response.data as Map,
+    );
+  }
+
+  // ============================================================
+  // ORDER INFO
+  // GET /orders/{orderId}
+  // ============================================================
+
+  Future<OrderInfoResponseModel> fetchOrderInfo(
+      int orderId,
+      ) async {
+    final response = await apiService.get(
+      ApiConstants.orderInfo(orderId),
+    );
+
+    final Map<String, dynamic> data =
+    Map<String, dynamic>.from(
       response.data as Map,
     );
 
-    return data;
+    return OrderInfoResponseModel.fromJson(
+      data,
+    );
   }
 }
