@@ -29,6 +29,11 @@ dependencies:
   geocoding: ^4.0.0
   dio: ^5.11.1
   provider: ^6.1.5+1
+  pdf: ^3.13.1
+  printing: ^5.14.0
+  path_provider: ^2.1.5
+  syncfusion_flutter_pdfviewer: ^35.1.37
+  file_saver: ^0.6.0
 
 dev_dependencies:
   flutter_test:
@@ -112,12 +117,6 @@ flutter:
           - asset: assets/fonts/AnimationsShopping-Bold.ttf
             weight: 700
 
-
-
-
-
-
-
   assets:
     - assets/images/profile.jpg
     - assets/images/background_image.png
@@ -132,3 +131,7 @@ flutter:
     - assets/shoppingflow_T21_onboarding_2.png
     - assets/shoppingflow_T21_onboarding_3.png
     - assets/animations/Shopping_cart.json
+    - assets/animations/invoice_generate.json
+    - assets/fonts/NotoSans-Regular.ttf
+    - assets/fonts/NotoSans-Bold.ttf
+    - assets/images/tomato_logo.png

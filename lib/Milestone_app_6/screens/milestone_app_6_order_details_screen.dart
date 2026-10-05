@@ -1,14 +1,22 @@
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/screens/InvoicePdfViewerScreen.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-
 import '../../core/constants/api_constants.dart';
 import '../../core/storage/auth_storage.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/generate_invoice_animation/invoice_generation_animation.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:file_saver/file_saver.dart';
+
+
 
 class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
   final MilestoneApp6State state;
@@ -52,24 +60,44 @@ class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
 
 class _MilestoneApp6OrderDetailsScreenState
     extends State<MilestoneApp6OrderDetailsScreen> {
-  Map<String, dynamic>? _order;
-  Map<String, dynamic>? _invoice;
 
+  final GlobalKey<InvoiceGenerationAnimationState>
+  _invoiceAnimationKey =
+  GlobalKey<InvoiceGenerationAnimationState>();
+
+  Map<String, dynamic>? _order;
+  bool _invoicePdfReady = false;
+  File? _invoicePdfFile;
+  bool _isGeneratingInvoice = false;
+  Map<String, dynamic>? _invoice;
+  String? _invoiceError;
   bool _isLoading = true;
   bool _isRefreshing = false;
-  bool _isGeneratingInvoice = false;
   bool _isCancelling = false;
-
   String? _errorMessage;
+  String _paymentMethodPreview() {
+    final payment =
+    _map(_order?['order_payment']);
+
+    final apiMethod =
+    _string(payment, 'method');
+
+    if (apiMethod.isNotEmpty) {
+      return 'Payment: $apiMethod';
+    }
+
+    if (widget.paymentType.isNotEmpty) {
+      return 'Payment: ${widget.paymentType}';
+    }
+
+    return 'Payment confirmed';
+  }
+
 
   @override
   void initState() {
     super.initState();
 
-    // Do not call an OrderController method directly from initState when
-    // that method calls notifyListeners(). That can notify Provider while
-    // the route is still being built. Flutter reports this as:
-    // "setState() or markNeedsBuild() called during build".
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _loadOrderDetails();
@@ -91,6 +119,8 @@ class _MilestoneApp6OrderDetailsScreenState
 
     return value;
   }
+
+
 
   // ============================================================
   // API HEADERS
@@ -238,117 +268,1742 @@ class _MilestoneApp6OrderDetailsScreenState
       debugPrint('ORDER INFO ERROR: $e');
     }
   }
+  Widget _buildInvoiceAnimationOverlay() {
+    if (!_isGeneratingInvoice) {
+      return const SizedBox.shrink();
+    }
 
+    return Positioned.fill(
+      child: InvoiceGenerationOverlay(
+        animationKey: _invoiceAnimationKey,
+        invoice: _invoice ?? <String, dynamic>{},
+        order: _order,
+        isPdfReady: _invoicePdfReady,
+        onViewPdf: _viewInvoicePdf,
+        onDownload: _downloadInvoicePdf,
+        generatingText: _invoicePdfReady
+            ? 'Invoice PDF ready'
+            : 'Generating invoice...',
+      ),
+    );
+  }
+
+  Widget _invoiceActionButtons() {
+    return SizedBox(
+      height: 50,
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _viewInvoicePdf,
+              icon: const Icon(
+                Icons.picture_as_pdf_rounded,
+                size: 18,
+              ),
+              label: const Text(
+                'View PDF',
+                style: TextStyle(
+                  fontWeight:
+                  FontWeight.w800,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                const Color(0xFFE53950),
+                backgroundColor:
+                Colors.white,
+                side: const BorderSide(
+                  color: Color(0xFFE53950),
+                  width: 1.2,
+                ),
+                shape:
+                RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed:
+              _downloadInvoicePdf,
+              icon: const Icon(
+                Icons.download_rounded,
+                size: 18,
+              ),
+              label: const Text(
+                'Download',
+                style: TextStyle(
+                  fontWeight:
+                  FontWeight.w800,
+                ),
+              ),
+              style:
+              ElevatedButton.styleFrom(
+                backgroundColor:
+                const Color(0xFFE53950),
+                foregroundColor:
+                Colors.white,
+                elevation: 4,
+                shadowColor:
+                const Color(0x55E53950),
+                shape:
+                RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildAnimatedInvoicePaperContent() {
+    final invoice = _invoice ?? {};
+
+    final restaurant = _map(
+      _order?['restaurant'],
+    );
+
+    final customer = _map(
+      _order?['customer'],
+    );
+
+    final address = _map(
+      _order?['delivery_address'],
+    );
+
+    final restaurantName =
+    _string(restaurant, 'name').isNotEmpty
+        ? _string(restaurant, 'name')
+        : 'Restaurant';
+
+    final invoiceNumber =
+    _string(invoice, 'invoice_number').isNotEmpty
+        ? _string(invoice, 'invoice_number')
+        : 'INV-${widget.orderId ?? '-'}';
+
+    final orderNumber =
+    _string(_order ?? {}, 'id').isNotEmpty
+        ? _string(_order ?? {}, 'id')
+        : widget.orderId ?? '-';
+
+    final customerName =
+    _string(customer, 'full_name').isNotEmpty
+        ? _string(customer, 'full_name')
+        : _string(
+      _map(invoice['user']),
+      'full_name',
+    );
+
+    final city = _string(
+      address,
+      'city',
+    );
+
+    final state = _string(
+      address,
+      'state',
+    );
+
+    final addressLine = _string(
+      address,
+      'address_line',
+    );
+
+    final deliveryFee =
+        _doubleValue(invoice['delivery_fee']) ??
+            _doubleValue(
+              _order?['delivery_fee'],
+            ) ??
+            0;
+
+    final total =
+        _doubleValue(invoice['total']) ??
+            _doubleValue(
+              _order?['total'],
+            ) ??
+            0;
+
+    final items = _order?['order_items'] is List
+        ? List<dynamic>.from(
+      _order!['order_items'],
+    )
+        : _order?['items'] is List
+        ? List<dynamic>.from(
+      _order!['items'],
+    )
+        : <dynamic>[];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 8,
+      ),
+      child: Column(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+          // ============================================================
+          // HEADER
+          // ============================================================
+
+          Row(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      restaurantName,
+                      maxLines: 1,
+                      overflow:
+                      TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight:
+                        FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    ),
+
+                    const SizedBox(height: 2),
+
+                    const Text(
+                      'ORDER INVOICE',
+                      style: TextStyle(
+                        fontSize: 7,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFE53950),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Container(
+                padding:
+                const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                  const Color(0xFFFFEEF1),
+                  borderRadius:
+                  BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  size: 16,
+                  color:
+                  Color(0xFFE53950),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 5),
+
+          Container(
+            height: 1,
+            color: Colors.black12,
+          ),
+
+          const SizedBox(height: 5),
+
+          // ============================================================
+          // ORDER DETAILS
+          // ============================================================
+
+          _invoicePreviewRow(
+            'Invoice',
+            invoiceNumber,
+          ),
+
+          _invoicePreviewRow(
+            'Order',
+            '#$orderNumber',
+          ),
+
+          _invoicePreviewRow(
+            'Customer',
+            customerName.isEmpty
+                ? '-'
+                : customerName,
+          ),
+
+          if (city.isNotEmpty ||
+              state.isNotEmpty)
+            _invoicePreviewRow(
+              'Location',
+              [
+                city,
+                state,
+              ].where((e) => e.isNotEmpty).join(', '),
+            ),
+
+          // ============================================================
+          // ADDRESS
+          // ============================================================
+
+          if (addressLine.isNotEmpty) ...[
+            const SizedBox(height: 4),
+
+            const Text(
+              'DELIVERY ADDRESS',
+              style: TextStyle(
+                fontSize: 7,
+                fontWeight:
+                FontWeight.w900,
+                color: Colors.black54,
+              ),
+            ),
+
+            const SizedBox(height: 2),
+
+            Text(
+              [
+                addressLine,
+                city,
+                state,
+              ]
+                  .where(
+                    (e) => e.isNotEmpty,
+              )
+                  .join(', '),
+              maxLines: 2,
+              overflow:
+              TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 7.2,
+                height: 1.15,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 5),
+
+          Container(
+            height: 1,
+            color: Colors.black12,
+          ),
+
+          const SizedBox(height: 5),
+
+          // ============================================================
+          // ITEMS
+          // ============================================================
+
+          const Text(
+            'ITEMS',
+            style: TextStyle(
+              fontSize: 7,
+              fontWeight: FontWeight.w900,
+              color: Colors.black54,
+            ),
+          ),
+
+          const SizedBox(height: 3),
+
+          if (items.isNotEmpty)
+            ...items.take(3).map(
+                  (rawItem) {
+                final item =
+                _map(rawItem);
+
+                final menuItem =
+                _map(item['menu_item']);
+
+                final name =
+                _string(
+                  menuItem,
+                  'name',
+                );
+
+                final quantity =
+                    _intValue(
+                      item['quantity'],
+                    ) ??
+                        1;
+
+                final price =
+                    _doubleValue(
+                      item[
+                      'price_at_purchase'
+                      ],
+                    ) ??
+                        _doubleValue(
+                          menuItem['price'],
+                        ) ??
+                        0;
+
+                final itemTotal =
+                    _doubleValue(
+                      item['total_price'],
+                    ) ??
+                        price * quantity;
+
+                return _invoiceItemPreviewRow(
+                  name.isEmpty
+                      ? 'Food Item'
+                      : name,
+                  quantity,
+                  itemTotal,
+                );
+              },
+            )
+          else
+            const Text(
+              'Food items',
+              style: TextStyle(
+                fontSize: 7.5,
+                color: Colors.black87,
+              ),
+            ),
+
+          const SizedBox(height: 4),
+
+          Container(
+            height: 1,
+            color: Colors.black12,
+          ),
+
+          const SizedBox(height: 4),
+
+          // ============================================================
+          // AMOUNTS
+          // ============================================================
+
+          _invoicePreviewAmountRow(
+            'Delivery',
+            deliveryFee,
+          ),
+
+          _invoicePreviewAmountRow(
+            'Total',
+            total,
+            bold: true,
+          ),
+
+          const SizedBox(height: 4),
+
+          // ============================================================
+          // PAYMENT STATUS
+          // ============================================================
+
+          Container(
+            width: double.infinity,
+            padding:
+            const EdgeInsets.symmetric(
+              horizontal: 7,
+              vertical: 5,
+            ),
+            decoration: BoxDecoration(
+              color:
+              const Color(0xFFF2FFF6),
+              borderRadius:
+              BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 13,
+                  color: Colors.green,
+                ),
+
+                const SizedBox(width: 4),
+
+                Expanded(
+                  child: Text(
+                    _paymentMethodPreview(),
+                    maxLines: 1,
+                    overflow:
+                    TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 7.5,
+                      fontWeight:
+                      FontWeight.w800,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+
+          Center(
+            child: Text(
+              _invoicePdfReady
+                  ? '✓ Invoice Ready'
+                  : 'Generating invoice...',
+              style: TextStyle(
+                fontSize: 7,
+                fontWeight:
+                FontWeight.w800,
+                color: _invoicePdfReady
+                    ? Colors.green
+                    : Colors.black45,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _invoicePreviewRow(
+      String title,
+      String value,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 1,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 48,
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 6.2,
+                color: Colors.black45,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 3),
+
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 6.4,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _invoiceItemPreviewRow(
+      String name,
+      int quantity,
+      double amount,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 1.5,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 6.3,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+
+          Text(
+            '×$quantity',
+            style: const TextStyle(
+              fontSize: 6.1,
+              color: Colors.black45,
+            ),
+          ),
+
+          const SizedBox(width: 4),
+
+          Text(
+            '₹${amount.toStringAsFixed(0)}',
+            style: const TextStyle(
+              fontSize: 6.3,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _invoicePreviewAmountRow(
+      String title,
+      double amount, {
+        bool bold = false,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 1,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: bold ? 7 : 6.3,
+                fontWeight: bold
+                    ? FontWeight.w900
+                    : FontWeight.w500,
+              ),
+            ),
+          ),
+
+          Text(
+            '₹${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: bold ? 7.2 : 6.3,
+              fontWeight: bold
+                  ? FontWeight.w900
+                  : FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Future<void> _downloadInvoicePdf() async {
+    if (_invoicePdfFile == null) {
+      return;
+    }
+
+    try {
+      final bytes =
+      await _invoicePdfFile!.readAsBytes();
+
+      await FileSaver.instance.saveToDownloads(
+        name: 'invoice_${widget.orderId}',
+        bytes: bytes,
+        fileExtension: 'pdf',
+        mimeType: MimeType.pdf,
+        subfolder: 'Invoices',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isGeneratingInvoice = false;
+      });
+
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Invoice downloaded successfully.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to save invoice: $e',
+          ),
+        ),
+      );
+    }
+  }
   // ============================================================
   // GENERATE INVOICE
   // GET /orders/{orderId}/invoice
   // ============================================================
 
   Future<void> _generateInvoice() async {
-    final int? id = _parsedOrderId;
+    final orderId = int.tryParse(widget.orderId ?? '');
 
-    if (id == null || _isGeneratingInvoice) {
+    if (orderId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid order ID'),
+        ),
+      );
       return;
     }
 
+    // ============================================================
+    // RESET OLD INVOICE AND OPEN THE ANIMATION OVERLAY
+    // ============================================================
+
     setState(() {
       _isGeneratingInvoice = true;
+      _invoicePdfReady = false;
+      _invoicePdfFile = null;
+      _invoiceError = null;
+      _invoice = null;
     });
 
     try {
-      final headers = await _headers();
+      final token = await AuthStorage.token;
 
-      final Uri uri = Uri.parse(
-        '${ApiConstants.baseUrl}'
-            '${ApiConstants.generateInvoice(id)}',
-      );
+      // ==========================================================
+      // INVOICE API
+      // ==========================================================
 
-      debugPrint('');
-      debugPrint('========================================');
-      debugPrint('           GENERATE INVOICE API');
-      debugPrint('========================================');
-      debugPrint('METHOD: GET');
-      debugPrint('ORDER ID: $id');
-      debugPrint('URL: $uri');
-      debugPrint('========================================');
+      final response = await http.get(
+        Uri.parse(
+          '${ApiConstants.baseUrl}'
+              '${ApiConstants.generateInvoice(orderId)}',
+        ),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ${token?.trim()}',
+        },
+      ).timeout(const Duration(seconds: 30));
 
-      final response = await http
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: 30));
+      debugPrint('INVOICE API STATUS: ${response.statusCode}');
+      debugPrint('INVOICE API RESPONSE: ${response.body}');
 
-      debugPrint(
-        'INVOICE STATUS: ${response.statusCode}',
-      );
-      debugPrint(
-        'INVOICE RESPONSE: ${response.body}',
-      );
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        final Map<String, dynamic> json =
+        jsonDecode(response.body);
 
-      if (response.statusCode == 401) {
+        if (json['success'] == true) {
+          // ========================================================
+          // 1. SAVE REAL API DATA
+          // ========================================================
+
+          final invoiceData =
+          Map<String, dynamic>.from(
+            json['data'] ?? {},
+          );
+
+          if (invoiceData.isEmpty) {
+            throw Exception(
+              'Invoice data is empty.',
+            );
+          }
+
+          if (!mounted) return;
+
+          setState(() {
+            _invoice = invoiceData;
+          });
+
+          // ========================================================
+          // 2. START CODE-BASED ANIMATION AFTER DATA IS PAINTED
+          // ========================================================
+          // addPostFrameCallback runs after the current frame has
+          // been rendered, so the real API data and animation begin
+          // together instead of using a guessed delay.
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+
+            _invoiceAnimationKey.currentState?.start();
+          });
+
+          // ========================================================
+          // 3. GENERATE PDF WHILE ANIMATION IS RUNNING
+          // ========================================================
+
+          debugPrint('GENERATING INVOICE PDF...');
+
+          final pdfFile = await _generateInvoicePdf();
+
+          debugPrint('PDF CREATED: ${pdfFile.path}');
+
+          if (!mounted) return;
+
+          // ========================================================
+          // 4. PDF READY - KEEP OVERLAY OPEN
+          // ========================================================
+
+          setState(() {
+            _invoicePdfFile = pdfFile;
+            _invoicePdfReady = true;
+            _isGeneratingInvoice = true;
+          });
+        } else {
+          throw Exception(
+            json['message'] ??
+                'Failed to generate invoice',
+          );
+        }
+      } else {
         throw Exception(
-          'Session expired. Please login again.',
+          'Invoice API failed: ${response.statusCode}',
         );
       }
-
-      if (response.statusCode < 200 ||
-          response.statusCode >= 300) {
-        throw Exception(
-          _apiMessage(
-            response.body,
-            fallback:
-            'Unable to generate invoice.',
-          ),
-        );
-      }
-
-      final decoded = jsonDecode(response.body);
-
-      if (decoded is! Map) {
-        throw Exception(
-          'Invalid invoice response.',
-        );
-      }
-
-      final responseMap =
-      Map<String, dynamic>.from(decoded);
-
-      final rawData = responseMap['data'];
-
-      if (rawData is! Map) {
-        throw Exception(
-          responseMap['message']?.toString() ??
-              'Invoice data not found.',
-        );
-      }
-
-      if (!mounted) return;
-
-      setState(() {
-        _invoice = Map<String, dynamic>.from(
-          rawData,
-        );
-        _isGeneratingInvoice = false;
-      });
-
-      _showSnackBar(
-        responseMap['message']?.toString() ??
-            'Invoice generated successfully.',
-      );
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
+        _invoiceError = e.toString();
+        _invoicePdfReady = false;
         _isGeneratingInvoice = false;
       });
 
-      _showSnackBar(
-        e.toString().replaceFirst(
-          'Exception: ',
-          '',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Invoice generation failed: $e',
+          ),
         ),
-        error: true,
       );
     }
   }
+
+  void _viewInvoicePdf() {
+    final file = _invoicePdfFile;
+
+    if (file == null || !file.existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Invoice PDF is not available.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => InvoicePdfViewerScreen(
+          pdfFile: file,
+        ),
+      ),
+    );
+  }
+// ============================================================
+// GENERATE INVOICE PDF
+// ============================================================
+
+  Future<File> _generateInvoicePdf() async {
+    final invoice = _invoice ?? {};
+
+
+    // ============================================================
+    // RESTAURANT DATA
+    // ============================================================
+
+    final restaurant = _map(
+      _order?['restaurant'],
+    );
+
+    final restaurantName =
+    _string(restaurant, 'name').isNotEmpty
+        ? _string(restaurant, 'name')
+        : 'Restaurant';
+
+    final restaurantAddress =
+    _string(restaurant, 'address').isNotEmpty
+        ? _string(restaurant, 'address')
+        : '';
+
+    // ============================================================
+    // INVOICE DATA
+    // ============================================================
+
+    final invoiceNumber =
+    _string(invoice, 'invoice_number').isNotEmpty
+        ? _string(invoice, 'invoice_number')
+        : 'INV-${widget.orderId ?? ''}';
+
+    final generatedAt =
+    _string(invoice, 'generated_at');
+
+    final formattedDate =
+    generatedAt.isNotEmpty
+        ? _formatDate(generatedAt)
+        : _formatDate(
+      _string(_order ?? {}, 'created_at'),
+    );
+
+    // ============================================================
+    // CUSTOMER
+    // ============================================================
+
+    final customer = _map(
+      _order?['customer'],
+    );
+
+    final invoiceUser = _map(
+      invoice['user'],
+    );
+
+    final customerName =
+    _string(customer, 'full_name').isNotEmpty
+        ? _string(customer, 'full_name')
+        : _string(invoiceUser, 'full_name');
+
+    final customerEmail =
+    _string(customer, 'email').isNotEmpty
+        ? _string(customer, 'email')
+        : _string(invoiceUser, 'email');
+
+    final customerPhone =
+    _string(customer, 'phone_number').isNotEmpty
+        ? _string(customer, 'phone_number')
+        : _string(invoiceUser, 'phone_number');
+
+    // ============================================================
+    // DELIVERY ADDRESS
+    // ============================================================
+
+    final address = _map(
+      _order?['delivery_address'],
+    );
+
+    final addressLine =
+    _string(address, 'address_line');
+
+    final city =
+    _string(address, 'city');
+
+    final state =
+    _string(address, 'state');
+
+    final pincode =
+    _string(address, 'pincode');
+
+    final deliveryAddress = [
+      addressLine,
+      city,
+      state,
+      pincode,
+    ]
+        .where((e) => e.trim().isNotEmpty)
+        .join(', ');
+
+    // ============================================================
+    // PAYMENT
+    // ============================================================
+
+    final backendPayment = _map(
+      _order?['order_payment'],
+    );
+
+    final backendMethod =
+    _string(backendPayment, 'method');
+
+    final paymentMethod =
+    backendMethod.isNotEmpty
+        ? _formatPaymentMethod(
+      backendMethod,
+    )
+        : widget.paymentType.trim().isNotEmpty
+        ? widget.paymentType.trim()
+        : 'Payment';
+
+    // ============================================================
+    // ITEMS
+    // ============================================================
+
+    final rawItems =
+    _order?['order_items'];
+
+    final List<Map<String, dynamic>> items =
+    rawItems is List
+        ? rawItems
+        .whereType<Map>()
+        .map(
+          (e) => Map<String, dynamic>.from(e),
+    )
+        .toList()
+        : <Map<String, dynamic>>[];
+
+    // ============================================================
+    // TOTALS
+    // ============================================================
+
+    final itemTotal = items.fold<double>(
+      0,
+          (sum, item) {
+        final menuItem =
+        _map(item['menu_item']);
+
+        final price =
+            _doubleValue(
+              item['price_at_purchase'],
+            ) ??
+                _doubleValue(
+                  menuItem['price'],
+                ) ??
+                0;
+
+        final quantity =
+            _intValue(item['quantity']) ?? 1;
+
+        return sum + (price * quantity);
+      },
+    );
+
+    final deliveryFee =
+        _doubleValue(
+          invoice['delivery_fee'],
+        ) ??
+            _doubleValue(
+              _order?['delivery_fee'],
+            ) ??
+            widget.shipping;
+
+    final orderTotal =
+        _doubleValue(
+          invoice['total'],
+        ) ??
+            _doubleValue(
+              _order?['total'],
+            ) ??
+            widget.totalPayment;
+
+    final discount =
+        widget.discount;
+
+    // ============================================================
+    // FONTS
+    // ============================================================
+
+    final regularFont =
+    pw.Font.ttf(
+      await rootBundle.load(
+        'assets/fonts/NotoSans-Regular.ttf',
+      ),
+    );
+
+    final boldFont =
+    pw.Font.ttf(
+      await rootBundle.load(
+        'assets/fonts/NotoSans-Bold.ttf',
+      ),
+    );
+
+    // ============================================================
+    // PDF
+    // ============================================================
+
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: regularFont,
+        bold: boldFont,
+      ),
+    );
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.fromLTRB(
+          28,
+          25,
+          28,
+          25,
+        ),
+
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment:
+            pw.CrossAxisAlignment.stretch,
+            children: [
+
+              // ==================================================
+              // HEADER
+              // ==================================================
+
+              pw.Row(
+                crossAxisAlignment:
+                pw.CrossAxisAlignment.center,
+                children: [
+
+                  pw.Container(
+                    width: 68,
+                    height: 68,
+                    alignment: pw.Alignment.center,
+                    decoration: pw.BoxDecoration(
+                      color: PdfColor.fromHex('#FFF1F3'),
+                      borderRadius: pw.BorderRadius.circular(8),
+                    ),
+                    child: pw.Text(
+                      'INVOICE',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        fontSize: 8,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColor.fromHex('#D9233E'),
+                      ),
+                    ),
+                  ),
+
+                  pw.SizedBox(width: 12),
+
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment:
+                      pw.CrossAxisAlignment.start,
+                      children: [
+
+                        pw.Text(
+                          restaurantName,
+                          maxLines: 1,
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight:
+                            pw.FontWeight.bold,
+                          ),
+                        ),
+
+                        if (restaurantAddress
+                            .isNotEmpty)
+                          pw.Padding(
+                            padding:
+                            const pw.EdgeInsets.only(
+                              top: 3,
+                            ),
+                            child: pw.Text(
+                              restaurantAddress,
+                              maxLines: 2,
+                              style:
+                              const pw.TextStyle(
+                                fontSize: 8.5,
+                                color:
+                                PdfColors.grey700,
+                              ),
+                            ),
+                          ),
+
+                        pw.SizedBox(height: 6),
+
+                        pw.Container(
+                          padding:
+                          const pw.EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration:
+                          pw.BoxDecoration(
+                            color:
+                            PdfColor.fromHex(
+                              '#FDECEF',
+                            ),
+                            borderRadius:
+                            pw.BorderRadius
+                                .circular(4),
+                          ),
+                          child: pw.Text(
+                            'ORDER INVOICE',
+                            style: pw.TextStyle(
+                              fontSize: 8.5,
+                              fontWeight:
+                              pw.FontWeight.bold,
+                              color:
+                              PdfColor.fromHex(
+                                '#D9233E',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  pw.SizedBox(width: 15),
+
+                  pw.Column(
+                    crossAxisAlignment:
+                    pw.CrossAxisAlignment.end,
+                    children: [
+
+                      pw.Text(
+                        'Invoice No.',
+                        style:
+                        const pw.TextStyle(
+                          fontSize: 7.5,
+                          color:
+                          PdfColors.grey600,
+                        ),
+                      ),
+
+                      pw.Text(
+                        invoiceNumber,
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight:
+                          pw.FontWeight.bold,
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 5),
+
+                      pw.Text(
+                        'Order #${widget.orderId ?? '-'}',
+                        style:
+                        const pw.TextStyle(
+                          fontSize: 8,
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 3),
+
+                      pw.Text(
+                        formattedDate,
+                        style:
+                        const pw.TextStyle(
+                          fontSize: 8,
+                          color:
+                          PdfColors.grey700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 12),
+
+              pw.Container(
+                height: 2,
+                color: PdfColor.fromHex(
+                  '#E72B43',
+                ),
+              ),
+
+              pw.SizedBox(height: 12),
+
+              // ==================================================
+              // CUSTOMER + DELIVERY
+              // ==================================================
+
+              pw.Row(
+                crossAxisAlignment:
+                pw.CrossAxisAlignment.start,
+                children: [
+
+                  pw.Expanded(
+                    child: _pdfInfoBox(
+                      title: 'BILL TO',
+                      children: [
+                        _pdfBoldText(
+                          customerName.isEmpty
+                              ? 'Customer'
+                              : customerName,
+                        ),
+
+                        if (customerPhone
+                            .isNotEmpty)
+                          _pdfSmallText(
+                            customerPhone,
+                          ),
+
+                        if (customerEmail
+                            .isNotEmpty)
+                          _pdfSmallText(
+                            customerEmail,
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  pw.SizedBox(width: 10),
+
+                  pw.Expanded(
+                    child: _pdfInfoBox(
+                      title: 'DELIVERY TO',
+                      children: [
+                        _pdfBoldText(
+                          address['label']
+                              ?.toString()
+                              .isNotEmpty ==
+                              true
+                              ? address['label']
+                              .toString()
+                              : 'Delivery Address',
+                        ),
+
+                        if (deliveryAddress
+                            .isNotEmpty)
+                          _pdfSmallText(
+                            deliveryAddress,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 12),
+
+              // ==================================================
+              // ITEMS
+              // ==================================================
+
+              pw.Text(
+                'ORDERED ITEMS',
+                style: pw.TextStyle(
+                  fontSize: 10,
+                  fontWeight:
+                  pw.FontWeight.bold,
+                ),
+              ),
+
+              pw.SizedBox(height: 6),
+
+              pw.Table(
+                border: pw.TableBorder.all(
+                  color: PdfColor.fromHex(
+                    '#E4E4E4',
+                  ),
+                  width: .6,
+                ),
+                columnWidths: const {
+                  0: pw.FlexColumnWidth(5),
+                  1: pw.FlexColumnWidth(1.2),
+                  2: pw.FlexColumnWidth(2),
+                  3: pw.FlexColumnWidth(2.2),
+                },
+                children: [
+
+                  pw.TableRow(
+                    decoration:
+                    pw.BoxDecoration(
+                      color:
+                      PdfColor.fromHex(
+                        '#F7F7F8',
+                      ),
+                    ),
+                    children: [
+                      _pdfHeaderCell(
+                        'ITEM',
+                      ),
+                      _pdfHeaderCell(
+                        'QTY',
+                      ),
+                      _pdfHeaderCell(
+                        'PRICE',
+                      ),
+                      _pdfHeaderCell(
+                        'AMOUNT',
+                      ),
+                    ],
+                  ),
+
+                  ...items.map(
+                        (item) {
+                      final menuItem =
+                      _map(
+                        item['menu_item'],
+                      );
+
+                      final name =
+                      _string(
+                        menuItem,
+                        'name',
+                      );
+
+                      final quantity =
+                          _intValue(
+                            item['quantity'],
+                          ) ??
+                              1;
+
+                      final price =
+                          _doubleValue(
+                            item[
+                            'price_at_purchase'
+                            ],
+                          ) ??
+                              _doubleValue(
+                                menuItem[
+                                'price'
+                                ],
+                              ) ??
+                              0;
+
+                      final total =
+                          _doubleValue(
+                            item[
+                            'total_price'
+                            ],
+                          ) ??
+                              price * quantity;
+
+                      return pw.TableRow(
+                        children: [
+
+                          _pdfCell(
+                            name.isEmpty
+                                ? 'Food Item'
+                                : name,
+                          ),
+
+                          _pdfCell(
+                            quantity.toString(),
+                            center: true,
+                          ),
+
+                          _pdfCell(
+                            '₹${price.toStringAsFixed(2)}',
+                            right: true,
+                          ),
+
+                          _pdfCell(
+                            '₹${total.toStringAsFixed(2)}',
+                            right: true,
+                            bold: true,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 10),
+
+              // ==================================================
+              // SUMMARY
+              // ==================================================
+
+              pw.Row(
+                crossAxisAlignment:
+                pw.CrossAxisAlignment.start,
+                children: [
+
+                  pw.Expanded(
+                    child: _pdfInfoBox(
+                      title: 'PAYMENT',
+                      children: [
+                        _pdfBoldText(
+                          paymentMethod,
+                        ),
+                        _pdfSmallText(
+                          'Order #${widget.orderId ?? '-'}',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  pw.SizedBox(width: 15),
+
+                  pw.SizedBox(
+                    width: 220,
+                    child: pw.Column(
+                      children: [
+
+                        _pdfAmountRow(
+                          'Item Total',
+                          itemTotal,
+                        ),
+
+                        _pdfAmountRow(
+                          'Delivery Fee',
+                          deliveryFee,
+                        ),
+
+                        if (discount > 0)
+                          _pdfAmountRow(
+                            'Discount',
+                            -discount,
+                            valueColor:
+                            PdfColor.fromHex(
+                              '#238B45',
+                            ),
+                          ),
+
+                        pw.Divider(
+                          color:
+                          PdfColors.grey400,
+                        ),
+
+                        pw.Container(
+                          padding:
+                          const pw.EdgeInsets
+                              .symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration:
+                          pw.BoxDecoration(
+                            color:
+                            PdfColor.fromHex(
+                              '#FFF1F3',
+                            ),
+                            borderRadius:
+                            pw.BorderRadius
+                                .circular(5),
+                          ),
+                          child: pw.Row(
+                            mainAxisAlignment:
+                            pw.MainAxisAlignment
+                                .spaceBetween,
+                            children: [
+
+                              pw.Text(
+                                'GRAND TOTAL',
+                                style:
+                                pw.TextStyle(
+                                  fontSize: 10,
+                                  fontWeight:
+                                  pw.FontWeight
+                                      .bold,
+                                ),
+                              ),
+
+                              pw.Text(
+                                '₹${orderTotal.toStringAsFixed(2)}',
+                                style:
+                                pw.TextStyle(
+                                  fontSize: 13,
+                                  fontWeight:
+                                  pw.FontWeight
+                                      .bold,
+                                  color:
+                                  PdfColor.fromHex(
+                                    '#D9233E',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              pw.Spacer(),
+
+              // ==================================================
+              // FOOTER
+              // ==================================================
+
+              pw.Divider(
+                color: PdfColors.grey300,
+              ),
+
+              pw.SizedBox(height: 5),
+
+              pw.Center(
+                child: pw.Text(
+                  'Thank you for ordering with us!',
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight:
+                    pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              pw.SizedBox(height: 3),
+
+              pw.Center(
+                child: pw.Text(
+                  'This is a computer-generated invoice and does not require a signature.',
+                  style: const pw.TextStyle(
+                    fontSize: 7,
+                    color:
+                    PdfColors.grey600,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final bytes = await pdf.save();
+
+    final directory = await getTemporaryDirectory();
+
+    final file = File(
+      '${directory.path}/invoice_${widget.orderId}.pdf',
+    );
+
+    await file.writeAsBytes(
+      bytes,
+      flush: true,
+    );
+
+    return file;
+  }
+  pw.Widget _pdfBoldText(String text) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(
+        bottom: 2,
+      ),
+      child: pw.Text(
+        text,
+        maxLines: 2,
+        style: pw.TextStyle(
+          fontSize: 8.5,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+  pw.Widget _pdfSmallText(String text) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(
+        bottom: 2,
+      ),
+      child: pw.Text(
+        text,
+        maxLines: 3,
+        style: const pw.TextStyle(
+          fontSize: 7.5,
+          color: PdfColors.grey700,
+        ),
+      ),
+    );
+  }
+  pw.Widget _pdfHeaderCell(String text) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(
+        horizontal: 6,
+        vertical: 6,
+      ),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 7,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+  pw.Widget _pdfCell(
+      String text, {
+        bool center = false,
+        bool right = false,
+        bool bold = false,
+      }) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(
+        horizontal: 6,
+        vertical: 7,
+      ),
+      child: pw.Align(
+        alignment: right
+            ? pw.Alignment.centerRight
+            : center
+            ? pw.Alignment.center
+            : pw.Alignment.centerLeft,
+        child: pw.Text(
+          text,
+          maxLines: 2,
+          style: pw.TextStyle(
+            fontSize: 8,
+            fontWeight: bold
+                ? pw.FontWeight.bold
+                : pw.FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _pdfInfoBox({
+    required String title,
+    required List<pw.Widget> children,
+  }) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(9),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(
+          color: PdfColor.fromHex('#E5E5E5'),
+          width: .7,
+        ),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment:
+        pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title,
+            style: pw.TextStyle(
+              fontSize: 7.5,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColor.fromHex('#D9233E'),
+            ),
+          ),
+          pw.SizedBox(height: 5),
+          ...children,
+        ],
+      ),
+    );
+  }
+  pw.Widget _pdfSectionTitle(
+      String title,
+      ) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.only(
+        bottom: 5,
+      ),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(
+            color: PdfColors.black,
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 11,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _pdfAmountRow(
+      String title,
+      double amount, {
+        PdfColor? valueColor,
+      }) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(
+        vertical: 3,
+      ),
+      child: pw.Row(
+        mainAxisAlignment:
+        pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            title,
+            style: const pw.TextStyle(
+              fontSize: 8,
+              color: PdfColors.grey700,
+            ),
+          ),
+          pw.Text(
+            '₹${amount.abs().toStringAsFixed(2)}',
+            style: pw.TextStyle(
+              fontSize: 8,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   // ============================================================
   // CANCEL ORDER
@@ -520,6 +2175,7 @@ class _MilestoneApp6OrderDetailsScreenState
   // ============================================================
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
@@ -540,9 +2196,7 @@ class _MilestoneApp6OrderDetailsScreenState
           IconButton(
             onPressed: _isLoading || _isRefreshing
                 ? null
-                : () => _loadOrderDetails(
-              refresh: true,
-            ),
+                : () => _loadOrderDetails(refresh: true),
             tooltip: 'Refresh order',
             icon: _isRefreshing
                 ? const SizedBox(
@@ -552,15 +2206,21 @@ class _MilestoneApp6OrderDetailsScreenState
                 strokeWidth: 2,
               ),
             )
-                : const Icon(
-              Icons.refresh_rounded,
-            ),
+                : const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
+
       body: SafeArea(
         top: false,
-        child: _buildBody(),
+        child: Stack(
+          children: [
+            _buildBody(),
+
+
+            _buildInvoiceAnimationOverlay(),
+          ],
+        ),
       ),
     );
   }
@@ -1060,6 +2720,7 @@ class _MilestoneApp6OrderDetailsScreenState
 
   Widget _itemsCard() {
     final rawItems = _order?['order_items'];
+
     final List<Map<String, dynamic>> items =
     rawItems is List
         ? rawItems
