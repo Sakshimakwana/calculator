@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+
 import '../../controllers/cart_controller.dart';
 import '../../controllers/order_controller.dart';
 import '../../models/cart/cart_response_model.dart';
+
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
 import '../widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_image.dart';
+
+const String razorpayKeyId = 'rzp_test_TZROdQUkcaHWjq';
 
 /// ================================================================
 /// CHECKOUT ARGUMENTS
@@ -18,8 +23,6 @@ class MilestoneApp6CheckoutArgs {
   final MilestoneApp6State state;
   final MilestoneApp6CartItem? buyNowItem;
   final VoidCallback? onPressed;
-
-
 
   const MilestoneApp6CheckoutArgs({
     required this.state,
@@ -107,7 +110,19 @@ class _MilestoneApp6CheckoutScreenState
   MilestoneApp6State get state => widget.state;
 
   /// ==============================================================
-  /// CONTROLLER
+  /// RAZORPAY
+  /// ==============================================================
+
+  late Razorpay _razorpay;
+
+  /// Backend Tomato order ID.
+  int? _pendingBackendOrderId;
+
+  /// Razorpay order ID.
+  String? _pendingRazorpayOrderId;
+
+  /// ==============================================================
+  /// CONTROLLERS
   /// ==============================================================
 
   final TextEditingController _couponController =
@@ -143,9 +158,17 @@ class _MilestoneApp6CheckoutScreenState
     super.initState();
 
     _createOrderItems();
+
+    _initializeRazorpay();
   }
 
-  MilestoneApp6CartItem _convertApiCartItem(CartItemModel item) {
+  /// ==============================================================
+  /// CONVERT API CART ITEM
+  /// ==============================================================
+
+  MilestoneApp6CartItem _convertApiCartItem(
+      CartItemModel item,
+      ) {
     return MilestoneApp6CartItem(
       food: MilestoneApp6Food(
         id: item.menuItem.id.toString(),
@@ -163,12 +186,450 @@ class _MilestoneApp6CheckoutScreenState
   }
 
   /// ==============================================================
+  /// INITIALIZE RAZORPAY
+  /// ==============================================================
+
+  void _initializeRazorpay() {
+    _razorpay = Razorpay();
+
+    _razorpay.on(
+      Razorpay.EVENT_PAYMENT_SUCCESS,
+      _handlePaymentSuccess,
+    );
+
+    _razorpay.on(
+      Razorpay.EVENT_PAYMENT_ERROR,
+      _handlePaymentError,
+    );
+
+    _razorpay.on(
+      Razorpay.EVENT_EXTERNAL_WALLET,
+      _handleExternalWallet,
+    );
+  }
+
+  /// ==============================================================
+  /// RAZORPAY PAYMENT SUCCESS
+  /// ==============================================================
+
+  Future<void> _handlePaymentSuccess(
+      PaymentSuccessResponse response,
+      ) async {
+    debugPrint(
+      '========== RAZORPAY PAYMENT SUCCESS ==========',
+    );
+
+    debugPrint(
+      'Payment ID: ${response.paymentId}',
+    );
+
+    debugPrint(
+      'Razorpay Order ID: ${response.orderId}',
+    );
+
+    debugPrint(
+      'Signature: ${response.signature}',
+    );
+
+    /// ------------------------------------------------------------
+    /// GET BACKEND ORDER ID
+    /// ------------------------------------------------------------
+
+    final int? backendOrderId = _pendingBackendOrderId;
+
+    /// ------------------------------------------------------------
+    /// GET RAZORPAY ORDER ID
+    /// ------------------------------------------------------------
+
+    final String? razorpayOrderId =
+        _pendingRazorpayOrderId ?? response.orderId;
+
+    /// ------------------------------------------------------------
+    /// GET PAYMENT ID
+    /// ------------------------------------------------------------
+
+    final String? razorpayPaymentId =
+        response.paymentId;
+
+    /// ------------------------------------------------------------
+    /// GET SIGNATURE
+    /// ------------------------------------------------------------
+
+    final String? razorpaySignature =
+        response.signature;
+
+    /// ------------------------------------------------------------
+    /// VALIDATE BACKEND ORDER ID
+    /// ------------------------------------------------------------
+
+    if (backendOrderId == null) {
+      _showSnackBar(
+        'Backend order ID is missing.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// VALIDATE RAZORPAY ORDER ID
+    /// ------------------------------------------------------------
+
+    if (razorpayOrderId == null ||
+        razorpayOrderId.isEmpty) {
+      _showSnackBar(
+        'Razorpay order ID is missing.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// VALIDATE PAYMENT ID
+    /// ------------------------------------------------------------
+
+    if (razorpayPaymentId == null ||
+        razorpayPaymentId.isEmpty) {
+      _showSnackBar(
+        'Razorpay payment ID is missing.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// VALIDATE SIGNATURE
+    /// ------------------------------------------------------------
+
+    if (razorpaySignature == null ||
+        razorpaySignature.isEmpty) {
+      _showSnackBar(
+        'Razorpay signature is missing.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// VERIFY PAYMENT WITH BACKEND
+    /// ------------------------------------------------------------
+
+    final orderController =
+    context.read<OrderController>();
+
+    debugPrint(
+      '========== VERIFY RAZORPAY PAYMENT ==========',
+    );
+
+    debugPrint(
+      'Backend Order ID: $backendOrderId',
+    );
+
+    debugPrint(
+      'Razorpay Order ID: $razorpayOrderId',
+    );
+
+    debugPrint(
+      'Razorpay Payment ID: $razorpayPaymentId',
+    );
+
+    final bool verified =
+    await orderController.verifyRazorpayPayment(
+      orderId: backendOrderId,
+      razorpayOrderId: razorpayOrderId,
+      razorpayPaymentId: razorpayPaymentId,
+      razorpaySignature: razorpaySignature,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// VERIFICATION FAILED
+    /// ------------------------------------------------------------
+
+    if (!verified) {
+      _showSnackBar(
+        orderController.paymentErrorMessage ??
+            'Payment verification failed.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// VERIFICATION SUCCESS
+    /// ------------------------------------------------------------
+
+    debugPrint(
+      '========== RAZORPAY PAYMENT VERIFIED ==========',
+    );
+
+    debugPrint(
+      'Verified Backend Order ID: $backendOrderId',
+    );
+
+    await _finishSuccessfulPayment(
+      backendOrderId,
+    );
+  }
+
+  /// ==============================================================
+  /// RAZORPAY PAYMENT ERROR
+  /// ==============================================================
+
+  void _handlePaymentError(
+      PaymentFailureResponse response,
+      ) {
+    debugPrint(
+      '========== RAZORPAY PAYMENT ERROR ==========',
+    );
+
+    debugPrint(
+      'Code: ${response.code}',
+    );
+
+    debugPrint(
+      'Message: ${response.message}',
+    );
+
+    _showSnackBar(
+      response.message ??
+          'Razorpay payment failed.',
+    );
+  }
+
+  /// ==============================================================
+  /// RAZORPAY EXTERNAL WALLET
+  /// ==============================================================
+
+  void _handleExternalWallet(
+      ExternalWalletResponse response,
+      ) {
+    debugPrint(
+      '========== RAZORPAY EXTERNAL WALLET ==========',
+    );
+
+    debugPrint(
+      'Wallet: ${response.walletName}',
+    );
+
+    _showSnackBar(
+      'External wallet selected: '
+          '${response.walletName ?? 'Unknown'}',
+    );
+  }
+
+  /// ==============================================================
+  /// COMPLETE VERIFIED PAYMENT
+  /// ==============================================================
+
+  Future<void> _finishSuccessfulPayment(
+      int backendOrderId,
+      ) async {
+    final orderController =
+    context.read<OrderController>();
+
+    final cartController =
+    context.read<CartController>();
+
+    /// ------------------------------------------------------------
+    /// FETCH COMPLETE ORDER
+    /// ------------------------------------------------------------
+
+    final bool orderInfoLoaded =
+    await orderController.fetchOrderInfo(
+      backendOrderId,
+    );
+
+    if (!orderInfoLoaded) {
+      debugPrint(
+        'WARNING: Order info could not be refreshed.',
+      );
+    }
+
+    /// ------------------------------------------------------------
+    /// CLEAR CART
+    /// ------------------------------------------------------------
+
+    if (!widget.isBuyNow) {
+      await cartController.clearCart();
+    }
+
+    /// ------------------------------------------------------------
+    /// CLEAR RAZORPAY STATE
+    /// ------------------------------------------------------------
+
+    _pendingBackendOrderId = null;
+    _pendingRazorpayOrderId = null;
+
+    debugPrint(
+      '========== ORDER COMPLETED ==========',
+    );
+
+    debugPrint(
+      'VERIFIED ORDER ID: $backendOrderId',
+    );
+
+    /// ------------------------------------------------------------
+    /// NAVIGATE TO ORDER DETAILS
+    /// ------------------------------------------------------------
+
+    if (!mounted) {
+      return;
+    }
+
+    context.go(
+      '/order-details/$backendOrderId',
+    );
+  }
+
+  /// ==============================================================
+  /// OPEN RAZORPAY CHECKOUT
+  /// ==============================================================
+
+  void _openRazorpayCheckout({
+    required Map<String, dynamic> paymentData,
+    required int backendOrderId,
+  }) {
+    /// ------------------------------------------------------------
+    /// RAZORPAY ORDER ID
+    /// ------------------------------------------------------------
+
+    final String? razorpayOrderId =
+    paymentData['razorpay_order_id']?.toString();
+
+    /// ------------------------------------------------------------
+    /// AMOUNT
+    /// ------------------------------------------------------------
+
+    final dynamic amountValue =
+    paymentData['amount'];
+
+    /// ------------------------------------------------------------
+    /// CURRENCY
+    /// ------------------------------------------------------------
+
+    final String currency =
+        paymentData['currency']?.toString() ?? 'INR';
+
+    /// ------------------------------------------------------------
+    /// VALIDATE RAZORPAY ORDER ID
+    /// ------------------------------------------------------------
+
+    if (razorpayOrderId == null ||
+        razorpayOrderId.isEmpty) {
+      _showSnackBar(
+        'Razorpay order ID was not received.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// VALIDATE AMOUNT
+    /// ------------------------------------------------------------
+
+    if (amountValue == null) {
+      _showSnackBar(
+        'Payment amount was not received.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// PARSE AMOUNT
+    /// ------------------------------------------------------------
+
+    final int? amount =
+    int.tryParse(
+      amountValue.toString(),
+    );
+
+    if (amount == null || amount <= 0) {
+      _showSnackBar(
+        'Invalid Razorpay payment amount.',
+      );
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// STORE PENDING PAYMENT DATA
+    /// ------------------------------------------------------------
+
+    _pendingBackendOrderId =
+        backendOrderId;
+
+    _pendingRazorpayOrderId =
+        razorpayOrderId;
+
+    /// ------------------------------------------------------------
+    /// DEBUG
+    /// ------------------------------------------------------------
+
+    debugPrint(
+      '========== OPEN RAZORPAY ==========',
+    );
+
+    debugPrint(
+      'Backend Order ID: $backendOrderId',
+    );
+
+    debugPrint(
+      'Razorpay Order ID: $razorpayOrderId',
+    );
+
+    debugPrint(
+      'Amount: $amount',
+    );
+
+    debugPrint(
+      'Currency: $currency',
+    );
+
+    /// ------------------------------------------------------------
+    /// RAZORPAY OPTIONS
+    /// ------------------------------------------------------------
+
+    final Map<String, dynamic> options = {
+      'key': razorpayKeyId,
+      'amount': amount,
+      'currency': currency,
+      'name': 'Tomato',
+      'description': 'Food Order #$backendOrderId',
+      'order_id': razorpayOrderId,
+      'retry': {
+        'enabled': true,
+      },
+      'send_sms_hash': true,
+      'theme': {
+        'color': '#FF5722',
+      },
+    };
+
+    /// ------------------------------------------------------------
+    /// OPEN RAZORPAY
+    /// ------------------------------------------------------------
+
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      debugPrint(
+        'RAZORPAY OPEN ERROR: $e',
+      );
+
+      _showSnackBar(
+        'Unable to open Razorpay checkout.',
+      );
+    }
+  }
+
+  /// ==============================================================
   /// CREATE ORDER ITEMS
   /// ==============================================================
 
   void _createOrderItems() {
+    /// ------------------------------------------------------------
+    /// BUY NOW
+    /// ------------------------------------------------------------
+
     if (widget.isBuyNow) {
-      final buyNowItem = widget.resolvedBuyNowItem;
+      final buyNowItem =
+          widget.resolvedBuyNowItem;
 
       if (buyNowItem == null) {
         _orderedItems = [];
@@ -176,24 +637,37 @@ class _MilestoneApp6CheckoutScreenState
       }
 
       _orderedItems = [
-        _copyCartItem(buyNowItem),
+        _copyCartItem(
+          buyNowItem,
+        ),
       ];
 
       return;
     }
 
-    final cartController = context.read<CartController>();
+    /// ------------------------------------------------------------
+    /// CART CHECKOUT
+    /// ------------------------------------------------------------
 
-    _orderedItems = cartController.cartItems
-        .map((item) => _convertApiCartItem(item))
-        .toList();
+    final cartController =
+    context.read<CartController>();
+
+    _orderedItems =
+        cartController.cartItems
+            .map(
+              (item) =>
+              _convertApiCartItem(item),
+        )
+            .toList();
   }
 
   /// ==============================================================
   /// COPY CART ITEM
   /// ==============================================================
 
-  MilestoneApp6CartItem _copyCartItem(MilestoneApp6CartItem item) {
+  MilestoneApp6CartItem _copyCartItem(
+      MilestoneApp6CartItem item,
+      ) {
     return MilestoneApp6CartItem(
       food: item.food,
       size: item.size,
@@ -208,8 +682,12 @@ class _MilestoneApp6CheckoutScreenState
 
   @override
   void dispose() {
+    _razorpay.clear();
+
     _couponController.dispose();
+
     _deliveryInstructionsController.dispose();
+
     super.dispose();
   }
 
@@ -220,7 +698,11 @@ class _MilestoneApp6CheckoutScreenState
   int get totalItemCount {
     return _orderedItems.fold<int>(
       0,
-          (total, item) => total + item.quantity,
+          (
+          total,
+          item,
+          ) =>
+      total + item.quantity,
     );
   }
 
@@ -231,7 +713,11 @@ class _MilestoneApp6CheckoutScreenState
   double get subtotal {
     return _orderedItems.fold<double>(
       0.0,
-          (total, item) => total + item.totalPrice,
+          (
+          total,
+          item,
+          ) =>
+      total + item.totalPrice,
     );
   }
 
@@ -264,7 +750,8 @@ class _MilestoneApp6CheckoutScreenState
   /// ==============================================================
 
   double get totalPayment {
-    final double value = subtotal + shipping - discount;
+    final double value =
+        subtotal + shipping - discount;
 
     if (value < 0) {
       return 0.0;
@@ -282,7 +769,8 @@ class _MilestoneApp6CheckoutScreenState
       return 0.0;
     }
 
-    final double onePercent = totalPayment * 0.01;
+    final double onePercent =
+        totalPayment * 0.01;
 
     if (onePercent < 1.0) {
       return 1.0;
@@ -309,10 +797,14 @@ class _MilestoneApp6CheckoutScreenState
 
   void _applyCoupon() {
     final String code =
-    _couponController.text.trim().toUpperCase();
+    _couponController.text
+        .trim()
+        .toUpperCase();
 
     if (code.isEmpty) {
-      _showSnackBar('Please enter a coupon code.');
+      _showSnackBar(
+        'Please enter a coupon code.',
+      );
       return;
     }
 
@@ -321,7 +813,10 @@ class _MilestoneApp6CheckoutScreenState
         _appliedCoupon = 'FOOD10';
       });
 
-      _showSnackBar('Coupon applied successfully!');
+      _showSnackBar(
+        'Coupon applied successfully!',
+      );
+
       return;
     }
 
@@ -329,7 +824,9 @@ class _MilestoneApp6CheckoutScreenState
       _appliedCoupon = null;
     });
 
-    _showSnackBar('Invalid coupon code.');
+    _showSnackBar(
+      'Invalid coupon code.',
+    );
   }
 
   /// ==============================================================
@@ -342,19 +839,24 @@ class _MilestoneApp6CheckoutScreenState
       _couponController.clear();
     });
 
-    _showSnackBar('Coupon removed.');
+    _showSnackBar(
+      'Coupon removed.',
+    );
   }
 
   /// ==============================================================
   /// SNACKBAR
   /// ==============================================================
 
-  void _showSnackBar(String message) {
+  void _showSnackBar(
+      String message,
+      ) {
     if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context)
+        .hideCurrentSnackBar();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -363,8 +865,16 @@ class _MilestoneApp6CheckoutScreenState
       ),
     );
   }
-  Widget _emptyCheckout(BuildContext context) {
-    final theme = Theme.of(context);
+
+  /// ==============================================================
+  /// EMPTY CHECKOUT
+  /// ==============================================================
+
+  Widget _emptyCheckout(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -390,19 +900,22 @@ class _MilestoneApp6CheckoutScreenState
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment:
+            MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.shopping_cart_outlined,
                 size: 72,
-                color: theme.colorScheme.primary,
+                color:
+                theme.colorScheme.primary,
               ),
               const SizedBox(height: 18),
               const Text(
                 'Your cart is empty',
                 style: TextStyle(
                   fontSize: 20,
-                  fontWeight: FontWeight.w800,
+                  fontWeight:
+                  FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 8),
@@ -433,7 +946,9 @@ class _MilestoneApp6CheckoutScreenState
   /// ==============================================================
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     if (_orderedItems.isEmpty) {
       return _emptyCheckout(context);
     }
@@ -463,7 +978,8 @@ class _MilestoneApp6CheckoutScreenState
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(
+                padding:
+                const EdgeInsets.fromLTRB(
                   16,
                   12,
                   16,
@@ -498,17 +1014,24 @@ class _MilestoneApp6CheckoutScreenState
   /// CHECKOUT STEPS
   /// ==============================================================
 
-  Widget _checkoutSteps(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _checkoutSteps(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding:
+      const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(16),
+        color:
+        theme.colorScheme.primary
+            .withOpacity(0.06),
+        borderRadius:
+        BorderRadius.circular(16),
       ),
       child: Row(
         children: [
@@ -521,10 +1044,13 @@ class _MilestoneApp6CheckoutScreenState
           Expanded(
             child: Container(
               height: 1,
-              margin: const EdgeInsets.symmetric(
+              margin:
+              const EdgeInsets.symmetric(
                 horizontal: 8,
               ),
-              color: theme.colorScheme.primary.withOpacity(0.25),
+              color:
+              theme.colorScheme.primary
+                  .withOpacity(0.25),
             ),
           ),
           _step(
@@ -536,10 +1062,13 @@ class _MilestoneApp6CheckoutScreenState
           Expanded(
             child: Container(
               height: 1,
-              margin: const EdgeInsets.symmetric(
+              margin:
+              const EdgeInsets.symmetric(
                 horizontal: 8,
               ),
-              color: theme.dividerColor.withOpacity(0.4),
+              color:
+              theme.dividerColor
+                  .withOpacity(0.4),
             ),
           ),
           _step(
@@ -557,30 +1086,38 @@ class _MilestoneApp6CheckoutScreenState
   /// STEP
   /// ==============================================================
 
-  Widget _step(BuildContext context,
+  Widget _step(
+      BuildContext context,
       String number,
       String title,
-      bool active,) {
-    final theme = Theme.of(context);
+      bool active,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Column(
       children: [
         Container(
           width: 30,
           height: 30,
-          alignment: Alignment.center,
+          alignment:
+          Alignment.center,
           decoration: BoxDecoration(
             color: active
                 ? theme.colorScheme.primary
-                : theme.dividerColor.withOpacity(0.35),
+                : theme.dividerColor
+                .withOpacity(0.35),
             shape: BoxShape.circle,
           ),
           child: Text(
             number,
             style: TextStyle(
-              color: active ? Colors.white : theme.hintColor,
+              color: active
+                  ? Colors.white
+                  : theme.hintColor,
               fontSize: 12,
-              fontWeight: FontWeight.w800,
+              fontWeight:
+              FontWeight.w800,
             ),
           ),
         ),
@@ -589,8 +1126,9 @@ class _MilestoneApp6CheckoutScreenState
           title,
           style: TextStyle(
             fontSize: 10,
-            fontWeight:
-            active ? FontWeight.w800 : FontWeight.w500,
+            fontWeight: active
+                ? FontWeight.w800
+                : FontWeight.w500,
             color: active
                 ? theme.colorScheme.primary
                 : theme.hintColor,
@@ -604,17 +1142,27 @@ class _MilestoneApp6CheckoutScreenState
   /// DELIVERY ADDRESS
   /// ==============================================================
 
-  Widget _deliveryAddress(BuildContext context) {
-    final theme = Theme.of(context);
-    final address = state.selectedAddress;
+  Widget _deliveryAddress(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    final address =
+        state.selectedAddress;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding:
+      const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
+          color:
+          theme.dividerColor
+              .withOpacity(0.25),
         ),
       ),
       child: Column(
@@ -623,7 +1171,8 @@ class _MilestoneApp6CheckoutScreenState
             children: [
               Icon(
                 Icons.location_on_rounded,
-                color: theme.colorScheme.primary,
+                color:
+                theme.colorScheme.primary,
               ),
               const SizedBox(width: 8),
               const Expanded(
@@ -631,7 +1180,8 @@ class _MilestoneApp6CheckoutScreenState
                   'Delivery Address',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight:
+                    FontWeight.w800,
                   ),
                 ),
               ),
@@ -643,7 +1193,9 @@ class _MilestoneApp6CheckoutScreenState
                   );
                 },
                 child: Text(
-                  address == null ? 'Add' : 'Change',
+                  address == null
+                      ? 'Add'
+                      : 'Change',
                 ),
               ),
             ],
@@ -654,41 +1206,58 @@ class _MilestoneApp6CheckoutScreenState
           else
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(13),
+              padding:
+              const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(14),
+                color:
+                theme.colorScheme.primary
+                    .withOpacity(0.05),
+                borderRadius:
+                BorderRadius.circular(14),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    _addressIcon(address.label),
-                    color: theme.colorScheme.primary,
+                    _addressIcon(
+                      address.label,
+                    ),
+                    color:
+                    theme.colorScheme.primary,
                   ),
                   const SizedBox(width: 11),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                      CrossAxisAlignment.start,
                       children: [
                         Text(
                           address.label,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
+                          overflow:
+                          TextOverflow.ellipsis,
+                          style:
+                          const TextStyle(
+                            fontWeight:
+                            FontWeight.w800,
                             fontSize: 14,
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(
+                          height: 5,
+                        ),
                         Text(
-                          address.fullAddress.isEmpty
+                          address.fullAddress
+                              .isEmpty
                               ? 'Address details not available'
                               : address.fullAddress,
                           maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
+                          overflow:
+                          TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: theme.hintColor,
+                            color:
+                            theme.hintColor,
                             fontSize: 12,
                             height: 1.4,
                           ),
@@ -708,11 +1277,15 @@ class _MilestoneApp6CheckoutScreenState
   /// NO ADDRESS
   /// ==============================================================
 
-  Widget _noAddress(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _noAddress(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius:
+      BorderRadius.circular(14),
       onTap: () {
         context.push(
           '/profile/address',
@@ -721,10 +1294,14 @@ class _MilestoneApp6CheckoutScreenState
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding:
+        const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(14),
+          color:
+          theme.colorScheme.primary
+              .withOpacity(0.05),
+          borderRadius:
+          BorderRadius.circular(14),
         ),
         child: const Row(
           children: [
@@ -736,7 +1313,8 @@ class _MilestoneApp6CheckoutScreenState
               child: Text(
                 'Add a delivery address',
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
+                  fontWeight:
+                  FontWeight.w700,
                 ),
               ),
             ),
@@ -753,7 +1331,9 @@ class _MilestoneApp6CheckoutScreenState
   /// ADDRESS ICON
   /// ==============================================================
 
-  IconData _addressIcon(String label) {
+  IconData _addressIcon(
+      String label,
+      ) {
     switch (label.toLowerCase()) {
       case 'home':
         return Icons.home_outlined;
@@ -771,20 +1351,29 @@ class _MilestoneApp6CheckoutScreenState
   /// ORDER ITEMS
   /// ==============================================================
 
-  Widget _orderItems(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _orderItems(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding:
+      const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
+          color:
+          theme.dividerColor
+              .withOpacity(0.25),
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -793,31 +1382,34 @@ class _MilestoneApp6CheckoutScreenState
                   'Order Items',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight:
+                    FontWeight.w800,
                   ),
                 ),
               ),
               Text(
-                '$totalItemCount item${totalItemCount == 1 ? '' : 's'}',
+                '$totalItemCount item'
+                    '${totalItemCount == 1 ? '' : 's'}',
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.hintColor,
+                  color:
+                  theme.hintColor,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
           ..._orderedItems.map(
-                (item) =>
-                Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 12,
-                  ),
-                  child: _checkoutItem(
-                    context,
-                    item,
-                  ),
-                ),
+                (item) => Padding(
+              padding:
+              const EdgeInsets.only(
+                bottom: 12,
+              ),
+              child: _checkoutItem(
+                context,
+                item,
+              ),
+            ),
           ),
         ],
       ),
@@ -828,31 +1420,40 @@ class _MilestoneApp6CheckoutScreenState
   /// CHECKOUT ITEM
   /// ==============================================================
 
-  Widget _checkoutItem(BuildContext context,
-      MilestoneApp6CartItem item,) {
-    final theme = Theme.of(context);
+  Widget _checkoutItem(
+      BuildContext context,
+      MilestoneApp6CartItem item,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
         MilestoneApp6Image(
           url: item.food.image,
           width: 68,
           height: 68,
-          borderRadius: BorderRadius.circular(13),
+          borderRadius:
+          BorderRadius.circular(13),
         ),
         const SizedBox(width: 11),
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
             children: [
               Text(
                 item.food.name,
                 maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                overflow:
+                TextOverflow.ellipsis,
+                style:
+                const TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                  fontWeight:
+                  FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 4),
@@ -860,8 +1461,10 @@ class _MilestoneApp6CheckoutScreenState
                 'Size: ${item.size}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
+                  color:
+                  theme.colorScheme.primary,
+                  fontWeight:
+                  FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 4),
@@ -869,7 +1472,8 @@ class _MilestoneApp6CheckoutScreenState
                 'Qty: ${item.quantity}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: theme.hintColor,
+                  color:
+                  theme.hintColor,
                 ),
               ),
             ],
@@ -878,9 +1482,11 @@ class _MilestoneApp6CheckoutScreenState
         const SizedBox(width: 8),
         Text(
           '\$${item.totalPrice.toStringAsFixed(2)}',
-          style: const TextStyle(
+          style:
+          const TextStyle(
             fontSize: 13,
-            fontWeight: FontWeight.w900,
+            fontWeight:
+            FontWeight.w900,
           ),
         ),
       ],
@@ -891,26 +1497,38 @@ class _MilestoneApp6CheckoutScreenState
   /// COUPON SECTION
   /// ==============================================================
 
-  Widget _couponSection(BuildContext context) {
-    final theme = Theme.of(context);
-    final bool couponApplied = _appliedCoupon != null;
+  Widget _couponSection(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    final bool couponApplied =
+        _appliedCoupon != null;
 
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding:
+      const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(18),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
+          color:
+          theme.dividerColor
+              .withOpacity(0.25),
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
           const Text(
             'Apply Coupon',
             style: TextStyle(
-              fontWeight: FontWeight.w800,
+              fontWeight:
+              FontWeight.w800,
             ),
           ),
           const SizedBox(height: 12),
@@ -918,16 +1536,26 @@ class _MilestoneApp6CheckoutScreenState
             children: [
               Expanded(
                 child: TextField(
-                  controller: _couponController,
-                  enabled: !couponApplied,
+                  controller:
+                  _couponController,
+                  enabled:
+                  !couponApplied,
                   textCapitalization:
-                  TextCapitalization.characters,
-                  decoration: InputDecoration(
-                    hintText: 'Enter promo code',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  TextCapitalization
+                      .characters,
+                  decoration:
+                  InputDecoration(
+                    hintText:
+                    'Enter promo code',
+                    border:
+                    OutlineInputBorder(
+                      borderRadius:
+                      BorderRadius
+                          .circular(12),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
+                    contentPadding:
+                    const EdgeInsets
+                        .symmetric(
                       horizontal: 12,
                       vertical: 12,
                     ),
@@ -937,23 +1565,35 @@ class _MilestoneApp6CheckoutScreenState
               const SizedBox(width: 8),
               if (couponApplied)
                 OutlinedButton(
-                  onPressed: _removeCoupon,
-                  child: const Text('Remove'),
+                  onPressed:
+                  _removeCoupon,
+                  child:
+                  const Text(
+                    'Remove',
+                  ),
                 )
               else
                 FilledButton(
-                  onPressed: _applyCoupon,
-                  child: const Text('Apply'),
+                  onPressed:
+                  _applyCoupon,
+                  child:
+                  const Text(
+                    'Apply',
+                  ),
                 ),
             ],
           ),
           if (couponApplied)
             const Padding(
-              padding: EdgeInsets.only(top: 10),
+              padding:
+              EdgeInsets.only(
+                top: 10,
+              ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.check_circle_outline,
+                    Icons
+                        .check_circle_outline,
                     size: 18,
                     color: Colors.green,
                   ),
@@ -961,8 +1601,10 @@ class _MilestoneApp6CheckoutScreenState
                   Text(
                     'FOOD10 applied • 10% OFF',
                     style: TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.w700,
+                      color:
+                      Colors.green,
+                      fontWeight:
+                      FontWeight.w700,
                     ),
                   ),
                 ],
@@ -977,27 +1619,37 @@ class _MilestoneApp6CheckoutScreenState
   /// BILL DETAILS
   /// ==============================================================
 
-  Widget _billDetails(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _billDetails(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(17),
+      padding:
+      const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
+          color:
+          theme.dividerColor
+              .withOpacity(0.25),
         ),
       ),
       child: Column(
         children: [
           const Align(
-            alignment: Alignment.centerLeft,
+            alignment:
+            Alignment.centerLeft,
             child: Text(
               'Bill Details',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w800,
+                fontWeight:
+                FontWeight.w800,
               ),
             ),
           ),
@@ -1016,15 +1668,18 @@ class _MilestoneApp6CheckoutScreenState
             _summaryRow(
               'Coupon Discount',
               '-\$${discount.toStringAsFixed(2)}',
-              valueColor: Colors.green,
+              valueColor:
+              Colors.green,
             ),
           ],
           Padding(
-            padding: const EdgeInsets.symmetric(
+            padding:
+            const EdgeInsets.symmetric(
               vertical: 15,
             ),
             child: Divider(
-              color: theme.dividerColor,
+              color:
+              theme.dividerColor,
             ),
           ),
           _summaryRow(
@@ -1041,7 +1696,8 @@ class _MilestoneApp6CheckoutScreenState
   /// SUMMARY ROW
   /// ==============================================================
 
-  Widget _summaryRow(String title,
+  Widget _summaryRow(
+      String title,
       String value, {
         bool bold = false,
         Color? valueColor,
@@ -1052,9 +1708,11 @@ class _MilestoneApp6CheckoutScreenState
           child: Text(
             title,
             style: TextStyle(
-              fontSize: bold ? 15 : 13,
-              fontWeight:
-              bold ? FontWeight.w800 : FontWeight.w500,
+              fontSize:
+              bold ? 15 : 13,
+              fontWeight: bold
+                  ? FontWeight.w800
+                  : FontWeight.w500,
             ),
           ),
         ),
@@ -1062,10 +1720,12 @@ class _MilestoneApp6CheckoutScreenState
         Text(
           value,
           style: TextStyle(
-            fontSize: bold ? 16 : 13,
+            fontSize:
+            bold ? 16 : 13,
             color: valueColor,
-            fontWeight:
-            bold ? FontWeight.w900 : FontWeight.w700,
+            fontWeight: bold
+                ? FontWeight.w900
+                : FontWeight.w700,
           ),
         ),
       ],
@@ -1076,43 +1736,59 @@ class _MilestoneApp6CheckoutScreenState
   /// PAYMENT METHOD
   /// ==============================================================
 
-  Widget _paymentMethod(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _paymentMethod(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding:
+      const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        color:
+        theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.25),
+          color:
+          theme.dividerColor
+              .withOpacity(0.25),
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
           const Text(
             'Payment Method',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontWeight:
+              FontWeight.w800,
             ),
           ),
           const SizedBox(height: 12),
           _paymentOption(
             context,
-            title: 'Online Payment',
+            title:
+            'Online Payment',
             value: 'online',
-            subtitle: 'Pay securely online using Razorpay',
-            icon: Icons.account_balance_wallet_outlined,
+            subtitle:
+            'Pay securely online using Razorpay',
+            icon: Icons
+                .account_balance_wallet_outlined,
           ),
           const SizedBox(height: 10),
           _paymentOption(
             context,
-            title: 'Cash on Delivery',
+            title:
+            'Cash on Delivery',
             value: 'cod',
-            subtitle: 'Pay when your order is delivered',
-            icon: Icons.payments_outlined,
+            subtitle:
+            'Pay when your order is delivered',
+            icon: Icons
+                .payments_outlined,
           ),
         ],
       ),
@@ -1123,35 +1799,53 @@ class _MilestoneApp6CheckoutScreenState
   /// PAYMENT OPTION
   /// ==============================================================
 
-  Widget _paymentOption(BuildContext context, {
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-  }) {
-    final theme = Theme.of(context);
-    final bool selected = _selectedPaymentMethod == value;
+  Widget _paymentOption(
+      BuildContext context, {
+        required String title,
+        required String value,
+        required String subtitle,
+        required IconData icon,
+      }) {
+    final theme =
+    Theme.of(context);
+
+    final bool selected =
+        _selectedPaymentMethod ==
+            value;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(15),
+      borderRadius:
+      BorderRadius.circular(15),
       onTap: () {
         setState(() {
-          _selectedPaymentMethod = value;
+          _selectedPaymentMethod =
+              value;
         });
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(14),
+        duration:
+        const Duration(
+          milliseconds: 180,
+        ),
+        padding:
+        const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: selected
-              ? theme.colorScheme.primary.withOpacity(0.08)
-              : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(15),
+              ? theme.colorScheme
+              .primary
+              .withOpacity(0.08)
+              : theme.colorScheme
+              .surface,
+          borderRadius:
+          BorderRadius.circular(15),
           border: Border.all(
             color: selected
-                ? theme.colorScheme.primary
-                : theme.dividerColor.withOpacity(0.30),
-            width: selected ? 1.5 : 1,
+                ? theme.colorScheme
+                .primary
+                : theme.dividerColor
+                .withOpacity(0.30),
+            width:
+            selected ? 1.5 : 1,
           ),
         ),
         child: Row(
@@ -1159,26 +1853,35 @@ class _MilestoneApp6CheckoutScreenState
             Icon(
               icon,
               color: selected
-                  ? theme.colorScheme.primary
-                  : theme.iconTheme.color,
+                  ? theme.colorScheme
+                  .primary
+                  : theme.iconTheme
+                  .color,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                CrossAxisAlignment
+                    .start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
+                    style:
+                    const TextStyle(
+                      fontWeight:
+                      FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(
+                    height: 3,
+                  ),
                   Text(
                     subtitle,
                     style: TextStyle(
                       fontSize: 11,
-                      color: theme.hintColor,
+                      color:
+                      theme.hintColor,
                     ),
                   ),
                 ],
@@ -1186,10 +1889,13 @@ class _MilestoneApp6CheckoutScreenState
             ),
             Radio<String>(
               value: value,
-              groupValue: _selectedPaymentMethod,
-              onChanged: (value) {
+              groupValue:
+              _selectedPaymentMethod,
+              onChanged:
+                  (value) {
                 setState(() {
-                  _selectedPaymentMethod = value;
+                  _selectedPaymentMethod =
+                      value;
                 });
               },
             ),
@@ -1203,31 +1909,41 @@ class _MilestoneApp6CheckoutScreenState
   /// SECURE PAYMENT
   /// ==============================================================
 
-  Widget _securePayment(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _securePayment(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding:
+      const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(15),
+        color:
+        theme.colorScheme.primary
+            .withOpacity(0.07),
+        borderRadius:
+        BorderRadius.circular(15),
       ),
       child: Row(
         children: [
           Icon(
             Icons.lock_outline_rounded,
             size: 20,
-            color: theme.colorScheme.primary,
+            color:
+            theme.colorScheme.primary,
           ),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
-              _selectedPaymentMethod == 'cod'
+              _selectedPaymentMethod ==
+                  'cod'
                   ? 'You will pay cash when your order is delivered.'
                   : 'Your online payment information is secure and protected.',
               style: TextStyle(
                 fontSize: 11,
-                color: theme.hintColor,
+                color:
+                theme.hintColor,
               ),
             ),
           ),
@@ -1240,52 +1956,76 @@ class _MilestoneApp6CheckoutScreenState
   /// BOTTOM PAY BAR
   /// ==============================================================
 
-  Widget _bottomPayBar(BuildContext context) {
-    final theme = Theme.of(context);
-    final orderController = context.watch<OrderController>();
+  Widget _bottomPayBar(
+      BuildContext context,
+      ) {
+    final theme =
+    Theme.of(context);
+
+    final orderController =
+    context.watch<OrderController>();
 
     final bool isProcessing =
         orderController.isLoading ||
-            orderController.isProcessingPayment;
+            orderController
+                .isProcessingPayment;
 
     final bool isCashOnDelivery =
-        _selectedPaymentMethod == 'cod';
+        _selectedPaymentMethod ==
+            'cod';
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding:
+      const EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        12,
+      ),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
+        color:
+        theme.scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
-            color: theme.dividerColor.withOpacity(0.25),
+            color:
+            theme.dividerColor
+                .withOpacity(0.25),
           ),
         ),
       ),
       child: Row(
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment
+                .start,
             children: [
               Text(
-                isCashOnDelivery ? 'Pay on Delivery' : 'Pay Now',
+                isCashOnDelivery
+                    ? 'Pay on Delivery'
+                    : 'Pay Now',
                 style: TextStyle(
-                  color: theme.hintColor,
+                  color:
+                  theme.hintColor,
                   fontSize: 11,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 '\$${totalPayment.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style:
+                const TextStyle(
                   fontSize: 19,
-                  fontWeight: FontWeight.w900,
+                  fontWeight:
+                  FontWeight.w900,
                 ),
               ),
             ],
           ),
           const SizedBox(width: 18),
           Expanded(
-            child: MilestoneApp6Button(
+            child:
+            MilestoneApp6Button(
               label: isProcessing
                   ? 'Processing...'
                   : isCashOnDelivery
@@ -1295,6 +2035,7 @@ class _MilestoneApp6CheckoutScreenState
                 if (isProcessing) {
                   return;
                 }
+
                 _payNow(context);
               },
             ),
@@ -1305,47 +2046,52 @@ class _MilestoneApp6CheckoutScreenState
   }
 
   /// ==============================================================
-  /// PAY NOW VALIDATION
+  /// PAY NOW
   /// ==============================================================
 
-  /// ==============================================================
-  /// PAY NOW VALIDATION
-  /// ==============================================================
+  Future<void> _payNow(
+      BuildContext context,
+      ) async {
+    final orderController =
+    context.read<OrderController>();
 
-  Future<void> _payNow(BuildContext context) async {
-    final orderController = context.read<OrderController>();
+    /// ------------------------------------------------------------
+    /// PREVENT DUPLICATE REQUEST
+    /// ------------------------------------------------------------
 
-    // Prevent duplicate order/payment requests.
     if (orderController.isLoading ||
-        orderController.isProcessingPayment) {
+        orderController
+            .isProcessingPayment) {
       return;
     }
 
-    // --------------------------------------------------------------
-    // CHECK ADDRESS
-    // --------------------------------------------------------------
+    /// ------------------------------------------------------------
+    /// CHECK ADDRESS
+    /// ------------------------------------------------------------
 
-    if (state.selectedAddress == null) {
+    if (state.selectedAddress ==
+        null) {
       _showSnackBar(
         'Please add a delivery address first.',
       );
       return;
     }
 
-    // --------------------------------------------------------------
-    // CHECK PAYMENT METHOD
-    // --------------------------------------------------------------
+    /// ------------------------------------------------------------
+    /// CHECK PAYMENT METHOD
+    /// ------------------------------------------------------------
 
-    if (_selectedPaymentMethod == null) {
+    if (_selectedPaymentMethod ==
+        null) {
       _showSnackBar(
         'Please select a payment method.',
       );
       return;
     }
 
-    // --------------------------------------------------------------
-    // CHECK ITEMS
-    // --------------------------------------------------------------
+    /// ------------------------------------------------------------
+    /// CHECK ITEMS
+    /// ------------------------------------------------------------
 
     if (_orderedItems.isEmpty) {
       _showSnackBar(
@@ -1354,23 +2100,70 @@ class _MilestoneApp6CheckoutScreenState
       return;
     }
 
-    // --------------------------------------------------------------
-    // SHOW CONFIRMATION
-    // --------------------------------------------------------------
+    /// ------------------------------------------------------------
+    /// SHOW CONFIRMATION
+    /// ------------------------------------------------------------
 
     final bool success =
-    await _showPaymentConfirmation(context);
+    await _showPaymentConfirmation(
+      context,
+    );
 
     if (!success || !mounted) {
       return;
     }
 
-    // --------------------------------------------------------------
-    // GET CREATED ORDER ID
-    // --------------------------------------------------------------
+    /// ============================================================
+    /// IMPORTANT
+    /// ============================================================
+    ///
+    /// For COD:
+    ///
+    ///     _completePayment()
+    ///     ↓
+    ///     Order API
+    ///     ↓
+    ///     Payment API
+    ///     ↓
+    ///     Order Details
+    ///
+    /// For Razorpay:
+    ///
+    ///     _completePayment()
+    ///     ↓
+    ///     Order API
+    ///     ↓
+    ///     Payment API
+    ///     ↓
+    ///     Razorpay Popup
+    ///     ↓
+    ///     Payment Success
+    ///     ↓
+    ///     Verify API
+    ///     ↓
+    ///     Order Details
+    ///
+    /// Therefore DO NOT navigate here for online payment.
+    /// The Razorpay success callback handles navigation.
+    /// ============================================================
+
+    if (_selectedPaymentMethod ==
+        'online') {
+      debugPrint(
+        'RAZORPAY FLOW STARTED.',
+      );
+
+      return;
+    }
+
+    /// ------------------------------------------------------------
+    /// COD ONLY
+    /// ------------------------------------------------------------
 
     final int? orderId =
-        context.read<OrderController>().orderId;
+        context
+            .read<OrderController>()
+            .orderId;
 
     if (orderId == null) {
       _showSnackBar(
@@ -1382,10 +2175,6 @@ class _MilestoneApp6CheckoutScreenState
     debugPrint(
       'NAVIGATING TO ORDER DETAILS: $orderId',
     );
-
-    // --------------------------------------------------------------
-    // GO TO ORDER DETAILS
-    // --------------------------------------------------------------
 
     context.go(
       '/order-details/$orderId',
@@ -1400,92 +2189,113 @@ class _MilestoneApp6CheckoutScreenState
       BuildContext context,
       ) async {
     final bool isCOD =
-        _selectedPaymentMethod == 'cod';
+        _selectedPaymentMethod ==
+            'cod';
 
-    final bool? confirmed = await showDialog<bool>(
+    final bool? confirmed =
+    await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        final theme = Theme.of(context);
+        final theme =
+        Theme.of(dialogContext);
 
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
+          shape:
+          RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(
+              22,
+            ),
           ),
           title: Text(
             isCOD
                 ? 'Confirm Order'
                 : 'Confirm Payment',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
+            style:
+            const TextStyle(
+              fontWeight:
+              FontWeight.w800,
             ),
           ),
           content: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize:
+            MainAxisSize.min,
             crossAxisAlignment:
-            CrossAxisAlignment.start,
+            CrossAxisAlignment
+                .start,
             children: [
               Text(
                 isCOD
                     ? 'Amount to pay on delivery'
                     : 'Amount to pay now',
                 style: TextStyle(
-                  color: theme.hintColor,
+                  color:
+                  theme.hintColor,
                   fontSize: 12,
                 ),
               ),
-
               const SizedBox(height: 5),
-
               Text(
                 '\$${amountPaidNow.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style:
+                const TextStyle(
                   fontSize: 26,
-                  fontWeight: FontWeight.w900,
+                  fontWeight:
+                  FontWeight.w900,
                 ),
               ),
-
               const SizedBox(height: 14),
-
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary
-                      .withOpacity(0.07),
+                width:
+                double.infinity,
+                padding:
+                const EdgeInsets.all(
+                  12,
+                ),
+                decoration:
+                BoxDecoration(
+                  color: theme
+                      .colorScheme
+                      .primary
+                      .withOpacity(
+                    0.07,
+                  ),
                   borderRadius:
-                  BorderRadius.circular(12),
+                  BorderRadius.circular(
+                    12,
+                  ),
                 ),
                 child: Text(
                   isCOD
                       ? 'Cash on Delivery'
                       : 'Online Payment',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+                  style:
+                  const TextStyle(
+                    fontWeight:
+                    FontWeight.w700,
                   ),
                 ),
               ),
-
               const SizedBox(height: 14),
-
               Text(
                 'Order total: '
                     '\$${totalPayment.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.hintColor,
+                  color:
+                  theme.hintColor,
                 ),
               ),
-
               const SizedBox(height: 10),
-
               Text(
                 isCOD
                     ? 'Are you sure you want to place '
                     'this order with Cash on Delivery?'
                     : 'Are you sure you want to continue '
                     'with this online payment?',
-                style: const TextStyle(
+                style:
+                const TextStyle(
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -1495,16 +2305,18 @@ class _MilestoneApp6CheckoutScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext)
-                    .pop(false);
+                Navigator.of(
+                  dialogContext,
+                ).pop(false);
               },
-              child: const Text('Cancel'),
+              child:
+              const Text('Cancel'),
             ),
-
             FilledButton(
               onPressed: () {
-                Navigator.of(dialogContext)
-                    .pop(true);
+                Navigator.of(
+                  dialogContext,
+                ).pop(true);
               },
               child: Text(
                 isCOD
@@ -1517,7 +2329,8 @@ class _MilestoneApp6CheckoutScreenState
       },
     );
 
-    if (!mounted || confirmed != true) {
+    if (!mounted ||
+        confirmed != true) {
       return false;
     }
 
@@ -1535,9 +2348,9 @@ class _MilestoneApp6CheckoutScreenState
     final cartController =
     context.read<CartController>();
 
-    // ============================================================
-    // 1. CHECK ADDRESS
-    // ============================================================
+    /// ============================================================
+    /// 1. CHECK ADDRESS
+    /// ============================================================
 
     final selectedAddress =
         state.selectedAddress;
@@ -1549,7 +2362,8 @@ class _MilestoneApp6CheckoutScreenState
       return false;
     }
 
-    final addressId = int.tryParse(
+    final int? addressId =
+    int.tryParse(
       selectedAddress.id.toString(),
     );
 
@@ -1560,11 +2374,11 @@ class _MilestoneApp6CheckoutScreenState
       return false;
     }
 
-    // ============================================================
-    // 2. CHECK PAYMENT METHOD
-    // ============================================================
+    /// ============================================================
+    /// 2. CHECK PAYMENT METHOD
+    /// ============================================================
 
-    final paymentMethod =
+    final String? paymentMethod =
         _selectedPaymentMethod;
 
     if (paymentMethod == null) {
@@ -1574,19 +2388,21 @@ class _MilestoneApp6CheckoutScreenState
       return false;
     }
 
-    // ============================================================
-    // 3. PLACE ORDER
-    // ============================================================
+    /// ============================================================
+    /// 3. PLACE ORDER
+    /// ============================================================
 
     debugPrint(
       '========== PLACE ORDER =========',
     );
 
-    final orderPlaced =
+    final bool orderPlaced =
     await orderController.placeOrder(
       addressId: addressId,
       deliveryInstructions:
-      _deliveryInstructionsController.text.trim(),
+      _deliveryInstructionsController
+          .text
+          .trim(),
     );
 
     if (!orderPlaced) {
@@ -1597,11 +2413,11 @@ class _MilestoneApp6CheckoutScreenState
       return false;
     }
 
-    // ============================================================
-    // 4. GET NEW ORDER ID
-    // ============================================================
+    /// ============================================================
+    /// 4. GET NEW ORDER ID
+    /// ============================================================
 
-    final newOrderId =
+    final int? newOrderId =
         orderController.orderId;
 
     if (newOrderId == null) {
@@ -1615,59 +2431,167 @@ class _MilestoneApp6CheckoutScreenState
       'NEW ORDER CREATED: $newOrderId',
     );
 
-    // ============================================================
-    // 5. PAYMENT API
-    // POST /orders/{orderId}/payment
-    // ============================================================
+    /// ============================================================
+    /// 5. PAYMENT API
+    ///
+    /// POST
+    /// /orders/{orderId}/payment
+    ///
+    /// COD:
+    /// {
+    ///   "payment_method": "cod"
+    /// }
+    ///
+    /// Razorpay:
+    /// {
+    ///   "payment_method": "razorpay"
+    /// }
+    /// ============================================================
 
-    final paymentSuccess =
+    final String backendPaymentMethod =
+    paymentMethod == 'online'
+        ? 'razorpay'
+        : 'cod';
+
+    debugPrint(
+      '========== PAYMENT API =========',
+    );
+
+    debugPrint(
+      'Backend Payment Method: '
+          '$backendPaymentMethod',
+    );
+
+    /// ------------------------------------------------------------
+    /// CALL PAYMENT API
+    /// ------------------------------------------------------------
+
+    final bool paymentSuccess =
     await orderController.makePayment(
       orderId: newOrderId,
       paymentRequest: {
-        'payment_method': paymentMethod,
+        'payment_method':
+        backendPaymentMethod,
       },
     );
+
+    /// ------------------------------------------------------------
+    /// PAYMENT API FAILED
+    /// ------------------------------------------------------------
 
     if (!paymentSuccess) {
       _showSnackBar(
         orderController.paymentErrorMessage ??
             'Payment failed.',
       );
+
       return false;
     }
 
     debugPrint(
-      'PAYMENT SUCCESS FOR ORDER: $newOrderId',
+      '========== PAYMENT API SUCCESS =========',
     );
 
-    // ============================================================
-    // 6. FETCH COMPLETE ORDER
-    // ============================================================
+    debugPrint(
+      'Payment created for order: '
+          '$newOrderId',
+    );
 
-    final orderInfoLoaded =
+    /// ============================================================
+    /// 6. RAZORPAY ONLINE PAYMENT
+    /// ============================================================
+
+    if (paymentMethod == 'online') {
+      final Map<String, dynamic>? paymentData =
+          orderController.paymentData;
+
+      /// ----------------------------------------------------------
+      /// CHECK PAYMENT DATA
+      /// ----------------------------------------------------------
+
+      if (paymentData == null) {
+        _showSnackBar(
+          'Razorpay payment data was not received.',
+        );
+        return false;
+      }
+
+      debugPrint(
+        '========== RAZORPAY PAYMENT DATA =========',
+      );
+
+      debugPrint(
+        '$paymentData',
+      );
+
+      /// ----------------------------------------------------------
+      /// OPEN RAZORPAY
+      /// ----------------------------------------------------------
+
+      _openRazorpayCheckout(
+        paymentData: paymentData,
+        backendOrderId: newOrderId,
+      );
+
+      /// ----------------------------------------------------------
+      /// IMPORTANT
+      ///
+      /// Do NOT:
+      /// - fetch order as completed
+      /// - clear cart
+      /// - navigate to order details
+      ///
+      /// here.
+      ///
+      /// Razorpay callback will do that after:
+      ///
+      /// payment success
+      ///       ↓
+      /// payment verify
+      ///       ↓
+      /// clear cart
+      ///       ↓
+      /// order details
+      /// ----------------------------------------------------------
+
+      return true;
+    }
+
+    /// ============================================================
+    /// 7. COD
+    /// ============================================================
+    ///
+    /// COD payment is already completed by the Payment API.
+    ///
+    /// Therefore we can fetch the final order and clear cart.
+    /// ============================================================
+
+    final bool orderInfoLoaded =
     await orderController.fetchOrderInfo(
       newOrderId,
     );
 
     if (!orderInfoLoaded) {
-      // Payment already succeeded.
-      // Do not report the complete order as failed.
       debugPrint(
         'WARNING: Order info could not be '
-            'refreshed after payment.',
+            'refreshed after COD payment.',
       );
     }
 
-    // ============================================================
-    // 7. CLEAR CART ONLY AFTER PAYMENT SUCCESS
-    // ============================================================
+    /// ------------------------------------------------------------
+    /// CLEAR CART FOR COD
+    /// ------------------------------------------------------------
 
     if (!widget.isBuyNow) {
       await cartController.clearCart();
     }
 
     debugPrint(
-      '========== ORDER COMPLETED ==========',
+      '========== COD ORDER COMPLETED =========',
+    );
+
+    debugPrint(
+      'COD ORDER ID: $newOrderId',
     );
 
     return true;

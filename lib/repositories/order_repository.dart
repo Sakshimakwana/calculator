@@ -1,6 +1,7 @@
+import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
+
 import '../core/constants/api_constants.dart';
 import '../core/network/api_service.dart';
-import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
 import '../models/order/my_orders_response_model.dart';
 
 class OrderRepository {
@@ -74,12 +75,53 @@ class OrderRepository {
 
     return OrderInfoResponseModel.fromJson(data);
   }
+
+  // ============================================================
+  // CREATE PAYMENT
+  // POST /orders/{orderId}/payment
+  //
+  // COD:
+  // {
+  //   "payment_method": "cod"
+  // }
+  //
+  // RAZORPAY:
+  // {
+  //   "payment_method": "razorpay"
+  // }
+  // ============================================================
+
   Future<Map<String, dynamic>> makePayment({
     required int orderId,
     required Map<String, dynamic> paymentData,
   }) async {
     final response = await apiService.post(
       ApiConstants.makePayment(orderId),
+      data: paymentData,
+    );
+
+    return Map<String, dynamic>.from(
+      response.data as Map,
+    );
+  }
+
+  // ============================================================
+  // VERIFY RAZORPAY PAYMENT
+  // POST /orders/{orderId}/payment/verify
+  //
+  // {
+  //   "razorpay_order_id": "...",
+  //   "razorpay_payment_id": "...",
+  //   "razorpay_signature": "..."
+  // }
+  // ============================================================
+
+  Future<Map<String, dynamic>> verifyPayment({
+    required int orderId,
+    required Map<String, dynamic> paymentData,
+  }) async {
+    final response = await apiService.post(
+      ApiConstants.verifyPayment(orderId),
       data: paymentData,
     );
 

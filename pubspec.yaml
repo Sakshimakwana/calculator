@@ -34,6 +34,7 @@ dependencies:
   path_provider: ^2.1.5
   syncfusion_flutter_pdfviewer: ^35.1.37
   file_saver: ^0.6.0
+  razorpay_flutter: ^1.4.7
 
 dev_dependencies:
   flutter_test:

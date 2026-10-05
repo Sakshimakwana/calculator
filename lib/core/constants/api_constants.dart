@@ -63,4 +63,7 @@ class ApiConstants {
   static String makePayment(int orderId) {
     return '/orders/$orderId/payment';
   }
+  static String verifyPayment(int orderId) {
+    return '/orders/$orderId/payment/verify';
+  }
 }

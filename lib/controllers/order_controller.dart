@@ -10,11 +10,19 @@ class OrderController extends ChangeNotifier {
   OrderController(this.repository);
 
   // ============================================================
-  // PLACE ORDER
+  // PAYMENT STATE
   // ============================================================
+
   bool isProcessingPayment = false;
+
   String? paymentErrorMessage;
+
   Map<String, dynamic>? paymentData;
+
+  // ============================================================
+  // PLACE ORDER STATE
+  // ============================================================
+
   bool isLoading = false;
 
   String? errorMessage;
@@ -22,6 +30,11 @@ class OrderController extends ChangeNotifier {
   int? orderId;
 
   Map<String, dynamic>? orderData;
+
+  // ============================================================
+  // PLACE ORDER
+  // POST /orders/store
+  // ============================================================
 
   Future<bool> placeOrder({
     required int addressId,
@@ -37,10 +50,18 @@ class OrderController extends ChangeNotifier {
 
       notifyListeners();
 
+      debugPrint('========== PLACE ORDER START ==========');
+      debugPrint('Address ID: $addressId');
+      debugPrint(
+        'Delivery Instructions: $deliveryInstructions',
+      );
+
       final response = await repository.placeOrder(
         addressId: addressId,
         deliveryInstructions: deliveryInstructions,
       );
+
+      debugPrint('PLACE ORDER RESPONSE: $response');
 
       orderData = response['data'];
 
@@ -52,6 +73,17 @@ class OrderController extends ChangeNotifier {
 
       final bool success =
           response['success'] == true;
+
+      if (success) {
+        debugPrint(
+            '========== ORDER CREATED =========='
+        );
+        debugPrint('NEW ORDER ID: $orderId');
+      } else {
+        errorMessage =
+            response['message']?.toString() ??
+                'Unable to place order.';
+      }
 
       isLoading = false;
 
@@ -66,6 +98,14 @@ class OrderController extends ChangeNotifier {
               e.message ??
               'Unable to place order.';
 
+      debugPrint(
+        'PLACE ORDER STATUS: ${e.response?.statusCode}',
+      );
+
+      debugPrint(
+        'PLACE ORDER ERROR: ${e.response?.data}',
+      );
+
       notifyListeners();
 
       return false;
@@ -73,6 +113,10 @@ class OrderController extends ChangeNotifier {
       isLoading = false;
 
       errorMessage = e.toString();
+
+      debugPrint(
+        'PLACE ORDER ERROR: $e',
+      );
 
       notifyListeners();
 
@@ -188,7 +232,9 @@ class OrderController extends ChangeNotifier {
     if (myOrdersCurrentPage >=
         myOrdersLastPage) {
       myOrdersHasMore = false;
+
       notifyListeners();
+
       return false;
     }
 
@@ -304,6 +350,18 @@ class OrderController extends ChangeNotifier {
       return false;
     }
   }
+
+  // ============================================================
+  // CREATE PAYMENT
+  // POST /orders/{orderId}/payment
+  //
+  // COD:
+  // payment_method = cod
+  //
+  // RAZORPAY:
+  // payment_method = razorpay
+  // ============================================================
+
   Future<bool> makePayment({
     required int orderId,
     required Map<String, dynamic> paymentRequest,
@@ -316,26 +374,56 @@ class OrderController extends ChangeNotifier {
       isProcessingPayment = true;
       paymentErrorMessage = null;
 
+      // Clear previous payment response.
+      paymentData = null;
+
       notifyListeners();
 
-      debugPrint('========== PAYMENT START ==========');
-      debugPrint('Order ID: $orderId');
-      debugPrint('Payment Request: $paymentRequest');
+      debugPrint(
+        '========== PAYMENT START ==========',
+      );
 
-      final response = await repository.makePayment(
+      debugPrint(
+        'Order ID: $orderId',
+      );
+
+      debugPrint(
+        'Payment Request: $paymentRequest',
+      );
+
+      final response =
+      await repository.makePayment(
         orderId: orderId,
         paymentData: paymentRequest,
       );
 
-      debugPrint('PAYMENT RESPONSE: $response');
+      debugPrint(
+        'PAYMENT RESPONSE: $response',
+      );
 
-      final success = response['success'] == true;
+      final bool success =
+          response['success'] == true;
 
       if (success) {
-        paymentData = response['data'];
+        final dynamic data =
+        response['data'];
 
-        debugPrint('========== PAYMENT SUCCESS ==========');
-        debugPrint('Order ID: $orderId');
+        if (data is Map) {
+          paymentData =
+          Map<String, dynamic>.from(data);
+        }
+
+        debugPrint(
+            '========== PAYMENT CREATED =========='
+        );
+
+        debugPrint(
+          'Backend Order ID: $orderId',
+        );
+
+        debugPrint(
+          'Payment Data: $paymentData',
+        );
       } else {
         paymentErrorMessage =
             response['message']?.toString() ??
@@ -343,6 +431,7 @@ class OrderController extends ChangeNotifier {
       }
 
       isProcessingPayment = false;
+
       notifyListeners();
 
       return success;
@@ -351,19 +440,23 @@ class OrderController extends ChangeNotifier {
 
       if (e.response?.data is Map) {
         paymentErrorMessage =
-            e.response?.data['message']?.toString() ??
+            e.response?.data['message']
+                ?.toString() ??
                 'Payment failed.';
       } else {
         paymentErrorMessage =
-            e.message ?? 'Payment failed.';
+            e.message ??
+                'Payment failed.';
       }
 
       debugPrint(
-        'PAYMENT STATUS: ${e.response?.statusCode}',
+        'PAYMENT STATUS: '
+            '${e.response?.statusCode}',
       );
 
       debugPrint(
-        'PAYMENT ERROR: ${e.response?.data}',
+        'PAYMENT ERROR: '
+            '${e.response?.data}',
       );
 
       notifyListeners();
@@ -371,7 +464,147 @@ class OrderController extends ChangeNotifier {
       return false;
     } catch (e) {
       isProcessingPayment = false;
+
       paymentErrorMessage = e.toString();
+
+      debugPrint(
+        'PAYMENT ERROR: $e',
+      );
+
+      notifyListeners();
+
+      return false;
+    }
+  }
+
+  // ============================================================
+  // VERIFY RAZORPAY PAYMENT
+  // POST /orders/{orderId}/payment/verify
+  // ============================================================
+
+  Future<bool> verifyRazorpayPayment({
+    required int orderId,
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+  }) async {
+    if (isProcessingPayment) {
+      return false;
+    }
+
+    try {
+      isProcessingPayment = true;
+      paymentErrorMessage = null;
+
+      notifyListeners();
+
+      debugPrint(
+          '========== RAZORPAY VERIFY START =========='
+      );
+
+      debugPrint(
+        'Backend Order ID: $orderId',
+      );
+
+      debugPrint(
+        'Razorpay Order ID: $razorpayOrderId',
+      );
+
+      debugPrint(
+        'Razorpay Payment ID: $razorpayPaymentId',
+      );
+
+      debugPrint(
+        'Razorpay Signature: $razorpaySignature',
+      );
+
+      final response =
+      await repository.verifyPayment(
+        orderId: orderId,
+        paymentData: {
+          'razorpay_order_id':
+          razorpayOrderId,
+          'razorpay_payment_id':
+          razorpayPaymentId,
+          'razorpay_signature':
+          razorpaySignature,
+        },
+      );
+
+      debugPrint(
+        'RAZORPAY VERIFY RESPONSE: '
+            '$response',
+      );
+
+      final bool success =
+          response['success'] == true;
+
+      if (success) {
+        final dynamic data =
+        response['data'];
+
+        if (data is Map) {
+          paymentData =
+          Map<String, dynamic>.from(data);
+        }
+
+        debugPrint(
+            '========== RAZORPAY VERIFIED =========='
+        );
+
+        debugPrint(
+          'Backend Order ID: $orderId',
+        );
+
+        debugPrint(
+          'Payment Status: paid',
+        );
+      } else {
+        paymentErrorMessage =
+            response['message']?.toString() ??
+                'Payment verification failed.';
+      }
+
+      isProcessingPayment = false;
+
+      notifyListeners();
+
+      return success;
+    } on DioException catch (e) {
+      isProcessingPayment = false;
+
+      if (e.response?.data is Map) {
+        paymentErrorMessage =
+            e.response?.data['message']
+                ?.toString() ??
+                'Payment verification failed.';
+      } else {
+        paymentErrorMessage =
+            e.message ??
+                'Payment verification failed.';
+      }
+
+      debugPrint(
+        'VERIFY STATUS: '
+            '${e.response?.statusCode}',
+      );
+
+      debugPrint(
+        'VERIFY ERROR: '
+            '${e.response?.data}',
+      );
+
+      notifyListeners();
+
+      return false;
+    } catch (e) {
+      isProcessingPayment = false;
+
+      paymentErrorMessage = e.toString();
+
+      debugPrint(
+        'VERIFY ERROR: $e',
+      );
 
       notifyListeners();
 
