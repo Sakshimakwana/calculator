@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/cart_controller.dart';
 import '../../controllers/order_controller.dart';
-import '../../models/cart_response_model.dart';
+import '../../models/cart/cart_response_model.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
@@ -17,12 +17,14 @@ import '../widgets/milestone_app_6_image.dart';
 class MilestoneApp6CheckoutArgs {
   final MilestoneApp6State state;
   final MilestoneApp6CartItem? buyNowItem;
+  final VoidCallback? onPressed;
 
 
 
   const MilestoneApp6CheckoutArgs({
     required this.state,
     this.buyNowItem,
+    required this.onPressed,
   });
 }
 
@@ -111,6 +113,9 @@ class _MilestoneApp6CheckoutScreenState
   final TextEditingController _couponController =
   TextEditingController();
 
+  final TextEditingController _deliveryInstructionsController =
+  TextEditingController();
+
   /// ==============================================================
   /// COUPON
   /// ==============================================================
@@ -121,19 +126,13 @@ class _MilestoneApp6CheckoutScreenState
   /// PAYMENT
   /// ==============================================================
 
-  String? _selectedPaymentType;
+  String? _selectedPaymentMethod;
 
   /// ==============================================================
   /// ORDER ITEMS
   /// ==============================================================
 
   late List<MilestoneApp6CartItem> _orderedItems;
-
-  /// ==============================================================
-  /// PROCESSING
-  /// ==============================================================
-
-  bool _isProcessingPayment = false;
 
   /// ==============================================================
   /// INIT
@@ -169,7 +168,7 @@ class _MilestoneApp6CheckoutScreenState
 
   void _createOrderItems() {
     if (widget.isBuyNow) {
-      final buyNowItem = widget.buyNowItem;
+      final buyNowItem = widget.resolvedBuyNowItem;
 
       if (buyNowItem == null) {
         _orderedItems = [];
@@ -201,7 +200,6 @@ class _MilestoneApp6CheckoutScreenState
       unitPrice: item.unitPrice,
       quantity: item.quantity,
     );
-
   }
 
   /// ==============================================================
@@ -211,6 +209,7 @@ class _MilestoneApp6CheckoutScreenState
   @override
   void dispose() {
     _couponController.dispose();
+    _deliveryInstructionsController.dispose();
     super.dispose();
   }
 
@@ -297,7 +296,7 @@ class _MilestoneApp6CheckoutScreenState
   /// ==============================================================
 
   double get amountPaidNow {
-    if (_selectedPaymentType == 'Cash on Delivery') {
+    if (_selectedPaymentMethod == 'cod') {
       return 0.0;
     }
 
@@ -361,6 +360,70 @@ class _MilestoneApp6CheckoutScreenState
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+  Widget _emptyCheckout(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () {
+            context.pop();
+          },
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+          ),
+        ),
+        title: const Text(
+          'Checkout',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.shopping_cart_outlined,
+                size: 72,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Your cart is empty',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add some delicious items before checking out.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: theme.hintColor,
+                ),
+              ),
+              const SizedBox(height: 24),
+              MilestoneApp6Button(
+                label: 'GO TO HOME',
+                onPressed: () {
+                  context.go('/');
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -494,12 +557,10 @@ class _MilestoneApp6CheckoutScreenState
   /// STEP
   /// ==============================================================
 
-  Widget _step(
-      BuildContext context,
+  Widget _step(BuildContext context,
       String number,
       String title,
-      bool active,
-      ) {
+      bool active,) {
     final theme = Theme.of(context);
 
     return Column(
@@ -747,15 +808,16 @@ class _MilestoneApp6CheckoutScreenState
           ),
           const SizedBox(height: 14),
           ..._orderedItems.map(
-                (item) => Padding(
-              padding: const EdgeInsets.only(
-                bottom: 12,
-              ),
-              child: _checkoutItem(
-                context,
-                item,
-              ),
-            ),
+                (item) =>
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 12,
+                  ),
+                  child: _checkoutItem(
+                    context,
+                    item,
+                  ),
+                ),
           ),
         ],
       ),
@@ -766,10 +828,8 @@ class _MilestoneApp6CheckoutScreenState
   /// CHECKOUT ITEM
   /// ==============================================================
 
-  Widget _checkoutItem(
-      BuildContext context,
-      MilestoneApp6CartItem item,
-      ) {
+  Widget _checkoutItem(BuildContext context,
+      MilestoneApp6CartItem item,) {
     final theme = Theme.of(context);
 
     return Row(
@@ -981,8 +1041,7 @@ class _MilestoneApp6CheckoutScreenState
   /// SUMMARY ROW
   /// ==============================================================
 
-  Widget _summaryRow(
-      String title,
+  Widget _summaryRow(String title,
       String value, {
         bool bold = false,
         Color? valueColor,
@@ -1034,12 +1093,16 @@ class _MilestoneApp6CheckoutScreenState
         children: [
           const Text(
             'Payment Method',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 12),
           _paymentOption(
             context,
             title: 'Online Payment',
+            value: 'online',
             subtitle: 'Pay securely online using Razorpay',
             icon: Icons.account_balance_wallet_outlined,
           ),
@@ -1047,6 +1110,7 @@ class _MilestoneApp6CheckoutScreenState
           _paymentOption(
             context,
             title: 'Cash on Delivery',
+            value: 'cod',
             subtitle: 'Pay when your order is delivered',
             icon: Icons.payments_outlined,
           ),
@@ -1059,27 +1123,24 @@ class _MilestoneApp6CheckoutScreenState
   /// PAYMENT OPTION
   /// ==============================================================
 
-  Widget _paymentOption(
-      BuildContext context, {
-        required String title,
-        required String subtitle,
-        required IconData icon,
-      }) {
+  Widget _paymentOption(BuildContext context, {
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+  }) {
     final theme = Theme.of(context);
-
-    final bool selected = _selectedPaymentType == title;
+    final bool selected = _selectedPaymentMethod == value;
 
     return InkWell(
       borderRadius: BorderRadius.circular(15),
       onTap: () {
         setState(() {
-          _selectedPaymentType = title;
+          _selectedPaymentMethod = value;
         });
       },
       child: AnimatedContainer(
-        duration: const Duration(
-          milliseconds: 180,
-        ),
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: selected
@@ -1124,11 +1185,11 @@ class _MilestoneApp6CheckoutScreenState
               ),
             ),
             Radio<String>(
-              value: title,
-              groupValue: _selectedPaymentType,
+              value: value,
+              groupValue: _selectedPaymentMethod,
               onChanged: (value) {
                 setState(() {
-                  _selectedPaymentType = value;
+                  _selectedPaymentMethod = value;
                 });
               },
             ),
@@ -1161,7 +1222,7 @@ class _MilestoneApp6CheckoutScreenState
           const SizedBox(width: 9),
           Expanded(
             child: Text(
-              _selectedPaymentType == 'Cash on Delivery'
+              _selectedPaymentMethod == 'cod'
                   ? 'You will pay cash when your order is delivered.'
                   : 'Your online payment information is secure and protected.',
               style: TextStyle(
@@ -1181,17 +1242,17 @@ class _MilestoneApp6CheckoutScreenState
 
   Widget _bottomPayBar(BuildContext context) {
     final theme = Theme.of(context);
+    final orderController = context.watch<OrderController>();
+
+    final bool isProcessing =
+        orderController.isLoading ||
+            orderController.isProcessingPayment;
 
     final bool isCashOnDelivery =
-        _selectedPaymentType == 'Cash on Delivery';
+        _selectedPaymentMethod == 'cod';
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        12,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
@@ -1206,7 +1267,7 @@ class _MilestoneApp6CheckoutScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isCashOnDelivery ? 'Place Order' : 'Pay Now',
+                isCashOnDelivery ? 'Pay on Delivery' : 'Pay Now',
                 style: TextStyle(
                   color: theme.hintColor,
                   fontSize: 11,
@@ -1214,9 +1275,7 @@ class _MilestoneApp6CheckoutScreenState
               ),
               const SizedBox(height: 2),
               Text(
-                isCashOnDelivery
-                    ? '\$${totalPayment.toStringAsFixed(2)}'
-                    : '\$${(_selectedPaymentType == 'Cash on Delivery' ? totalPayment : amountPaidNow).toStringAsFixed(2)}',
+                '\$${totalPayment.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.w900,
@@ -1227,14 +1286,15 @@ class _MilestoneApp6CheckoutScreenState
           const SizedBox(width: 18),
           Expanded(
             child: MilestoneApp6Button(
-              label: _isProcessingPayment
+              label: isProcessing
                   ? 'Processing...'
-                  : 'Pay Now',
+                  : isCashOnDelivery
+                  ? 'PLACE ORDER'
+                  : 'PAY NOW',
               onPressed: () {
-                if (_isProcessingPayment) {
+                if (isProcessing) {
                   return;
                 }
-
                 _payNow(context);
               },
             ),
@@ -1248,10 +1308,22 @@ class _MilestoneApp6CheckoutScreenState
   /// PAY NOW VALIDATION
   /// ==============================================================
 
-  void _payNow(BuildContext context) {
-    if (_isProcessingPayment) {
+  /// ==============================================================
+  /// PAY NOW VALIDATION
+  /// ==============================================================
+
+  Future<void> _payNow(BuildContext context) async {
+    final orderController = context.read<OrderController>();
+
+    // Prevent duplicate order/payment requests.
+    if (orderController.isLoading ||
+        orderController.isProcessingPayment) {
       return;
     }
+
+    // --------------------------------------------------------------
+    // CHECK ADDRESS
+    // --------------------------------------------------------------
 
     if (state.selectedAddress == null) {
       _showSnackBar(
@@ -1260,12 +1332,20 @@ class _MilestoneApp6CheckoutScreenState
       return;
     }
 
-    if (_selectedPaymentType == null) {
+    // --------------------------------------------------------------
+    // CHECK PAYMENT METHOD
+    // --------------------------------------------------------------
+
+    if (_selectedPaymentMethod == null) {
       _showSnackBar(
         'Please select a payment method.',
       );
       return;
     }
+
+    // --------------------------------------------------------------
+    // CHECK ITEMS
+    // --------------------------------------------------------------
 
     if (_orderedItems.isEmpty) {
       _showSnackBar(
@@ -1274,16 +1354,54 @@ class _MilestoneApp6CheckoutScreenState
       return;
     }
 
-    _showPaymentConfirmation(context);
+    // --------------------------------------------------------------
+    // SHOW CONFIRMATION
+    // --------------------------------------------------------------
+
+    final bool success =
+    await _showPaymentConfirmation(context);
+
+    if (!success || !mounted) {
+      return;
+    }
+
+    // --------------------------------------------------------------
+    // GET CREATED ORDER ID
+    // --------------------------------------------------------------
+
+    final int? orderId =
+        context.read<OrderController>().orderId;
+
+    if (orderId == null) {
+      _showSnackBar(
+        'Order ID was not received.',
+      );
+      return;
+    }
+
+    debugPrint(
+      'NAVIGATING TO ORDER DETAILS: $orderId',
+    );
+
+    // --------------------------------------------------------------
+    // GO TO ORDER DETAILS
+    // --------------------------------------------------------------
+
+    context.go(
+      '/order-details/$orderId',
+    );
   }
 
   /// ==============================================================
   /// PAYMENT CONFIRMATION
   /// ==============================================================
 
-  Future<void> _showPaymentConfirmation(
+  Future<bool> _showPaymentConfirmation(
       BuildContext context,
       ) async {
+    final bool isCOD =
+        _selectedPaymentMethod == 'cod';
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -1295,7 +1413,7 @@ class _MilestoneApp6CheckoutScreenState
             borderRadius: BorderRadius.circular(22),
           ),
           title: Text(
-            _selectedPaymentType == 'Cash on Delivery'
+            isCOD
                 ? 'Confirm Order'
                 : 'Confirm Payment',
             style: const TextStyle(
@@ -1304,10 +1422,11 @@ class _MilestoneApp6CheckoutScreenState
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
             children: [
               Text(
-                _selectedPaymentType == 'Cash on Delivery'
+                isCOD
                     ? 'Amount to pay on delivery'
                     : 'Amount to pay now',
                 style: TextStyle(
@@ -1315,7 +1434,9 @@ class _MilestoneApp6CheckoutScreenState
                   fontSize: 12,
                 ),
               ),
+
               const SizedBox(height: 5),
+
               Text(
                 '\$${amountPaidNow.toStringAsFixed(2)}',
                 style: const TextStyle(
@@ -1323,36 +1444,48 @@ class _MilestoneApp6CheckoutScreenState
                   fontWeight: FontWeight.w900,
                 ),
               ),
+
               const SizedBox(height: 14),
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                  theme.colorScheme.primary.withOpacity(0.07),
-                  borderRadius: BorderRadius.circular(12),
+                  color: theme.colorScheme.primary
+                      .withOpacity(0.07),
+                  borderRadius:
+                  BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _selectedPaymentType ?? 'Payment',
+                  isCOD
+                      ? 'Cash on Delivery'
+                      : 'Online Payment',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
+
               const SizedBox(height: 14),
+
               Text(
-                'Order total: \$${totalPayment.toStringAsFixed(2)}',
+                'Order total: '
+                    '\$${totalPayment.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.hintColor,
                 ),
               ),
+
               const SizedBox(height: 10),
+
               Text(
-                _selectedPaymentType == 'Cash on Delivery'
-                    ? 'Are you sure you want to place this order with Cash on Delivery?'
-                    : 'Are you sure you want to continue with this online payment?',
-                style: TextStyle(
+                isCOD
+                    ? 'Are you sure you want to place '
+                    'this order with Cash on Delivery?'
+                    : 'Are you sure you want to continue '
+                    'with this online payment?',
+                style: const TextStyle(
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -1362,16 +1495,19 @@ class _MilestoneApp6CheckoutScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(false);
+                Navigator.of(dialogContext)
+                    .pop(false);
               },
               child: const Text('Cancel'),
             ),
+
             FilledButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(true);
+                Navigator.of(dialogContext)
+                    .pop(true);
               },
               child: Text(
-                _selectedPaymentType == 'Cash on Delivery'
+                isCOD
                     ? 'Confirm Order'
                     : 'Confirm Pay',
               ),
@@ -1381,345 +1517,159 @@ class _MilestoneApp6CheckoutScreenState
       },
     );
 
-    if (!mounted) {
-      return;
+    if (!mounted || confirmed != true) {
+      return false;
     }
 
-    if (confirmed != true) {
-      return;
-    }
-
-    await _completePayment();
+    return _completePayment();
   }
 
   /// ==============================================================
   /// COMPLETE PAYMENT
   /// ==============================================================
 
-  Future<void> _completePayment() async {
-    if (_isProcessingPayment) {
-      return;
-    }
+  Future<bool> _completePayment() async {
+    final orderController =
+    context.read<OrderController>();
+
+    final cartController =
+    context.read<CartController>();
 
     // ============================================================
-    // GET SELECTED ADDRESS
+    // 1. CHECK ADDRESS
     // ============================================================
 
-    final selectedAddress = state.selectedAddress;
+    final selectedAddress =
+        state.selectedAddress;
 
     if (selectedAddress == null) {
       _showSnackBar(
-        'Please add a delivery address first.',
+        'Please select a delivery address.',
       );
-      return;
+      return false;
     }
 
-    // ============================================================
-    // GET ADDRESS ID
-    // ============================================================
-
-    final int? addressId = int.tryParse(
+    final addressId = int.tryParse(
       selectedAddress.id.toString(),
     );
 
-    if (addressId == null || addressId <= 0) {
+    if (addressId == null) {
       _showSnackBar(
         'Invalid delivery address.',
       );
-      return;
+      return false;
     }
 
-    debugPrint('');
-    debugPrint('========================================');
-    debugPrint('          PAY NOW CLICKED');
-    debugPrint('========================================');
-    debugPrint('ADDRESS ID: $addressId');
-    debugPrint(
-      'ADDRESS: ${selectedAddress.fullAddress}',
-    );
-    debugPrint(
-      'ITEM COUNT: ${_orderedItems.length}',
-    );
-    debugPrint(
-      'TOTAL: ${totalPayment.toStringAsFixed(2)}',
-    );
-    debugPrint('========================================');
-
     // ============================================================
-    // CHECK ITEMS
+    // 2. CHECK PAYMENT METHOD
     // ============================================================
 
-    if (_orderedItems.isEmpty) {
+    final paymentMethod =
+        _selectedPaymentMethod;
+
+    if (paymentMethod == null) {
       _showSnackBar(
-        'There are no items to checkout.',
+        'Please select a payment method.',
       );
-      return;
+      return false;
     }
 
     // ============================================================
-    // START PROCESSING
+    // 3. PLACE ORDER
     // ============================================================
 
-    setState(() {
-      _isProcessingPayment = true;
-    });
-
-    try {
-      // ==========================================================
-      // PAYMENT TYPE
-      // ==========================================================
-
-      final String paymentType =
-          _selectedPaymentType ?? 'Online Payment';
-
-      // ==========================================================
-      // ORDER CONTROLLER
-      // ==========================================================
-
-      final orderController =
-      context.read<OrderController>();
-
-      // ==========================================================
-      // CREATE ORDER USING API
-      // ==========================================================
-
-      debugPrint('');
-      debugPrint('========================================');
-      debugPrint('          CALLING ORDER API');
-      debugPrint('========================================');
-      debugPrint('METHOD: POST');
-      debugPrint('ENDPOINT: /orders/store');
-      debugPrint('ADDRESS ID: $addressId');
-      debugPrint('========================================');
-
-      final bool orderCreated =
-      await orderController.placeOrder(
-        addressId: addressId,
-        deliveryInstructions: null,
-      );
-
-      // ==========================================================
-      // CHECK WIDGET
-      // ==========================================================
-
-      if (!mounted) {
-        return;
-      }
-
-      // ==========================================================
-      // ORDER API FAILED
-      // ==========================================================
-
-      if (!orderCreated) {
-        debugPrint('');
-        debugPrint('========================================');
-        debugPrint('          ORDER API FAILED');
-        debugPrint('========================================');
-        debugPrint(
-          'ERROR: ${orderController.errorMessage}',
-        );
-        debugPrint('========================================');
-
-        _showSnackBar(
-          orderController.errorMessage ??
-              'Unable to place order.',
-        );
-
-        return;
-      }
-
-      // ==========================================================
-      // GET BACKEND ORDER ID
-      // ==========================================================
-
-      final int? backendOrderId =
-          orderController.orderId;
-
-      debugPrint('');
-      debugPrint('========================================');
-      debugPrint('          ORDER CREATED SUCCESSFULLY');
-      debugPrint('========================================');
-      debugPrint(
-        'ORDER ID: $backendOrderId',
-      );
-      debugPrint(
-        'STATUS: ${orderController.orderData?['status']}',
-      );
-      debugPrint(
-        'BACKEND TOTAL: ${orderController.orderData?['total']}',
-      );
-      debugPrint(
-        'ADDRESS ID: ${orderController.orderData?['address_id']}',
-      );
-      debugPrint('========================================');
-
-      // ==========================================================
-      // CREATE SAFE ORDER ITEM SNAPSHOT
-      // ==========================================================
-
-      final List<MilestoneApp6CartItem> orderItems =
-      _orderedItems
-          .map(
-            (item) => _copyCartItem(item),
-      )
-          .toList();
-
-      // Save local values before clearing anything.
-      final double subtotalValue = subtotal;
-      final double shippingValue = shipping;
-      final double discountValue = discount;
-      final double totalValue = totalPayment;
-      final double minimumValue = minimumPayment;
-      final double paidValue = amountPaidNow;
-
-      // ==========================================================
-      // CLEAR API CART
-      // ==========================================================
-
-      if (!widget.isBuyNow) {
-        debugPrint('');
-        debugPrint('========================================');
-        debugPrint('          CLEARING API CART');
-        debugPrint('========================================');
-
-        final bool cartCleared =
-        await context
-            .read<CartController>()
-            .clearCart();
-
-        debugPrint(
-          'API CART CLEARED: $cartCleared',
-        );
-
-        if (!cartCleared) {
-          debugPrint(
-            'WARNING: Order was created but cart '
-                'could not be cleared.',
-          );
-        }
-      }
-
-      // ==========================================================
-      // CHECK WIDGET
-      // ==========================================================
-
-      if (!mounted) {
-        return;
-      }
-
-      // ==========================================================
-      // SUCCESS MESSAGE
-      // ==========================================================
-
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Your order confirmed successfully!',
-            ),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-
-      // ==========================================================
-      // ORDER DETAILS
-      // ==========================================================
-
-      context.push(
-        '/order-details',
-        extra: {
-          'state': state,
-
-          // Real backend order ID
-          'orderId': backendOrderId,
-
-          // Existing checkout data
-          'items': orderItems,
-          'paymentType': paymentType,
-          'subtotal': subtotalValue,
-          'shipping': shippingValue,
-          'discount': discountValue,
-          'totalPayment': totalValue,
-          'minimumPayment': minimumValue,
-          'amountPaidNow': paidValue,
-        },
-      );
-    } catch (e, stackTrace) {
-      debugPrint('');
-      debugPrint('========================================');
-      debugPrint('          ORDER API ERROR');
-      debugPrint('========================================');
-      debugPrint('ERROR: $e');
-      debugPrint('STACK TRACE: $stackTrace');
-      debugPrint('========================================');
-
-      if (mounted) {
-        _showSnackBar(
-          'Something went wrong while placing your order.',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessingPayment = false;
-        });
-      }
-    }
-  }
-
-  /// ==============================================================
-  /// EMPTY CHECKOUT
-  /// ==============================================================
-
-  Widget _emptyCheckout(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Checkout',
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.shopping_cart_outlined,
-                size: 65,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'No items to checkout',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Add some food before continuing.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: 180,
-                child: MilestoneApp6Button(
-                  label: 'Browse Food',
-                  onPressed: () {
-                    context.go('/home');
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    debugPrint(
+      '========== PLACE ORDER =========',
     );
+
+    final orderPlaced =
+    await orderController.placeOrder(
+      addressId: addressId,
+      deliveryInstructions:
+      _deliveryInstructionsController.text.trim(),
+    );
+
+    if (!orderPlaced) {
+      _showSnackBar(
+        orderController.errorMessage ??
+            'Unable to place order.',
+      );
+      return false;
+    }
+
+    // ============================================================
+    // 4. GET NEW ORDER ID
+    // ============================================================
+
+    final newOrderId =
+        orderController.orderId;
+
+    if (newOrderId == null) {
+      _showSnackBar(
+        'Order ID was not received.',
+      );
+      return false;
+    }
+
+    debugPrint(
+      'NEW ORDER CREATED: $newOrderId',
+    );
+
+    // ============================================================
+    // 5. PAYMENT API
+    // POST /orders/{orderId}/payment
+    // ============================================================
+
+    final paymentSuccess =
+    await orderController.makePayment(
+      orderId: newOrderId,
+      paymentRequest: {
+        'payment_method': paymentMethod,
+      },
+    );
+
+    if (!paymentSuccess) {
+      _showSnackBar(
+        orderController.paymentErrorMessage ??
+            'Payment failed.',
+      );
+      return false;
+    }
+
+    debugPrint(
+      'PAYMENT SUCCESS FOR ORDER: $newOrderId',
+    );
+
+    // ============================================================
+    // 6. FETCH COMPLETE ORDER
+    // ============================================================
+
+    final orderInfoLoaded =
+    await orderController.fetchOrderInfo(
+      newOrderId,
+    );
+
+    if (!orderInfoLoaded) {
+      // Payment already succeeded.
+      // Do not report the complete order as failed.
+      debugPrint(
+        'WARNING: Order info could not be '
+            'refreshed after payment.',
+      );
+    }
+
+    // ============================================================
+    // 7. CLEAR CART ONLY AFTER PAYMENT SUCCESS
+    // ============================================================
+
+    if (!widget.isBuyNow) {
+      await cartController.clearCart();
+    }
+
+    debugPrint(
+      '========== ORDER COMPLETED ==========',
+    );
+
+    return true;
   }
 }

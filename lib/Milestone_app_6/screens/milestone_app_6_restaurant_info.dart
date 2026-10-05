@@ -11,7 +11,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/data/milestone_app_6_
 import 'package:app_matic_tech_flutter_app/models/restaurant_menu_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_image.dart';
-import '../../models/cart_response_model.dart';
+import '../../models/cart/cart_response_model.dart';
 
 class MilestoneApp6RestaurantInfoScreen extends StatefulWidget {
   final MilestoneApp6Restaurant restaurant;

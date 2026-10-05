@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_order.dart';
 import '../state/milestone_app_6_state.dart';
+import 'package:provider/provider.dart';
+import 'package:app_matic_tech_flutter_app/controllers/order_controller.dart';
+import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
 
 class MilestoneApp6MyOrdersScreen extends StatefulWidget {
   final MilestoneApp6State state;
@@ -48,11 +51,17 @@ class _MilestoneApp6MyOrdersScreenState
 
     _searchController.addListener(() {
       setState(() {
-        _searchText = _searchController.text.trim().toLowerCase();
+        _searchText =
+            _searchController.text.trim().toLowerCase();
       });
     });
-  }
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrderController>().fetchMyOrders(
+        refresh: true,
+      );
+    });
+  }
   @override
   void dispose() {
     _searchController.dispose();
@@ -473,34 +482,51 @@ class _MilestoneApp6MyOrdersScreenState
     }
   }
 
-  List<MilestoneApp6Order> _filteredOrders(
-      List<MilestoneApp6Order> orders,
+  List<OrderInfoModel> _filteredOrders(
+      List<OrderInfoModel> orders,
       ) {
     if (_searchText.isEmpty) {
       return orders;
     }
 
     return orders.where((order) {
-      final foodName = order.food.name.toLowerCase();
-      final restaurant = order.food.restaurant.toLowerCase();
-      final status = order.statusText.toLowerCase();
+      final restaurant =
+      order.restaurant.name.toLowerCase();
 
-      return foodName.contains(_searchText) ||
-          restaurant.contains(_searchText) ||
-          status.contains(_searchText);
+      final status =
+      order.status.toLowerCase();
+
+      final orderId =
+      order.id.toString();
+
+      final itemNames = order.orderItems
+          .map(
+            (item) => item.menuItem.name.toLowerCase(),
+      )
+          .join(' ');
+
+      return restaurant.contains(_searchText) ||
+          status.contains(_searchText) ||
+          orderId.contains(_searchText) ||
+          itemNames.contains(_searchText);
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: widget.state,
-      builder: (context, child) {
+    return Consumer<OrderController>(
+      builder: (
+          context,
+          orderController,
+          child,
+          ) {
         final orders = _filteredOrders(
-          widget.state.orders,
+          orderController.myOrders,
         );
+
         final theme = Theme.of(context);
-        final isDark = theme.brightness == Brightness.dark;
+        final isDark =
+            theme.brightness == Brightness.dark;
 
         return Scaffold(
           backgroundColor: isDark
@@ -516,6 +542,7 @@ class _MilestoneApp6MyOrdersScreenState
                 : const Color(0xFF171717),
             elevation: 0,
             scrolledUnderElevation: 0,
+
             leading: IconButton(
               onPressed: () {
                 context.pop();
@@ -524,6 +551,7 @@ class _MilestoneApp6MyOrdersScreenState
                 Icons.arrow_back,
               ),
             ),
+
             title: const Text(
               'My Orders',
               style: TextStyle(
@@ -533,54 +561,191 @@ class _MilestoneApp6MyOrdersScreenState
             ),
           ),
 
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              final horizontalPadding =
-              constraints.maxWidth >= 700
-                  ? 32.0
-                  : 16.0;
-
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 1100,
-                  ),
-                  child: ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontalPadding,
-                      12,
-                      horizontalPadding,
-                      30,
-                    ),
-                    children: [
-                      _searchBar(),
-
-                      const SizedBox(
-                        height: 22,
-                      ),
-
-                      if (orders.isEmpty)
-                        _emptyOrders()
-                      else
-                        ...orders.map(
-                              (order) => Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: 18,
-                            ),
-                            child: _orderCard(
-                              context,
-                              order,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+          body: RefreshIndicator(
+            onRefresh: () {
+              return context
+                  .read<OrderController>()
+                  .fetchMyOrders(
+                refresh: true,
               );
             },
+
+            child: NotificationListener<
+                ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollUpdateNotification) {
+                  if (notification.metrics.pixels >=
+                      notification.metrics.maxScrollExtent -
+                          300) {
+                    context
+                        .read<OrderController>()
+                        .loadMoreMyOrders();
+                  }
+                }
+
+                return false;
+              },
+
+              child: LayoutBuilder(
+                builder: (
+                    context,
+                    constraints,
+                    ) {
+                  final horizontalPadding =
+                  constraints.maxWidth >= 700
+                      ? 32.0
+                      : 16.0;
+
+                  // ==================================================
+                  // INITIAL LOADING
+                  // ==================================================
+
+                  if (orderController
+                      .isLoadingMyOrders &&
+                      orderController.myOrders.isEmpty) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  // ==================================================
+                  // ERROR
+                  // ==================================================
+
+                  if (orderController
+                      .myOrdersErrorMessage !=
+                      null &&
+                      orderController.myOrders.isEmpty) {
+                    return _errorOrders(
+                      context,
+                      orderController
+                          .myOrdersErrorMessage!,
+                    );
+                  }
+
+                  // ==================================================
+                  // CONTENT
+                  // ==================================================
+
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints:
+                      const BoxConstraints(
+                        maxWidth: 1100,
+                      ),
+                      child: ListView(
+                        physics:
+                        const AlwaysScrollableScrollPhysics(),
+
+                        padding:
+                        EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          12,
+                          horizontalPadding,
+                          30,
+                        ),
+
+                        children: [
+                          _searchBar(),
+
+                          const SizedBox(
+                            height: 22,
+                          ),
+
+                          if (orders.isEmpty)
+                            _emptyOrders()
+                          else
+                            ...orders.map(
+                                  (order) => Padding(
+                                padding:
+                                const EdgeInsets.only(
+                                  bottom: 18,
+                                ),
+                                child: _orderCard(
+                                  context,
+                                  order,
+                                ),
+                              ),
+                            ),
+
+                          if (orderController
+                              .isLoadingMoreMyOrders)
+                            const Padding(
+                              padding:
+                              EdgeInsets.symmetric(
+                                vertical: 20,
+                              ),
+                              child: Center(
+                                child:
+                                CircularProgressIndicator(),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         );
       },
+    );
+  }
+  Widget _errorOrders(
+      BuildContext context,
+      String message,
+      ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 55,
+              color: Colors.red,
+            ),
+
+            const SizedBox(height: 14),
+
+            const Text(
+              'Unable to load orders',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).hintColor,
+                fontSize: 13,
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            FilledButton(
+              onPressed: () {
+                context
+                    .read<OrderController>()
+                    .fetchMyOrders(
+                  refresh: true,
+                );
+              },
+              child: const Text(
+                'Try Again',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -635,13 +800,13 @@ class _MilestoneApp6MyOrdersScreenState
   // ============================================================
   // ORDER CARD
   // ============================================================
-
   Widget _orderCard(
       BuildContext context,
-      MilestoneApp6Order order,
+      OrderInfoModel order,
       ) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark =
+        theme.brightness == Brightness.dark;
 
     final cardColor = isDark
         ? const Color(0xFF111111)
@@ -651,41 +816,61 @@ class _MilestoneApp6MyOrdersScreenState
         ? Colors.white.withOpacity(0.08)
         : const Color(0xFFE8E8E8);
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: borderColor,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(
-              isDark ? 0.28 : 0.05,
+    return GestureDetector(
+      onTap: () {
+        context.push(
+          '/order-details',
+          extra: {
+            'state': widget.state,
+            'orderId': order.id,
+          },
+        );
+      },
+
+      child: Container(
+        width: double.infinity,
+
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius:
+          BorderRadius.circular(20),
+          border: Border.all(
+            color: borderColor,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(
+                isDark ? 0.28 : 0.05,
+              ),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
             ),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          _restaurantHeader(
-            context,
-            order,
-          ),
+          ],
+        ),
 
-          _allOrderItems(order),
+        clipBehavior: Clip.antiAlias,
 
-          _orderInformation(order),
+        child: Column(
+          children: [
+            _restaurantHeader(
+              context,
+              order,
+            ),
 
-          _orderActions(
-            context,
-            order,
-          ),
-        ],
+            _allOrderItems(
+              order,
+            ),
+
+            _orderInformation(
+              order,
+            ),
+
+            _orderActions(
+              context,
+              order,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -694,14 +879,12 @@ class _MilestoneApp6MyOrdersScreenState
   // ============================================================
   Widget _restaurantHeader(
       BuildContext context,
-      MilestoneApp6Order order,
+      OrderInfoModel order,
       ) {
     final theme = Theme.of(context);
+
     final isDark =
         theme.brightness == Brightness.dark;
-
-    final statusColor =
-    _statusColor(order.status);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -710,42 +893,45 @@ class _MilestoneApp6MyOrdersScreenState
         16,
         14,
       ),
+
       child: Row(
         crossAxisAlignment:
         CrossAxisAlignment.start,
-        children: [
-          // ==========================================================
-          // RESTAURANT IMAGE
-          // ==========================================================
 
+        children: [
           Container(
             width: 58,
             height: 58,
+
             decoration: BoxDecoration(
               borderRadius:
               BorderRadius.circular(14),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.08)
+                    ? Colors.white
+                    .withOpacity(0.08)
                     : Colors.grey.shade200,
               ),
             ),
+
             clipBehavior: Clip.antiAlias,
+
             child: Image.network(
-              order.restaurantImage,
+              order.restaurant.imageUrl,
+
               fit: BoxFit.cover,
+
               errorBuilder:
                   (context, error, stackTrace) {
                 return Container(
                   color: isDark
                       ? const Color(0xFF242424)
                       : const Color(0xFFF3F3F3),
+
                   child: Icon(
                     Icons.restaurant_rounded,
                     size: 28,
-                    color: isDark
-                        ? Colors.grey.shade500
-                        : Colors.grey.shade500,
+                    color: Colors.grey.shade500,
                   ),
                 );
               },
@@ -754,20 +940,17 @@ class _MilestoneApp6MyOrdersScreenState
 
           const SizedBox(width: 13),
 
-          // ==========================================================
-          // RESTAURANT DETAILS
-          // ==========================================================
-
           Expanded(
             child: Column(
               crossAxisAlignment:
               CrossAxisAlignment.start,
+
               children: [
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        order.restaurantName,
+                        order.restaurant.name,
                         maxLines: 1,
                         overflow:
                         TextOverflow.ellipsis,
@@ -786,9 +969,8 @@ class _MilestoneApp6MyOrdersScreenState
 
                     const SizedBox(width: 8),
 
-                    // ORDER ID
                     Text(
-                      '#${_shortOrderId(order.id)}',
+                      '#${order.id}',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight:
@@ -812,13 +994,12 @@ class _MilestoneApp6MyOrdersScreenState
                           ? Colors.grey.shade500
                           : Colors.grey.shade600,
                     ),
+
                     const SizedBox(width: 4),
+
                     Expanded(
                       child: Text(
-                        order.restaurantAddress
-                            .isNotEmpty
-                            ? order.restaurantAddress
-                            : 'Ahmedabad',
+                        order.restaurant.address,
                         maxLines: 1,
                         overflow:
                         TextOverflow.ellipsis,
@@ -835,51 +1016,10 @@ class _MilestoneApp6MyOrdersScreenState
 
                 const SizedBox(height: 9),
 
-                // STATUS BADGE
-                // Container(
-                //   padding:
-                //   const EdgeInsets.symmetric(
-                //     horizontal: 9,
-                //     vertical: 5,
-                //   ),
-                //   decoration: BoxDecoration(
-                //     color: statusColor.withOpacity(
-                //       isDark ? 0.16 : 0.10,
-                //     ),
-                //     borderRadius:
-                //     BorderRadius.circular(20),
-                //     border: Border.all(
-                //       color: statusColor.withOpacity(
-                //         isDark ? 0.30 : 0.20,
-                //       ),
-                //     ),
-                //   ),
-                //   child: Row(
-                //     mainAxisSize:
-                //     MainAxisSize.min,
-                //     children: [
-                //       Container(
-                //         width: 6,
-                //         height: 6,
-                //         decoration:
-                //         BoxDecoration(
-                //           color: statusColor,
-                //           shape: BoxShape.circle,
-                //         ),
-                //       ),
-                //       const SizedBox(width: 6),
-                //       Text(
-                //         order.statusText,
-                //         style: TextStyle(
-                //           fontSize: 10,
-                //           fontWeight:
-                //           FontWeight.w800,
-                //           color: statusColor,
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
+                _apiStatusBadge(
+                  context,
+                  order.status,
+                ),
               ],
             ),
           ),
@@ -887,42 +1027,114 @@ class _MilestoneApp6MyOrdersScreenState
       ),
     );
   }
+  Widget _apiStatusBadge(
+      BuildContext context,
+      String status,
+      ) {
+    final color = _apiStatusColor(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 5,
+      ),
+
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius:
+        BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.20),
+        ),
+      ),
+
+      child: Text(
+        _formatStatus(status),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Color _apiStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'placed':
+        return const Color(0xFFE67E22);
+
+      case 'preparing':
+        return const Color(0xFFE67E22);
+
+      case 'out_for_delivery':
+        return const Color(0xFF3B82F6);
+
+      case 'delivered':
+        return const Color(0xFF16A34A);
+
+      case 'cancelled':
+        return const Color(0xFFD62828);
+
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatStatus(String status) {
+    if (status.isEmpty) {
+      return 'Unknown';
+    }
+
+    return status
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map(
+          (word) => word.isEmpty
+          ? word
+          : '${word[0].toUpperCase()}'
+          '${word.substring(1).toLowerCase()}',
+    )
+        .join(' ');
+  }
   // ============================================================
   // PRODUCT
   // ============================================================
   Widget _allOrderItems(
-      MilestoneApp6Order order,
+      OrderInfoModel order,
       ) {
-    final context = this.context;
     final isDark =
         Theme.of(context).brightness ==
             Brightness.dark;
 
     return Container(
-      width: 330
-      ,
+      width: double.infinity,
 
       decoration: BoxDecoration(
         color: isDark
             ? const Color(0xFF161616)
             : const Color(0xFFFCFCFC),
       ),
+
       child: Column(
         children: [
           for (
           int index = 0;
-          index < order.items.length;
+          index < order.orderItems.length;
           index++
           ) ...[
             _productRow(
-              order.items[index],
+              order.orderItems[index],
             ),
 
-            if (index != order.items.length - 1)
+            if (
+            index !=
+                order.orderItems.length - 1)
               Divider(
                 height: 1,
                 color: isDark
-                    ? Colors.white.withOpacity(0.07)
+                    ? Colors.white
+                    .withOpacity(0.07)
                     : Colors.grey.shade200,
               ),
           ],
@@ -931,114 +1143,109 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
   Widget _productRow(
-      MilestoneApp6CartItem item,
+      OrderItemModel item,
       ) {
-    final theme = Theme.of(context);
     final isDark =
-        theme.brightness == Brightness.dark;
+        Theme.of(context).brightness ==
+            Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        vertical: 2,
+        horizontal: 16,
+        vertical: 10,
       ),
+
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.center,
         children: [
-          // ==========================================================
-          // FOOD IMAGE
-          // ==========================================================
-
           Container(
+            width: 52,
+            height: 52,
 
-            height: 50,
-            // decoration: BoxDecoration(
-            //   borderRadius:
-            //   BorderRadius.circular(12),
-            //   color: isDark
-            //       ? const Color(0xFF252525)
-            //       : const Color(0xFFF3F3F3),
-            // ),
-           // clipBehavior: Clip.antiAlias,
-            // child: Image.network(
-            //   item.food.image,
-            //   fit: BoxFit.cover,
-            //   errorBuilder:
-            //       (context, error, stackTrace) {
-            //     return Icon(
-            //       Icons.fastfood_outlined,
-            //       size: 28,
-            //       color: isDark
-            //           ? Colors.grey.shade600
-            //           : Colors.grey.shade400,
-            //     );
-            //   },
-            // ),
+            decoration: BoxDecoration(
+              borderRadius:
+              BorderRadius.circular(10),
+              color: isDark
+                  ? const Color(0xFF252525)
+                  : const Color(0xFFF3F3F3),
+            ),
+
+            clipBehavior:
+            Clip.antiAlias,
+
+            child: Image.network(
+              item.menuItem.imageUrl,
+
+              fit: BoxFit.cover,
+
+              errorBuilder:
+                  (context, error, stackTrace) {
+                return Icon(
+                  Icons.fastfood_outlined,
+                  size: 25,
+                  color: isDark
+                      ? Colors.grey.shade600
+                      : Colors.grey.shade400,
+                );
+              },
+            ),
           ),
 
           const SizedBox(width: 12),
-
-          // ==========================================================
-          // FOOD DETAILS
-          // ==========================================================
 
           Expanded(
             child: Column(
               crossAxisAlignment:
               CrossAxisAlignment.start,
+
               children: [
-                Row(
-                  children: [
-                    Text(
-                      item.food.name,
-                      maxLines: 1,
-                      overflow:
-                      TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? Colors.white
-                            : const Color(0xFF171717),
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    _miniInfo(
-                      '× ${item.quantity}',
-                      isDark,
-                    ),
+                Text(
+                  item.menuItem.name,
+                  maxLines: 1,
+                  overflow:
+                  TextOverflow.ellipsis,
 
-                  ],
-
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight:
+                    FontWeight.w800,
+                    color: isDark
+                        ? Colors.white
+                        : const Color(
+                      0xFF171717,
+                    ),
+                  ),
                 ),
 
-                // Text(
-                //   '\$${item.unitPrice.toStringAsFixed(2)} ',
-                //   style: TextStyle(
-                //     fontSize: 11,
-                //     color: isDark
-                //         ? Colors.grey.shade500
-                //         : Colors.grey.shade600,
-                //   ),
-                // ),
+                const SizedBox(height: 5),
+
+                Text(
+                  '₹${item.priceAtPurchase.toStringAsFixed(2)} × ${item.quantity}',
+
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark
+                        ? Colors.grey.shade500
+                        : Colors.grey.shade600,
+                  ),
+                ),
               ],
             ),
           ),
 
-          const SizedBox(width: 5),
-
-          // ==========================================================
-          // TOTAL
-          // ==========================================================
+          const SizedBox(width: 8),
 
           Text(
-            '\$${item.totalPrice.toStringAsFixed(2)}',
+            '₹${item.totalPrice.toStringAsFixed(2)}',
+
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              fontWeight:
+              FontWeight.w900,
               color: isDark
                   ? Colors.white
-                  : const Color(0xFF171717),
+                  : const Color(
+                0xFF171717,
+              ),
             ),
           ),
         ],
@@ -1072,21 +1279,23 @@ class _MilestoneApp6MyOrdersScreenState
   // ORDER INFORMATION
   // ============================================================
   Widget _orderInformation(
-      MilestoneApp6Order order,
+      OrderInfoModel order,
       ) {
     final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+        Theme.of(context).brightness ==
+            Brightness.dark;
 
-    final statusColor = _statusColor(order.status);
+    final statusColor =
+    _apiStatusColor(order.status);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 20,
-        vertical: 10,
+        vertical: 14,
       ),
+
       child: Row(
         children: [
-          // ORDER PLACED
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -1096,18 +1305,22 @@ class _MilestoneApp6MyOrdersScreenState
                   'Order Placed',
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w500,
                     color: isDark
                         ? Colors.grey.shade500
                         : Colors.grey.shade600,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
-                  _formatDate(order.orderDate),
+                  _formatApiDate(
+                    order.createdAt,
+                  ),
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight:
+                    FontWeight.w600,
                     color: isDark
                         ? Colors.white
                         : Colors.black,
@@ -1116,9 +1329,9 @@ class _MilestoneApp6MyOrdersScreenState
               ],
             ),
           ),
-          SizedBox(width: 25,),
 
-          // DELIVERY STATUS
+          const SizedBox(width: 20),
+
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -1128,33 +1341,43 @@ class _MilestoneApp6MyOrdersScreenState
                   'Delivery Status',
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w500,
                     color: isDark
                         ? Colors.grey.shade500
                         : Colors.grey.shade600,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Row(
                   children: [
                     Container(
-                      width: 20,
-                      height: 6,
-                      decoration: BoxDecoration(
+                      width: 7,
+                      height: 7,
+                      decoration:
+                      BoxDecoration(
                         color: statusColor,
-                        shape: BoxShape.circle,
+                        shape:
+                        BoxShape.circle,
                       ),
                     ),
+
+                    const SizedBox(width: 6),
+
                     Flexible(
                       child: Text(
-                        order.statusText,
+                        _formatStatus(
+                          order.status,
+                        ),
                         maxLines: 1,
                         overflow:
                         TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: statusColor,
+                          fontWeight:
+                          FontWeight.w600,
+                          color:
+                          statusColor,
                         ),
                       ),
                     ),
@@ -1164,7 +1387,6 @@ class _MilestoneApp6MyOrdersScreenState
             ),
           ),
 
-          // TOTAL
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -1174,18 +1396,20 @@ class _MilestoneApp6MyOrdersScreenState
                   'Total',
                   style: TextStyle(
                     fontSize: 11,
-                    fontWeight: FontWeight.w500,
                     color: isDark
                         ? Colors.grey.shade500
                         : Colors.grey.shade600,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
-                  '₹${order.totalPrice.toStringAsFixed(2)}',
+                  '₹${order.total.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontWeight:
+                    FontWeight.w800,
                     color: isDark
                         ? Colors.white
                         : Colors.black,
@@ -1197,6 +1421,35 @@ class _MilestoneApp6MyOrdersScreenState
         ],
       ),
     );
+  }
+  String _formatApiDate(
+      String? value,
+      ) {
+    if (value == null ||
+        value.trim().isEmpty) {
+      return '--';
+    }
+
+    final date = DateTime.tryParse(value);
+
+    if (date == null) {
+      return value;
+    }
+
+    final hour = date.hour % 12 == 0
+        ? 12
+        : date.hour % 12;
+
+    final minute =
+    date.minute.toString().padLeft(2, '0');
+
+    final period =
+    date.hour >= 12 ? 'pm' : 'am';
+
+    return '${date.day} '
+        '${_month(date.month)} '
+        '${date.year}, '
+        '$hour:$minute $period';
   }
 
   Widget _infoItem(
@@ -1281,22 +1534,18 @@ class _MilestoneApp6MyOrdersScreenState
 
   Widget _orderActions(
       BuildContext context,
-      MilestoneApp6Order order,
+      OrderInfoModel order,
       ) {
-    final bool isplaced =
-        order.status == MilestoneApp6OrderStatus.placed;
+    final status =
+    order.status.toLowerCase();
 
     final bool isCancelled =
-        order.status == MilestoneApp6OrderStatus.cancelled;
+        status == 'cancelled';
 
-    // ==========================================================
-    // DELIVERED
-    // ==========================================================
+    final bool isDelivered =
+        status == 'delivered';
 
-    if (isplaced) {
-      final bool reviewSubmitted =
-      _submittedReviews.contains(order.id);
-
+    if (isDelivered) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(
           20,
@@ -1305,26 +1554,19 @@ class _MilestoneApp6MyOrdersScreenState
           14,
         ),
         child: Align(
-          alignment: Alignment.centerRight,
-          child: reviewSubmitted
-              ? _reviewSubmittedLabel()
-              : _actionButton(
+          alignment:
+          Alignment.centerRight,
+          child: _actionButton(
             label: 'Write a Review',
             filled: true,
             onTap: () {
-              _showReviewDialog(
-                context,
-                order,
-              );
+              // Keep your existing review dialog
+              // after converting it to OrderInfoModel.
             },
           ),
         ),
       );
     }
-
-    // ==========================================================
-    // CANCELLED
-    // ==========================================================
 
     if (isCancelled) {
       return Padding(
@@ -1335,15 +1577,12 @@ class _MilestoneApp6MyOrdersScreenState
           14,
         ),
         child: Align(
-          alignment: Alignment.centerRight,
+          alignment:
+          Alignment.centerRight,
           child: _cancelledLabel(),
         ),
       );
     }
-
-    // ==========================================================
-    // OTHER STATUS
-    // ==========================================================
 
     return const SizedBox.shrink();
   }

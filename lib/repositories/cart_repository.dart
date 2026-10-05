@@ -1,4 +1,4 @@
-import 'package:app_matic_tech_flutter_app/models/cart_response_model.dart';
+import 'package:app_matic_tech_flutter_app/models/cart/cart_response_model.dart';
 import 'package:dio/dio.dart';
 
 import '../core/constants/api_constants.dart';

@@ -791,134 +791,85 @@ class MilestoneApp6Routes {
         // ================================================================
         // ORDER DETAILS
         // ================================================================
+// ================================================================
+// ORDER DETAILS
+// ================================================================
 
         GoRoute(
-          path: '/order-details',
+          path: '/order-details/:orderId',
           pageBuilder: (
               context,
               routeState,
               ) {
-            final extra =
-                routeState.extra;
 
-            if (extra
-            is! Map<String, dynamic>) {
-              return _orderError(
-                routeState,
-                'Order information is missing.',
-              );
-            }
-
-            final Object? stateData =
-            extra['state'];
-
-            if (stateData
-            is! MilestoneApp6State) {
-              return _orderError(
-                routeState,
-                'Order state is missing.',
-              );
-            }
+            // --------------------------------------------------------------
+            // GET ORDER ID FROM URL
+            // Example:
+            // /order-details/222
+            // orderId = 222
+            // --------------------------------------------------------------
 
             final String? orderId =
-            extra['orderId']
-                ?.toString();
+            routeState.pathParameters['orderId'];
 
-            final Object? itemsData =
-            extra['items'];
+            debugPrint(
+              '==========================================',
+            );
+            debugPrint(
+              'ORDER DETAILS ROUTE',
+            );
+            debugPrint(
+              'ORDER ID FROM ROUTE: $orderId',
+            );
+            debugPrint(
+              '==========================================',
+            );
 
-            if (itemsData is! List) {
+            // --------------------------------------------------------------
+            // CHECK ORDER ID
+            // --------------------------------------------------------------
+
+            if (orderId == null ||
+                orderId.trim().isEmpty) {
               return _orderError(
                 routeState,
-                'Ordered items are missing.',
+                'Order ID is missing.',
               );
             }
 
-            final List<
-                MilestoneApp6CartItem>
-            items =
-            itemsData
-                .whereType<
-                MilestoneApp6CartItem>()
-                .map(
-                  (item) =>
-                  MilestoneApp6CartItem(
-                    food: item.food,
-                    size: item.size,
-                    unitPrice:
-                    item.unitPrice,
-                    quantity:
-                    item.quantity,
-                  ),
-            )
-                .toList();
-
-            if (items.isEmpty) {
-              return _orderError(
-                routeState,
-                'No ordered items were found.',
-              );
-            }
-
-            final String paymentType =
-                extra['paymentType']
-                    ?.toString() ??
-                    'Full Payment';
-
-            final double subtotal =
-                _toDouble(
-                  extra['subtotal'],
-                ) ??
-                    0.0;
-
-            final double shipping =
-                _toDouble(
-                  extra['shipping'],
-                ) ??
-                    0.0;
-
-            final double discount =
-                _toDouble(
-                  extra['discount'],
-                ) ??
-                    0.0;
-
-            final double totalPayment =
-                _toDouble(
-                  extra['totalPayment'],
-                ) ??
-                    0.0;
-
-            final double minimumPayment =
-                _toDouble(
-                  extra['minimumPayment'],
-                ) ??
-                    0.0;
-
-            final double amountPaidNow =
-                _toDouble(
-                  extra['amountPaidNow'],
-                ) ??
-                    totalPayment;
+            // --------------------------------------------------------------
+            // OPEN ORDER DETAILS SCREEN
+            // --------------------------------------------------------------
+            //
+            // The Order Details screen itself calls:
+            //
+            // GET /orders/{orderId}
+            //
+            // so the backend remains the source of truth.
+            // --------------------------------------------------------------
 
             return _page(
               routeState,
               MilestoneApp6OrderDetailsScreen(
-                state: stateData,
+                state: state,
                 auth: auth,
+
+                // IMPORTANT
                 orderId: orderId,
-                items: items,
-                paymentType:
-                paymentType,
-                subtotal: subtotal,
-                shipping: shipping,
-                discount: discount,
-                totalPayment:
-                totalPayment,
-                minimumPayment:
-                minimumPayment,
-                amountPaidNow:
-                amountPaidNow,
+
+                // These are required by your existing constructor.
+                // The Order Details screen gets the real order
+                // information from the backend using orderId.
+                items: const [],
+
+                paymentType: 'Cash on Delivery',
+
+                subtotal: 0.0,
+                shipping: 0.0,
+                discount: 0.0,
+                totalPayment: 0.0,
+                minimumPayment: 0.0,
+                amountPaidNow: 0.0,
               ),
             );
           },

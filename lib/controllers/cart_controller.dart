@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../models/cart_response_model.dart';
+import '../models/cart/cart_response_model.dart';
 import '../repositories/cart_repository.dart';
 
 class CartController extends ChangeNotifier {

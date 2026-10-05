@@ -3,11 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:app_matic_tech_flutter_app/controllers/cart_controller.dart';
-import 'package:app_matic_tech_flutter_app/models/cart_response_model.dart';
+import 'package:app_matic_tech_flutter_app/models/cart/cart_response_model.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/address_storage.dart';
 import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/services/milestone_app_6_address_api.dart';
-import 'package:app_matic_tech_flutter_app/models/milestone_app_6_address_model.dart';
+import 'package:app_matic_tech_flutter_app/models/address/milestone_app_6_address_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_button.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_image.dart';

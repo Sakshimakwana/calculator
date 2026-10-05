@@ -1,5 +1,5 @@
 
-import 'package:app_matic_tech_flutter_app/models/cart_response_model.dart';
+import 'package:app_matic_tech_flutter_app/models/cart/cart_response_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/milestone_app_6_food.dart';
