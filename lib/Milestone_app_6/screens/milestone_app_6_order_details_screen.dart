@@ -18,6 +18,7 @@ import 'package:file_saver/file_saver.dart';
 import 'dart:async';
 
 class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
+
   final MilestoneApp6State state;
   final MilestoneApp6AuthStore auth;
 
@@ -54,6 +55,7 @@ class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
   @override
   State<MilestoneApp6OrderDetailsScreen> createState() =>
       _MilestoneApp6OrderDetailsScreenState();
+
 }
 
 class _MilestoneApp6OrderDetailsScreenState
@@ -108,6 +110,8 @@ class _MilestoneApp6OrderDetailsScreenState
   bool _isCancelling = false;
 
   String? _errorMessage;
+
+
 
   String _paymentMethodPreview() {
     final payment =
@@ -2806,396 +2810,368 @@ class _MilestoneApp6OrderDetailsScreenState
   // STATUS
   // ============================================================
 
-  Widget _statusCard() {
-    final orderStatus =
-    (_order?['status'] ?? '').toString().toLowerCase().trim();
+  Widget  _statusCard() {
 
-    final deliveryStatus =
-    (_delivery?['status'] ?? '').toString().toLowerCase().trim();
+    final int currentStep = 0;
 
-    // ------------------------------------------------------------
-    // CURRENT STEP
-    // 0 = Order Placed
-    // 1 = Partner Assigned
-    // 2 = Out for Delivery
-    // 3 = Delivered
-    // ------------------------------------------------------------
-
-    int currentStep = 0;
-
-    if (orderStatus == 'delivered' || deliveryStatus == 'delivered') {
-      currentStep = 3;
-    } else if (orderStatus == 'out_for_delivery' ||
-        deliveryStatus == 'picked') {
-      currentStep = 2;
-    } else if (deliveryStatus == 'assigned') {
-      currentStep = 1;
-    }
-
-    final isCancelled = orderStatus == 'cancelled';
-
-    final steps = [
-      {
-        'title': 'Order Placed',
-        'subtitle': 'Your order is confirmed',
-        'icon': Icons.receipt_long_rounded,
-      },
-      {
-        'title': 'Partner Assigned',
-        'subtitle': 'Delivery partner is ready',
-        'icon': Icons.delivery_dining_rounded,
-      },
-      {
-        'title': 'Out for Delivery',
-        'subtitle': 'Your food is on the way',
-        'icon': Icons.two_wheeler_rounded,
-      },
-      {
-        'title': 'Delivered',
-        'subtitle': 'Enjoy your meal!',
-        'icon': Icons.home_rounded,
-      },
+    final List<_OrderStatusStep> steps = [
+      _OrderStatusStep(
+        title: 'Order\nPlaced',
+        shortTitle: 'Order Placed',
+        icon: Icons.receipt_long_rounded,
+      ),
+      _OrderStatusStep(
+        title: 'Partner\nAssigned',
+        shortTitle: 'Partner Assigned',
+        icon: Icons.delivery_dining_rounded,
+      ),
+      _OrderStatusStep(
+        title: 'Out for\nDelivery',
+        shortTitle: 'Out for Delivery',
+        icon: Icons.two_wheeler_rounded,
+      ),
+      _OrderStatusStep(
+        title: 'Delivered',
+        shortTitle: 'Delivered',
+        icon: Icons.home_rounded,
+      ),
     ];
 
-    if (isCancelled) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: Colors.red.withOpacity(.15),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(.05),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close_rounded,
-                color: Colors.red,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Order Cancelled',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'This order has been cancelled.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
+    final String currentMessage;
+
+    switch (currentStep) {
+      case 0:
+        currentMessage = 'Your order is confirmed';
+        break;
+      case 1:
+        currentMessage = 'A delivery partner has been assigned';
+        break;
+      case 2:
+        currentMessage = 'Your order is on the way';
+        break;
+      case 3:
+        currentMessage = 'Your order has been delivered';
+        break;
+      default:
+        currentMessage = 'Your order is being processed';
     }
 
-    final current = steps[currentStep];
-
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.black.withOpacity(.05),
-        ),
+        borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.055),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ========================================================
+          // ----------------------------------------------------------
           // HEADER
-          // ========================================================
-
+          // ----------------------------------------------------------
           Row(
             children: [
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Order Status',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF171717),
+                    Padding(
+                      padding: EdgeInsets.only(left: 12),
+                      child: Text(
+                        'Order Status',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF171717),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 3),
-                    Text(
-                      'Track your order in real time',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: Colors.black45,
+                    SizedBox(height: 4),
+                    Padding(
+                      padding: EdgeInsets.only(left: 12),
+                      child: Text(
+                        'Track your order in real time',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF929292),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Live badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F3),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.circle,
-                      size: 7,
-                      color: Color(0xFFE63958),
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'LIVE',
-                      style: TextStyle(
-                        color: Color(0xFFE63958),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: .7,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // // LIVE BADGE
+              // Container(
+              //   padding: const EdgeInsets.symmetric(
+              //     horizontal: 11,
+              //     vertical: 7,
+              //   ),
+              //   decoration: BoxDecoration(
+              //     color: const Color(0xFFFFF0F3),
+              //     borderRadius: BorderRadius.circular(20),
+              //   ),
+              //   child: Row(
+              //     mainAxisSize: MainAxisSize.min,
+              //     children: [
+              //       Container(
+              //         width: 7,
+              //         height: 7,
+              //         decoration: const BoxDecoration(
+              //           color: Color(0xFFE91E4D),
+              //           shape: BoxShape.circle,
+              //         ),
+              //       ),
+              //       const SizedBox(width: 6),
+              //       const Text(
+              //         'LIVE',
+              //         style: TextStyle(
+              //           color: Color(0xFFE91E4D),
+              //           fontSize: 11,
+              //           fontWeight: FontWeight.w800,
+              //           letterSpacing: 0.5,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
-          // ========================================================
-          // HORIZONTAL TRACKER
-          // ========================================================
+          // ----------------------------------------------------------
+          // STATUS TIMELINE
+          // ----------------------------------------------------------
+          SizedBox(
+            height: 122,
+            child: Stack(
+              children: [
+                // BACKGROUND LINE
+                Positioned(
+                  left: 28,
+                  right: 28,
+                  top: 23,
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE9E9E9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
 
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(
-              steps.length,
-                  (index) {
-                final completed = index < currentStep;
-                final active = index == currentStep;
+                // COMPLETED / ACTIVE LINE
+                if (currentStep > 0)
+                  Positioned(
+                    left: 28,
+                    right: 28,
+                    top: 23,
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: currentStep / 3,
+                      child: Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE9435F),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
 
-                return Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
+                // STEPS
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: List.generate(
+                    steps.length,
+                        (index) {
+                      final bool isCompleted = index < currentStep;
+                      final bool isCurrent = index == currentStep;
+
+                      return Expanded(
                         child: Column(
                           children: [
                             // ICON
-                            Container(
-                              width: active ? 48 : 42,
-                              height: active ? 48 : 42,
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: isCurrent ? 48 : 44,
+                              height: isCurrent ? 48 : 44,
                               decoration: BoxDecoration(
+                                color: isCompleted || isCurrent
+                                    ? const Color(0xFFE9435F)
+                                    : const Color(0xFFF1F1F1),
                                 shape: BoxShape.circle,
-                                color: completed || active
-                                    ? const Color(0xFFE63958)
-                                    : const Color(0xFFF2F2F2),
-                                border: active
+                                border: isCurrent
                                     ? Border.all(
-                                  color: const Color(0xFFFFD6DE),
+                                  color: const Color(0xFFFFC4CE),
                                   width: 5,
                                 )
                                     : null,
-                                boxShadow: active
+                                boxShadow: isCurrent
                                     ? [
                                   BoxShadow(
-                                    color: const Color(0xFFE63958)
-                                        .withOpacity(.22),
-                                    blurRadius: 14,
+                                    color: const Color(0xFFE9435F)
+                                        .withOpacity(0.22),
+                                    blurRadius: 12,
                                     spreadRadius: 1,
                                   ),
                                 ]
-                                    : [],
+                                    : null,
                               ),
                               child: Icon(
-                                completed
+                                isCompleted
                                     ? Icons.check_rounded
-                                    : steps[index]['icon'] as IconData,
-                                size: active ? 23 : 20,
-                                color: completed || active
+                                    : steps[index].icon,
+                                size: 21,
+                                color: isCompleted || isCurrent
                                     ? Colors.white
-                                    : Colors.black38,
+                                    : const Color(0xFF9B9B9B),
                               ),
                             ),
 
-                            const SizedBox(height: 9),
+                            const SizedBox(height: 11),
 
-                            Text(
-                              steps[index]['title'] as String,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                height: 1.2,
-                                fontWeight: active
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                                color: active
-                                    ? const Color(0xFFE63958)
-                                    : completed
-                                    ? Colors.black87
-                                    : Colors.black38,
+                            // TITLE
+                            SizedBox(
+                              height: 34,
+                              child: Text(
+                                steps[index].title,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  height: 1.15,
+                                  fontWeight: isCurrent
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                  color: isCompleted || isCurrent
+                                      ? const Color(0xFFE9435F)
+                                      : const Color(0xFF888888),
+                                ),
                               ),
                             ),
 
-                            if (active) ...[
-                              const SizedBox(height: 5),
+                            // CURRENT BADGE
+                            if (isCurrent)
                               Container(
+                                margin: const EdgeInsets.only(top: 4),
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                                  horizontal: 7,
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF0F3),
-                                  borderRadius: BorderRadius.circular(20),
+                                  color: const Color(0xFFFFEEF1),
+                                  borderRadius: BorderRadius.circular(7),
                                 ),
                                 child: const Text(
                                   'CURRENT',
                                   style: TextStyle(
                                     fontSize: 7.5,
-                                    letterSpacing: .5,
-                                    color: Color(0xFFE63958),
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFFE9435F),
+                                    letterSpacing: 0.4,
                                   ),
                                 ),
                               ),
-                            ],
                           ],
                         ),
-                      ),
-
-                      // CONNECTING LINE
-                      if (index != steps.length - 1)
-                        Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.only(
-                              top: 20,
-                              left: 2,
-                              right: 2,
-                            ),
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: index < currentStep
-                                  ? const Color(0xFFE63958)
-                                  : const Color(0xFFE9E9E9),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                    ],
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
 
-          // ========================================================
-          // CURRENT STATUS DETAIL
-          // ========================================================
-
+          // ----------------------------------------------------------
+          // CURRENT STATUS MESSAGE
+          // ----------------------------------------------------------
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 13,
+            ),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF7F8),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(17),
               border: Border.all(
-                color: const Color(0xFFFFE1E6),
+                color: const Color(0xFFFFDCE2),
+                width: 1,
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE8EC),
+                    borderRadius: BorderRadius.circular(13),
                   ),
-                  child: Icon(
-                    current['icon'] as IconData,
-                    color: const Color(0xFFE63958),
-                    size: 22,
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Color(0xFFE9435F),
+                    size: 20,
                   ),
                 ),
 
-                const SizedBox(width: 13),
+                const SizedBox(width: 12),
 
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        current['title'] as String,
+                        steps[currentStep].shortTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF222222),
+                          color: Color(0xFF202020),
                         ),
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        current['subtitle'] as String,
+                        currentMessage,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF8B8B8B),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: Colors.black26,
+                const SizedBox(width: 8),
+
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: Color(0xFFAAAAAA),
+                  ),
                 ),
               ],
             ),
@@ -3204,6 +3180,7 @@ class _MilestoneApp6OrderDetailsScreenState
       ),
     );
   }
+
   // ============================================================
   // RESTAURANT
   // ============================================================
@@ -4551,4 +4528,15 @@ class InvoicePdfViewerScreen extends StatelessWidget {
       ),
     );
   }
+}
+class _OrderStatusStep {
+  final String title;
+  final String shortTitle;
+  final IconData icon;
+
+  const _OrderStatusStep({
+    required this.title,
+    required this.shortTitle,
+    required this.icon,
+  });
 }

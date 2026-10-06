@@ -414,10 +414,6 @@ const milestoneApp6Foods = <MilestoneApp6Food>[
     'Freshly squeezed orange juice served chilled.',
   ),
 
-
-
-
-
   MilestoneApp6Food(
     id: 'fried-rice',
     name: 'Vegetable Fried Rice',
@@ -441,10 +437,6 @@ const milestoneApp6Foods = <MilestoneApp6Food>[
     description:
     'Stir-fried noodles with vegetables and a savory house sauce.',
   ),
-
-  // ==========================================================================
-  // BREAKFAST
-  // ==========================================================================
 
   MilestoneApp6Food(
     id: 'pancakes',

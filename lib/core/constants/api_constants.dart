@@ -77,25 +77,17 @@ class ApiConstants {
   static String createReview(int orderId) {
     return '/orders/$orderId/reviews';
   }
-
-  static const String deliveries =
-      '/deliveries';
+  static const String deliveries = '/deliveries';
 
   static String assignDelivery(int orderId) {
     return '/orders/$orderId/delivery';
   }
-
-
   static String pickupDelivery(
       int deliveryId,
       ) {
     return '/deliveries/$deliveryId/pickup';
   }
-
-
-  static String completeDelivery(
-      int deliveryId,
-      ) {
+  static String completeDelivery(int deliveryId,) {
     return '/deliveries/$deliveryId/delivered';
   }
 }

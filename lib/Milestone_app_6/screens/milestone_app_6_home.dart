@@ -8,6 +8,8 @@ import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_a
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import '../../models/address/milestone_app_6_address_model.dart';
+import '../../services/milestone_app_6_address_api.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../state/milestone_app_6_state.dart';
 import '../theme/milestone_app_6_colors.dart';
@@ -64,6 +66,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
   static const int _restaurantPerPage = 6;
 
+  String fullname = 'User';
+
   int _currentRestaurantPage = 0;
 
   int _lastRestaurantPage = 1;
@@ -103,7 +107,12 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ADDRESS
 // ==============================================================
 
-  String _selectedAddress = '';
+  final MilestoneApp6AddressApi _addressApi =
+  MilestoneApp6AddressApi();
+
+  MilestoneApp6Address? _selectedApiAddress;
+
+  bool _isLoadingAddress = true;
 
 // ==============================================================
 // CATEGORY
@@ -156,6 +165,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     _homeScrollController.addListener(
       _onHomeScroll,
     );
+    _loadUserName();
 
     _loadSelectedAddress();
 
@@ -177,6 +187,18 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     );
 
     _loadNearbyRestaurants();
+  }
+
+  Future<void> _loadUserName() async {
+    final String? name = await AuthStorage.fullName;
+
+    if (!mounted) return;
+
+    setState(() {
+      fullname = name == null || name.trim().isEmpty
+          ? 'User'
+          : name.trim();
+    });
   }
 
 // =============================================================
@@ -210,22 +232,121 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // LOAD SELECTED ADDRESS
 // ==============================================================
 
-  Future<void> _loadSelectedAddress() async {
-    final int? addressId = AddressStorage.selectedAddressId;
+  // ==============================================================
+// LOAD SELECTED ADDRESS FROM API
+// ==============================================================
 
+  Future<void> _loadSelectedAddress() async {
     if (!mounted) return;
 
-    if (addressId == null || addressId <= 0) {
+    setState(() {
+      _isLoadingAddress = true;
+    });
+
+    try {
+      final String? token = await AuthStorage.token;
+
+      if (token == null || token.trim().isEmpty) {
+        if (!mounted) return;
+
+        setState(() {
+          _selectedApiAddress = null;
+          _isLoadingAddress = false;
+        });
+
+        return;
+      }
+
+      // ------------------------------------------------------------
+      // GET ALL SAVED ADDRESSES
+      // ------------------------------------------------------------
+
+      final List<MilestoneApp6Address> addresses =
+      await _addressApi.fetchAddresses(
+        token: token,
+      );
+
+      // ------------------------------------------------------------
+      // GET SELECTED ADDRESS ID
+      // ------------------------------------------------------------
+
+      final int? selectedAddressId =
+          AddressStorage.selectedAddressId;
+
+      MilestoneApp6Address? selectedAddress;
+
+      // ------------------------------------------------------------
+      // FIND SELECTED ADDRESS
+      // ------------------------------------------------------------
+
+      if (selectedAddressId != null && selectedAddressId > 0) {
+        for (final address in addresses) {
+          if (address.id == selectedAddressId) {
+            selectedAddress = address;
+            break;
+          }
+        }
+      }
+
+      // ------------------------------------------------------------
+      // FALLBACK
+      // ------------------------------------------------------------
+      // If selected ID doesn't exist but addresses are available,
+      // use the first address.
+
+      if (selectedAddress == null && addresses.isNotEmpty) {
+        selectedAddress = addresses.first;
+
+        await AddressStorage.saveSelectedAddressId(
+          selectedAddress.id,
+        );
+      }
+
+      // ------------------------------------------------------------
+      // UPDATE STATE
+      // ------------------------------------------------------------
+
+      if (selectedAddress != null) {
+        widget.state.setAddress(selectedAddress);
+      }
+
+      if (!mounted) return;
+
       setState(() {
-        _selectedAddress = '';
+        _selectedApiAddress = selectedAddress;
+        _isLoadingAddress = false;
       });
 
-      return;
-    }
+      // ------------------------------------------------------------
+      // CONSOLE DEBUG
+      // ------------------------------------------------------------
 
-    setState(() {
-      _selectedAddress = 'Address #$addressId';
-    });
+      debugPrint('');
+      debugPrint('==========================================');
+      debugPrint('          HOME ADDRESS');
+      debugPrint('==========================================');
+      debugPrint(
+        'SELECTED ADDRESS ID: ${selectedAddress?.id}',
+      );
+      debugPrint(
+        'ADDRESS LABEL: ${selectedAddress?.label}',
+      );
+      debugPrint(
+        'FULL ADDRESS: ${selectedAddress?.fullAddress}',
+      );
+      debugPrint('==========================================');
+    } catch (e) {
+      debugPrint(
+        'HOME ADDRESS API ERROR: $e',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _selectedApiAddress = null;
+        _isLoadingAddress = false;
+      });
+    }
   }
 
 // ==============================================================
@@ -755,16 +876,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
   }
 
 // ==============================================================
-// CATEGORY SELECTION
-// ==============================================================
-
-  void _selectCategory(String category) {
-    setState(() {
-      _selectedCategory = category;
-    });
-  }
-
-// ==============================================================
 // FILTERED API RESTAURANT FOOD
 // ==============================================================
 
@@ -786,8 +897,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
 // ==============================================================
 // API RESTAURANT FOOD
-// ==============================================================
-
 // ==============================================================
 
   List<_ApiFoodEntry> _restaurantApiFoods(
@@ -974,10 +1083,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 //     ),
 //   );
 // }
-
-// ==============================================================
-// NEARBY RESTAURANTS VERTICAL
-// ==============================================================
 
 // =============================================================
 // NEARBY RESTAURANTS - 2 COLUMN GRID
@@ -2011,18 +2116,18 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                 },
                 child: Container(
                   constraints: const BoxConstraints(
-                    maxWidth: 145,
+                    maxWidth: 180,
                   ),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
+                    horizontal: 9,
+                    vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(
-                      10,
-                    ),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -2030,38 +2135,84 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                       Icon(
                         Icons.location_on_rounded,
                         size: 17,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                      const SizedBox(
-                        width: 4,
-                      ),
+
+                      const SizedBox(width: 5),
+
                       Flexible(
-                        child: Text(
-                          _selectedAddress.isEmpty
-                              ? 'Add address'
-                              : _selectedAddress,
+                        child: _isLoadingAddress
+                            ? SizedBox(
+                          width: 70,
+                          height: 12,
+                          child: LinearProgressIndicator(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.12),
+                          ),
+                        )
+                            : _selectedApiAddress == null
+                            ? Text(
+                          'Add address',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary,
                           ),
+                        )
+                            : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ADDRESS LABEL
+                            Text(
+                              _selectedApiAddress!.label.trim().isEmpty
+                                  ? 'Address'
+                                  : _selectedApiAddress!.label.trim(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary,
+                              ),
+                            ),
+
+                            const SizedBox(height: 2),
+
+                            // ACTUAL ADDRESS
+                            Text(
+                              _selectedApiAddress!.fullAddress.trim(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.75),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(
-                        width: 2,
-                      ),
+
+                      const SizedBox(width: 3),
+
                       Icon(
                         Icons.keyboard_arrow_down_rounded,
                         size: 16,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ],
                   ),
@@ -2087,9 +2238,9 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Text(
-                      'Hi, Sakshi',
-                      style: TextStyle(
+                    Text(
+                      'Hi, $fullname',
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),

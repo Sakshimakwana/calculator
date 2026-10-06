@@ -351,17 +351,6 @@ class OrderController extends ChangeNotifier {
     }
   }
 
-  // ============================================================
-  // CREATE PAYMENT
-  // POST /orders/{orderId}/payment
-  //
-  // COD:
-  // payment_method = cod
-  //
-  // RAZORPAY:
-  // payment_method = razorpay
-  // ============================================================
-
   Future<bool> makePayment({
     required int orderId,
     required Map<String, dynamic> paymentRequest,
