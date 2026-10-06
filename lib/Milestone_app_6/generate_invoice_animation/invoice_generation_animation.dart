@@ -82,8 +82,7 @@ class InvoiceGenerationAnimation extends StatefulWidget {
       InvoiceGenerationAnimationState();
 }
 
-class InvoiceGenerationAnimationState
-    extends State<InvoiceGenerationAnimation>
+class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -99,6 +98,7 @@ class InvoiceGenerationAnimationState
   bool _started = false;
 
   bool get isStarted => _started;
+
   bool get isCompleted => _controller.isCompleted;
 
   @override
@@ -218,9 +218,9 @@ class InvoiceGenerationAnimationState
   void didUpdateWidget(covariant InvoiceGenerationAnimation oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // If a new invoice object is supplied before start(), do not
-    // automatically start here. The parent controls the exact
-    // API-data/animation synchronization.
+// If a new invoice object is supplied before start(), do not
+// automatically start here. The parent controls the exact
+// API-data/animation synchronization.
   }
 
   @override
@@ -427,14 +427,12 @@ class InvoiceGenerationAnimationState
         const SizedBox(height: 12),
         const Divider(height: 1),
         const SizedBox(height: 10),
-        if (generatedAt.isNotEmpty)
-          _infoRow('Date', _formatDate(generatedAt)),
+        if (generatedAt.isNotEmpty) _infoRow('Date', _formatDate(generatedAt)),
         _infoRow(
           'Order',
           '#${_orderId()}',
         ),
-        if (_customerName().isNotEmpty)
-          _infoRow('Customer', _customerName()),
+        if (_customerName().isNotEmpty) _infoRow('Customer', _customerName()),
       ],
     );
   }
@@ -534,27 +532,63 @@ class InvoiceGenerationAnimationState
   }
 
   Widget _buildItemRow(Map<String, dynamic> item) {
+// ------------------------------------------------------------
+// ORDER ITEM NAME
+//
+// The order API can return the food name either directly on the
+// order item or inside `menu_item`.
+// ------------------------------------------------------------
+    final menuItem = _map(item['menu_item']);
+    final food = _map(item['food']);
+    final product = _map(item['product']);
+
     final name = _firstString([
       item['name'],
+      item['item_name'],
       item['menu_item_name'],
+      item['food_name'],
+      item['product_name'],
       item['title'],
+
+// Nested API objects
+      menuItem['name'],
+      menuItem['item_name'],
+      menuItem['title'],
+      food['name'],
+      food['item_name'],
+      food['title'],
+      product['name'],
+      product['item_name'],
+      product['title'],
     ], fallback: 'Item');
 
+// ------------------------------------------------------------
+// QUANTITY
+// ------------------------------------------------------------
     final quantity = _number(
-      item['quantity'] ??
-          item['qty'] ??
-          item['count'],
+      item['quantity'] ?? item['qty'] ?? item['count'] ?? menuItem['quantity'],
     );
 
+// ------------------------------------------------------------
+// PRICE
+// ------------------------------------------------------------
     final price = _number(
       item['price'] ??
           item['unit_price'] ??
-          item['amount'],
+          item['price_at_purchase'] ??
+          item['amount'] ??
+          menuItem['price'] ??
+          menuItem['unit_price'],
     );
 
+// ------------------------------------------------------------
+// TOTAL
+// ------------------------------------------------------------
     final total = _number(
       item['total'] ??
+          item['total_price'] ??
           item['subtotal'] ??
+          item['item_total'] ??
           (price * quantity),
     );
 
@@ -632,12 +666,9 @@ class InvoiceGenerationAnimationState
     return Column(
       children: [
         _amountRow('Subtotal', subtotal),
-        if (deliveryFee != 0)
-          _amountRow('Delivery fee', deliveryFee),
-        if (tax != 0)
-          _amountRow('Tax', tax),
-        if (discount != 0)
-          _amountRow('Discount', -discount),
+        if (deliveryFee != 0) _amountRow('Delivery fee', deliveryFee),
+        if (tax != 0) _amountRow('Tax', tax),
+        if (discount != 0) _amountRow('Discount', -discount),
         const SizedBox(height: 5),
         const Divider(height: 1),
         const SizedBox(height: 8),
@@ -693,62 +724,62 @@ class InvoiceGenerationAnimationState
       opacity: _buttonOpacity,
       child: widget.isPdfReady
           ? Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: widget.onViewPdf,
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('View PDF'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(
-                  color: Colors.white,
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: widget.onViewPdf,
+                    icon: const Icon(Icons.picture_as_pdf_outlined),
+                    label: const Text('View PDF'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(
+                        color: Colors.white,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 13,
+                      ),
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 13,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: widget.onDownload,
+                    icon: const Icon(Icons.download_rounded),
+                    label: const Text('Download'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 13,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: widget.onDownload,
-              icon: const Icon(Icons.download_rounded),
-              label: const Text('Download'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
-      )
+              ],
+            )
           : Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 9),
+                Text(
+                  'Preparing PDF...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ),
-          SizedBox(width: 9),
-          Text(
-            'Preparing PDF...',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -785,11 +816,11 @@ class InvoiceGenerationAnimationState
   }
 
   Widget _amountRow(
-      String title,
-      double amount, {
-        bool bold = false,
-        bool large = false,
-      }) {
+    String title,
+    double amount, {
+    bool bold = false,
+    bool large = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -799,9 +830,7 @@ class InvoiceGenerationAnimationState
               title,
               style: TextStyle(
                 fontSize: large ? 14 : 10,
-                fontWeight: bold
-                    ? FontWeight.w900
-                    : FontWeight.w500,
+                fontWeight: bold ? FontWeight.w900 : FontWeight.w500,
               ),
             ),
           ),
@@ -809,9 +838,7 @@ class InvoiceGenerationAnimationState
             _money(amount),
             style: TextStyle(
               fontSize: large ? 15 : 10,
-              fontWeight: bold
-                  ? FontWeight.w900
-                  : FontWeight.w700,
+              fontWeight: bold ? FontWeight.w900 : FontWeight.w700,
             ),
           ),
         ],
@@ -834,7 +861,7 @@ class InvoiceGenerationAnimationState
             .whereType<Map>()
             .map(
               (e) => Map<String, dynamic>.from(e),
-        )
+            )
             .toList();
       }
     }
@@ -871,9 +898,9 @@ class InvoiceGenerationAnimationState
   }
 
   String _firstString(
-      List<dynamic> values, {
-        String fallback = '',
-      }) {
+    List<dynamic> values, {
+    String fallback = '',
+  }) {
     for (final value in values) {
       if (value == null) continue;
 
@@ -903,8 +930,8 @@ class InvoiceGenerationAnimationState
     if (value is num) return value.toDouble();
 
     return double.tryParse(
-      value?.toString().replaceAll(',', '').trim() ?? '',
-    ) ??
+          value?.toString().replaceAll(',', '').trim() ?? '',
+        ) ??
         0;
   }
 

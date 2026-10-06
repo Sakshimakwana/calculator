@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/screens/InvoicePdfViewerScreen.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -15,8 +15,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:file_saver/file_saver.dart';
-
-
+import 'dart:async';
 
 class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
   final MilestoneApp6State state;
@@ -29,7 +28,6 @@ class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
   // IMPORTANT: this is the method selected by the user in Checkout.
   // Example: Online Payment / Cash on Delivery.
   final String paymentType;
-
   final double subtotal;
   final double shipping;
   final double discount;
@@ -61,20 +59,56 @@ class MilestoneApp6OrderDetailsScreen extends StatefulWidget {
 class _MilestoneApp6OrderDetailsScreenState
     extends State<MilestoneApp6OrderDetailsScreen> {
 
+  // ============================================================
+  // INVOICE ANIMATION
+  // ============================================================
+
   final GlobalKey<InvoiceGenerationAnimationState>
   _invoiceAnimationKey =
   GlobalKey<InvoiceGenerationAnimationState>();
 
+  // ============================================================
+  // ORDER
+  // ============================================================
+
   Map<String, dynamic>? _order;
+
+  // ============================================================
+  // DELIVERY
+  // ============================================================
+
+  Map<String, dynamic>? _delivery;
+
+  bool _isLoadingDeliveryStatus = false;
+
+  Timer? _deliveryStatusTimer;
+
+  // ============================================================
+  // INVOICE
+  // ============================================================
+
   bool _invoicePdfReady = false;
+
   File? _invoicePdfFile;
+
   bool _isGeneratingInvoice = false;
+
   Map<String, dynamic>? _invoice;
+
   String? _invoiceError;
+
+  // ============================================================
+  // SCREEN STATE
+  // ============================================================
+
   bool _isLoading = true;
+
   bool _isRefreshing = false;
+
   bool _isCancelling = false;
+
   String? _errorMessage;
+
   String _paymentMethodPreview() {
     final payment =
     _map(_order?['order_payment']);
@@ -98,10 +132,20 @@ class _MilestoneApp6OrderDetailsScreenState
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      _loadOrderDetails();
+
+      await _loadOrderDetails();
+
+      if (!mounted) return;
+
+      _startDeliveryStatusPolling();
     });
+  }
+  @override
+  void dispose() {
+    _deliveryStatusTimer?.cancel();
+    super.dispose();
   }
 
   // ============================================================
@@ -119,7 +163,219 @@ class _MilestoneApp6OrderDetailsScreenState
 
     return value;
   }
+  // ============================================================
+// GET DELIVERY STATUS
+// GET /deliveries
+//
+// Finds the delivery record belonging to this order.
+// ============================================================
 
+  Future<void> _loadDeliveryStatus() async {
+    final int? orderId = _parsedOrderId;
+
+    if (orderId == null || _isLoadingDeliveryStatus) {
+      return;
+    }
+
+    _isLoadingDeliveryStatus = true;
+
+    try {
+      final headers = await _headers();
+
+      final Uri uri = Uri.parse(
+        '${ApiConstants.baseUrl}/deliveries',
+      );
+
+      debugPrint('');
+      debugPrint('========================================');
+      debugPrint('          DELIVERY STATUS API');
+      debugPrint('========================================');
+      debugPrint('METHOD: GET');
+      debugPrint('ORDER ID: $orderId');
+      debugPrint('URL: $uri');
+      debugPrint('========================================');
+
+      final response = await http
+          .get(
+        uri,
+        headers: headers,
+      )
+          .timeout(
+        const Duration(seconds: 30),
+      );
+
+      debugPrint(
+        'DELIVERIES STATUS: ${response.statusCode}',
+      );
+
+      debugPrint(
+        'DELIVERIES RESPONSE: ${response.body}',
+      );
+
+      if (response.statusCode == 401) {
+        throw Exception(
+          'Session expired. Please login again.',
+        );
+      }
+
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300) {
+        throw Exception(
+          _apiMessage(
+            response.body,
+            fallback: 'Unable to load delivery status.',
+          ),
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is! Map) {
+        throw Exception(
+          'Invalid deliveries response.',
+        );
+      }
+
+      final responseMap =
+      Map<String, dynamic>.from(decoded);
+
+      final rawData = responseMap['data'];
+
+      if (rawData is! List) {
+        throw Exception(
+          'Delivery data is not available.',
+        );
+      }
+
+      Map<String, dynamic>? matchedDelivery;
+
+      for (final item in rawData) {
+        if (item is! Map) {
+          continue;
+        }
+
+        final delivery =
+        Map<String, dynamic>.from(item);
+
+        final deliveryOrderId =
+        int.tryParse(
+          delivery['order_id']?.toString() ?? '',
+        );
+
+        final nestedOrder =
+        _map(delivery['order']);
+
+        final nestedOrderId =
+        int.tryParse(
+          nestedOrder['id']?.toString() ?? '',
+        );
+
+        if (deliveryOrderId == orderId ||
+            nestedOrderId == orderId) {
+          matchedDelivery = delivery;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+
+      if (matchedDelivery != null) {
+        setState(() {
+          _delivery = matchedDelivery;
+        });
+
+        // ----------------------------------------------------------
+        // IMPORTANT
+        //
+        // Delivery API contains nested order.status.
+        // Keep _order status synchronized with that value.
+        // ----------------------------------------------------------
+
+        final nestedOrder =
+        _map(matchedDelivery['order']);
+
+        final backendOrderStatus =
+        nestedOrder['status']?.toString().trim();
+
+        if (backendOrderStatus != null &&
+            backendOrderStatus.isNotEmpty) {
+          setState(() {
+            _order = {
+              ...?_order,
+              'status': backendOrderStatus,
+            };
+          });
+        }
+
+        debugPrint('');
+        debugPrint('DELIVERY FOUND');
+        debugPrint(
+          'DELIVERY ID: ${matchedDelivery['id']}',
+        );
+        debugPrint(
+          'DELIVERY STATUS: ${matchedDelivery['status']}',
+        );
+        debugPrint(
+          'ORDER STATUS: ${nestedOrder['status']}',
+        );
+        debugPrint('========================================');
+      } else {
+        debugPrint(
+          'No delivery record found for order $orderId',
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        'DELIVERY STATUS ERROR: $e',
+      );
+    } finally {
+      _isLoadingDeliveryStatus = false;
+    }
+  }
+// ============================================================
+// DELIVERY STATUS POLLING
+// ============================================================
+
+  void _startDeliveryStatusPolling() {
+    _deliveryStatusTimer?.cancel();
+
+    _deliveryStatusTimer = Timer.periodic(
+      const Duration(seconds: 10),
+          (_) async {
+        if (!mounted) return;
+
+        final currentStatus =
+            _currentOrderStatus;
+
+        // Stop polling once order reaches final state.
+        if (currentStatus == 'delivered' ||
+            currentStatus == 'cancelled' ||
+            currentStatus == 'canceled') {
+          _deliveryStatusTimer?.cancel();
+          return;
+        }
+
+        await _loadOrderDetails(
+          refresh: true,
+        );
+      },
+    );
+  }
+  String get _currentOrderStatus {
+    final orderStatus = _normalizedStatus(
+      _string(_order, 'status'),
+    );
+
+    if (orderStatus.isNotEmpty) {
+      return orderStatus;
+    }
+
+    final deliveryStatus = _normalizedStatus(
+      _string(_delivery, 'status'),
+    );
+
+    return deliveryStatus;
+  }
 
 
   // ============================================================
@@ -146,18 +402,20 @@ class _MilestoneApp6OrderDetailsScreenState
   // GET ORDER INFO
   // GET /orders/{orderId}
   // ============================================================
-
   Future<void> _loadOrderDetails({
     bool refresh = false,
   }) async {
     final int? id = _parsedOrderId;
 
     if (id == null) {
+      if (!mounted) return;
+
       setState(() {
         _isLoading = false;
         _isRefreshing = false;
         _errorMessage = 'Invalid order ID.';
       });
+
       return;
     }
 
@@ -174,9 +432,14 @@ class _MilestoneApp6OrderDetailsScreenState
     }
 
     try {
+      // ============================================================
+      // 1. GET ORDER DETAILS
+      // GET /orders/{orderId}
+      // ============================================================
+
       final headers = await _headers();
 
-      final Uri uri = Uri.parse(
+      final Uri orderUri = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.orderInfo(id)}',
       );
 
@@ -186,15 +449,25 @@ class _MilestoneApp6OrderDetailsScreenState
       debugPrint('========================================');
       debugPrint('METHOD: GET');
       debugPrint('ORDER ID: $id');
-      debugPrint('URL: $uri');
+      debugPrint('URL: $orderUri');
       debugPrint('========================================');
 
       final response = await http
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: 30));
+          .get(
+        orderUri,
+        headers: headers,
+      )
+          .timeout(
+        const Duration(seconds: 30),
+      );
 
-      debugPrint('ORDER INFO STATUS: ${response.statusCode}');
-      debugPrint('ORDER INFO RESPONSE: ${response.body}');
+      debugPrint(
+        'ORDER INFO STATUS: ${response.statusCode}',
+      );
+
+      debugPrint(
+        'ORDER INFO RESPONSE: ${response.body}',
+      );
 
       if (response.statusCode == 401) {
         throw Exception(
@@ -207,8 +480,7 @@ class _MilestoneApp6OrderDetailsScreenState
         throw Exception(
           _apiMessage(
             response.body,
-            fallback:
-            'Unable to load order details.',
+            fallback: 'Unable to load order details.',
           ),
         );
       }
@@ -233,39 +505,271 @@ class _MilestoneApp6OrderDetailsScreenState
         );
       }
 
+      // Save order information first.
+      Map<String, dynamic> orderData =
+      Map<String, dynamic>.from(rawData);
+
+      // ============================================================
+      // 2. GET DELIVERY DETAILS
+      // GET /deliveries
+      // ============================================================
+
+      Map<String, dynamic>? matchedDelivery;
+
+      try {
+        final Uri deliveryUri = Uri.parse(
+          '${ApiConstants.baseUrl}/deliveries',
+        );
+
+        debugPrint('');
+        debugPrint('========================================');
+        debugPrint('          DELIVERY STATUS API');
+        debugPrint('========================================');
+        debugPrint('METHOD: GET');
+        debugPrint('ORDER ID: $id');
+        debugPrint('URL: $deliveryUri');
+        debugPrint('========================================');
+
+        final deliveryResponse = await http
+            .get(
+          deliveryUri,
+          headers: headers,
+        )
+            .timeout(
+          const Duration(seconds: 30),
+        );
+
+        debugPrint(
+          'DELIVERY STATUS: '
+              '${deliveryResponse.statusCode}',
+        );
+
+        debugPrint(
+          'DELIVERY RESPONSE: '
+              '${deliveryResponse.body}',
+        );
+
+        if (deliveryResponse.statusCode == 401) {
+          throw Exception(
+            'Session expired. Please login again.',
+          );
+        }
+
+        if (deliveryResponse.statusCode >= 200 &&
+            deliveryResponse.statusCode < 300) {
+          final deliveryDecoded =
+          jsonDecode(deliveryResponse.body);
+
+          if (deliveryDecoded is Map) {
+            final deliveryMap =
+            Map<String, dynamic>.from(
+              deliveryDecoded,
+            );
+
+            final deliveryData =
+            deliveryMap['data'];
+
+            if (deliveryData is List) {
+              // ----------------------------------------------------
+              // Find delivery belonging to current order.
+              // ----------------------------------------------------
+
+              for (final item in deliveryData) {
+                if (item is! Map) {
+                  continue;
+                }
+
+                final delivery =
+                Map<String, dynamic>.from(item);
+
+                final deliveryOrderId =
+                int.tryParse(
+                  delivery['order_id']?.toString() ?? '',
+                );
+
+                final nestedOrder =
+                _map(delivery['order']);
+
+                final nestedOrderId =
+                int.tryParse(
+                  nestedOrder['id']?.toString() ?? '',
+                );
+
+                if (deliveryOrderId == id ||
+                    nestedOrderId == id) {
+                  matchedDelivery = delivery;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } catch (deliveryError) {
+        // ----------------------------------------------------------
+        // Do NOT fail the complete Order Details screen if the
+        // delivery API has a temporary problem.
+        // ----------------------------------------------------------
+
+        debugPrint(
+          'DELIVERY API ERROR: $deliveryError',
+        );
+      }
+
+      // ============================================================
+      // 3. SYNCHRONIZE DELIVERY + ORDER STATUS
+      // ============================================================
+
+      if (matchedDelivery != null) {
+        final deliveryStatus =
+        _normalizedStatus(
+          matchedDelivery['status']?.toString() ?? '',
+        );
+
+        final nestedOrder =
+        _map(matchedDelivery['order']);
+
+        final nestedOrderStatus =
+        _normalizedStatus(
+          nestedOrder['status']?.toString() ?? '',
+        );
+
+        debugPrint('');
+        debugPrint('========================================');
+        debugPrint('        DELIVERY STATUS RESULT');
+        debugPrint('========================================');
+        debugPrint(
+          'DELIVERY ID: '
+              '${matchedDelivery['id']}',
+        );
+        debugPrint(
+          'DELIVERY STATUS: $deliveryStatus',
+        );
+        debugPrint(
+          'ORDER STATUS: $nestedOrderStatus',
+        );
+        debugPrint(
+          'ORDER ID: $id',
+        );
+        debugPrint('========================================');
+
+        // ----------------------------------------------------------
+        // Backend source of truth:
+        //
+        // assigned
+        //   -> order.status = placed
+        //
+        // picked
+        //   -> order.status = out_for_delivery
+        //
+        // delivered
+        //   -> order.status = delivered
+        // ----------------------------------------------------------
+
+        // Keep the real order status from /orders/{id}.
+        // Delivery status is stored separately and is used by the
+        // four-step delivery tracker. This is important because the
+        // backend can return:
+        // assigned -> order.status = placed
+        // picked   -> order.status = out_for_delivery
+        // delivered -> order.status = delivered
+        if (orderData['status'] == null ||
+            orderData['status'].toString().trim().isEmpty) {
+          if (nestedOrderStatus.isNotEmpty) {
+            orderData['status'] = nestedOrderStatus;
+          } else {
+            switch (deliveryStatus) {
+              case 'assigned':
+                orderData['status'] = 'placed';
+                break;
+              case 'picked':
+                orderData['status'] = 'out_for_delivery';
+                break;
+              case 'delivered':
+                orderData['status'] = 'delivered';
+                break;
+            }
+          }
+        }
+
+        // Keep complete delivery information
+        // available to the Order Details screen.
+        orderData['delivery'] =
+            matchedDelivery;
+      } else {
+        debugPrint(
+          'No delivery record found for order $id',
+        );
+      }
+
+      // ============================================================
+      // 4. UPDATE UI
+      // ============================================================
+
       if (!mounted) return;
 
       setState(() {
-        _order = Map<String, dynamic>.from(
-          rawData,
-        );
+        _order = orderData;
+        _delivery = matchedDelivery;
+
         _isLoading = false;
         _isRefreshing = false;
         _errorMessage = null;
       });
 
-      debugPrint('ORDER INFO SUCCESS');
-      debugPrint('ORDER ID: ${_value(_order, 'id')}');
-      debugPrint('STATUS: ${_value(_order, 'status')}');
+      // ============================================================
+      // 5. DEBUG LOGS
+      // ============================================================
+
+      debugPrint('');
+      debugPrint('========================================');
+      debugPrint('          ORDER DETAILS SUCCESS');
+      debugPrint('========================================');
+
       debugPrint(
-        'PAYMENT FROM API: ${_mapValue(_order?['order_payment'], 'method')}',
+        'ORDER ID: ${_value(_order, 'id')}',
       );
+
       debugPrint(
-        'SELECTED PAYMENT FROM CHECKOUT: ${widget.paymentType}',
+        'FINAL ORDER STATUS: '
+            '${_value(_order, 'status')}',
       );
+
+      debugPrint(
+        'DELIVERY STATUS: '
+            '${_delivery?['status'] ?? 'No delivery'}',
+      );
+
+      debugPrint(
+        'PAYMENT FROM API: '
+            '${_mapValue(
+          _order?['order_payment'],
+          'method',
+        )}',
+      );
+
+      debugPrint(
+        'SELECTED PAYMENT FROM CHECKOUT: '
+            '${widget.paymentType}',
+      );
+
+      debugPrint('========================================');
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
         _isLoading = false;
         _isRefreshing = false;
-        _errorMessage = e.toString().replaceFirst(
+        _errorMessage = e
+            .toString()
+            .replaceFirst(
           'Exception: ',
           '',
         );
       });
 
-      debugPrint('ORDER INFO ERROR: $e');
+      debugPrint(
+        'ORDER INFO ERROR: $e',
+      );
     }
   }
   Widget _buildInvoiceAnimationOverlay() {
@@ -1093,57 +1597,33 @@ class _MilestoneApp6OrderDetailsScreenState
 // ============================================================
 
   Future<File> _generateInvoicePdf() async {
-    final invoice = _invoice ?? {};
-
+    final invoice = _invoice ?? <String, dynamic>{};
 
     // ============================================================
-    // RESTAURANT DATA
+    // DATA
     // ============================================================
 
-    final restaurant = _map(
-      _order?['restaurant'],
-    );
+    final restaurant = _map(_order?['restaurant']);
 
-    final restaurantName =
-    _string(restaurant, 'name').isNotEmpty
+    final restaurantName = _string(restaurant, 'name').isNotEmpty
         ? _string(restaurant, 'name')
         : 'Restaurant';
 
-    final restaurantAddress =
-    _string(restaurant, 'address').isNotEmpty
-        ? _string(restaurant, 'address')
-        : '';
+    final restaurantAddress = _string(restaurant, 'address');
 
-    // ============================================================
-    // INVOICE DATA
-    // ============================================================
-
-    final invoiceNumber =
-    _string(invoice, 'invoice_number').isNotEmpty
+    final invoiceNumber = _string(invoice, 'invoice_number').isNotEmpty
         ? _string(invoice, 'invoice_number')
-        : 'INV-${widget.orderId ?? ''}';
+        : 'INV-${widget.orderId ?? '-'}';
 
-    final generatedAt =
-    _string(invoice, 'generated_at');
+    final generatedAt = _string(invoice, 'generated_at').isNotEmpty
+        ? _string(invoice, 'generated_at')
+        : _string(_order ?? <String, dynamic>{}, 'created_at');
 
     final formattedDate =
-    generatedAt.isNotEmpty
-        ? _formatDate(generatedAt)
-        : _formatDate(
-      _string(_order ?? {}, 'created_at'),
-    );
+    generatedAt.isNotEmpty ? _formatDate(generatedAt) : '-';
 
-    // ============================================================
-    // CUSTOMER
-    // ============================================================
-
-    final customer = _map(
-      _order?['customer'],
-    );
-
-    final invoiceUser = _map(
-      invoice['user'],
-    );
+    final customer = _map(_order?['customer']);
+    final invoiceUser = _map(invoice['user']);
 
     final customerName =
     _string(customer, 'full_name').isNotEmpty
@@ -1160,139 +1640,162 @@ class _MilestoneApp6OrderDetailsScreenState
         ? _string(customer, 'phone_number')
         : _string(invoiceUser, 'phone_number');
 
-    // ============================================================
-    // DELIVERY ADDRESS
-    // ============================================================
-
-    final address = _map(
-      _order?['delivery_address'],
-    );
-
-    final addressLine =
-    _string(address, 'address_line');
-
-    final city =
-    _string(address, 'city');
-
-    final state =
-    _string(address, 'state');
-
-    final pincode =
-    _string(address, 'pincode');
+    final address = _map(_order?['delivery_address']);
 
     final deliveryAddress = [
-      addressLine,
-      city,
-      state,
-      pincode,
-    ]
-        .where((e) => e.trim().isNotEmpty)
-        .join(', ');
+      _string(address, 'address_line'),
+      _string(address, 'city'),
+      _string(address, 'state'),
+      _string(address, 'pincode'),
+    ].where((e) => e.trim().isNotEmpty).join(', ');
 
-    // ============================================================
-    // PAYMENT
-    // ============================================================
+    final backendPayment = _map(_order?['order_payment']);
 
-    final backendPayment = _map(
-      _order?['order_payment'],
-    );
+    final backendMethod = _string(backendPayment, 'method');
 
-    final backendMethod =
-    _string(backendPayment, 'method');
-
-    final paymentMethod =
-    backendMethod.isNotEmpty
-        ? _formatPaymentMethod(
-      backendMethod,
-    )
+    final paymentMethod = backendMethod.isNotEmpty
+        ? _formatPaymentMethod(backendMethod)
         : widget.paymentType.trim().isNotEmpty
         ? widget.paymentType.trim()
         : 'Payment';
 
-    // ============================================================
-    // ITEMS
-    // ============================================================
+    final rawItems = _order?['order_items'];
 
-    final rawItems =
-    _order?['order_items'];
-
-    final List<Map<String, dynamic>> items =
-    rawItems is List
+    final List<Map<String, dynamic>> items = rawItems is List
         ? rawItems
         .whereType<Map>()
-        .map(
-          (e) => Map<String, dynamic>.from(e),
-    )
+        .map((e) => Map<String, dynamic>.from(e))
         .toList()
         : <Map<String, dynamic>>[];
 
-    // ============================================================
-    // TOTALS
-    // ============================================================
+    // ------------------------------------------------------------
+    // Item helpers
+    // ------------------------------------------------------------
+
+    String itemName(Map<String, dynamic> item) {
+      final menuItem = _map(item['menu_item']);
+      final food = _map(item['food']);
+      final product = _map(item['product']);
+
+      final candidates = <dynamic>[
+        item['name'],
+        item['item_name'],
+        item['menu_item_name'],
+        item['food_name'],
+        item['product_name'],
+        item['title'],
+        menuItem['name'],
+        menuItem['item_name'],
+        menuItem['title'],
+        food['name'],
+        food['item_name'],
+        food['title'],
+        product['name'],
+        product['item_name'],
+        product['title'],
+      ];
+
+      for (final value in candidates) {
+        final valueText = value?.toString().trim() ?? '';
+        if (valueText.isNotEmpty && valueText.toLowerCase() != 'null') {
+          return valueText;
+        }
+      }
+
+      return 'Food Item';
+    }
+
+    double itemPrice(Map<String, dynamic> item) {
+      final menuItem = _map(item['menu_item']);
+
+      return _doubleValue(item['price_at_purchase']) ??
+          _doubleValue(item['price']) ??
+          _doubleValue(item['unit_price']) ??
+          _doubleValue(menuItem['price']) ??
+          0;
+    }
+
+    int itemQuantity(Map<String, dynamic> item) {
+      return _intValue(item['quantity']) ??
+          _intValue(item['qty']) ??
+          _intValue(item['count']) ??
+          1;
+    }
+
+    double calculateItemTotal(Map<String, dynamic> item) {
+      final price = itemPrice(item);
+      final quantity = itemQuantity(item);
+
+      return _doubleValue(item['total_price']) ??
+          _doubleValue(item['total']) ??
+          _doubleValue(item['subtotal']) ??
+          price * quantity;
+    }
 
     final itemTotal = items.fold<double>(
       0,
-          (sum, item) {
-        final menuItem =
-        _map(item['menu_item']);
-
-        final price =
-            _doubleValue(
-              item['price_at_purchase'],
-            ) ??
-                _doubleValue(
-                  menuItem['price'],
-                ) ??
-                0;
-
-        final quantity =
-            _intValue(item['quantity']) ?? 1;
-
-        return sum + (price * quantity);
-      },
+          (sum, item) => sum + calculateItemTotal(item),
     );
 
     final deliveryFee =
-        _doubleValue(
-          invoice['delivery_fee'],
-        ) ??
-            _doubleValue(
-              _order?['delivery_fee'],
-            ) ??
+        _doubleValue(invoice['delivery_fee']) ??
+            _doubleValue(_order?['delivery_fee']) ??
             widget.shipping;
 
-    final orderTotal =
-        _doubleValue(
-          invoice['total'],
-        ) ??
-            _doubleValue(
-              _order?['total'],
-            ) ??
-            widget.totalPayment;
-
     final discount =
-        widget.discount;
+        _doubleValue(invoice['discount']) ??
+            _doubleValue(_order?['discount']) ??
+            widget.discount;
+
+    final orderTotal =
+        _doubleValue(invoice['total']) ??
+            _doubleValue(invoice['grand_total']) ??
+            _doubleValue(_order?['total']) ??
+            widget.totalPayment;
 
     // ============================================================
     // FONTS
     // ============================================================
 
-    final regularFont =
-    pw.Font.ttf(
+    final regularFont = pw.Font.ttf(
       await rootBundle.load(
         'assets/fonts/NotoSans-Regular.ttf',
       ),
     );
 
-    final boldFont =
-    pw.Font.ttf(
+    final boldFont = pw.Font.ttf(
       await rootBundle.load(
         'assets/fonts/NotoSans-Bold.ttf',
       ),
     );
 
     // ============================================================
+    // LOGO
+    //
+    // Put your application logo at:
+    // assets/images/tomato_logo.png
+    //
+    // If the asset is not available, the PDF still generates
+    // without crashing.
+    // ============================================================
+
+    pw.MemoryImage? logoImage;
+
+    try {
+      final logoData = await rootBundle.load(
+        'assets/images/tomato_logo.png',
+      );
+
+      logoImage = pw.MemoryImage(
+        logoData.buffer.asUint8List(),
+      );
+    } catch (_) {
+      logoImage = null;
+    }
+
+    // ============================================================
     // PDF
+    // BLACK + WHITE ONLY
     // ============================================================
 
     final pdf = pw.Document(
@@ -1306,66 +1809,81 @@ class _MilestoneApp6OrderDetailsScreenState
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(
-          28,
-          25,
-          28,
-          25,
+          34,
+          32,
+          34,
+          30,
         ),
-
         build: (context) {
           return pw.Column(
-            crossAxisAlignment:
-            pw.CrossAxisAlignment.stretch,
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-
               // ==================================================
               // HEADER
               // ==================================================
 
               pw.Row(
-                crossAxisAlignment:
-                pw.CrossAxisAlignment.center,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-
-                  pw.Container(
-                    width: 68,
-                    height: 68,
-                    alignment: pw.Alignment.center,
-                    decoration: pw.BoxDecoration(
-                      color: PdfColor.fromHex('#FFF1F3'),
-                      borderRadius: pw.BorderRadius.circular(8),
-                    ),
-                    child: pw.Text(
-                      'INVOICE',
-                      textAlign: pw.TextAlign.center,
-                      style: pw.TextStyle(
-                        fontSize: 8,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColor.fromHex('#D9233E'),
+                  // LOGO
+                  if (logoImage != null)
+                    pw.Container(
+                      width: 58,
+                      height: 58,
+                      padding: const pw.EdgeInsets.all(7),
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(
+                          color: PdfColors.black,
+                          width: 1,
+                        ),
+                        borderRadius:
+                        pw.BorderRadius.circular(8),
+                      ),
+                      child: pw.Image(
+                        logoImage!,
+                        fit: pw.BoxFit.contain,
+                      ),
+                    )
+                  else
+                    pw.Container(
+                      width: 58,
+                      height: 58,
+                      alignment: pw.Alignment.center,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(
+                          color: PdfColors.black,
+                          width: 1,
+                        ),
+                        borderRadius:
+                        pw.BorderRadius.circular(8),
+                      ),
+                      child: pw.Text(
+                        'T',
+                        style: pw.TextStyle(
+                          fontSize: 24,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
 
-                  pw.SizedBox(width: 12),
+                  pw.SizedBox(width: 14),
 
+                  // RESTAURANT
                   pw.Expanded(
                     child: pw.Column(
                       crossAxisAlignment:
                       pw.CrossAxisAlignment.start,
                       children: [
-
                         pw.Text(
                           restaurantName,
-                          maxLines: 1,
+                          maxLines: 2,
                           style: pw.TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight:
                             pw.FontWeight.bold,
                           ),
                         ),
-
-                        if (restaurantAddress
-                            .isNotEmpty)
+                        if (restaurantAddress.isNotEmpty)
                           pw.Padding(
                             padding:
                             const pw.EdgeInsets.only(
@@ -1374,93 +1892,64 @@ class _MilestoneApp6OrderDetailsScreenState
                             child: pw.Text(
                               restaurantAddress,
                               maxLines: 2,
-                              style:
-                              const pw.TextStyle(
+                              style: const pw.TextStyle(
                                 fontSize: 8.5,
                                 color:
                                 PdfColors.grey700,
                               ),
                             ),
                           ),
-
-                        pw.SizedBox(height: 6),
-
-                        pw.Container(
-                          padding:
-                          const pw.EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration:
-                          pw.BoxDecoration(
-                            color:
-                            PdfColor.fromHex(
-                              '#FDECEF',
-                            ),
-                            borderRadius:
-                            pw.BorderRadius
-                                .circular(4),
-                          ),
-                          child: pw.Text(
-                            'ORDER INVOICE',
-                            style: pw.TextStyle(
-                              fontSize: 8.5,
-                              fontWeight:
-                              pw.FontWeight.bold,
-                              color:
-                              PdfColor.fromHex(
-                                '#D9233E',
-                              ),
-                            ),
+                        pw.SizedBox(height: 7),
+                        pw.Text(
+                          'ORDER INVOICE',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight:
+                            pw.FontWeight.bold,
+                            letterSpacing: 1,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  pw.SizedBox(width: 15),
+                  pw.SizedBox(width: 14),
 
+                  // INVOICE META
                   pw.Column(
                     crossAxisAlignment:
                     pw.CrossAxisAlignment.end,
                     children: [
-
                       pw.Text(
-                        'Invoice No.',
-                        style:
-                        const pw.TextStyle(
-                          fontSize: 7.5,
-                          color:
-                          PdfColors.grey600,
+                        'INVOICE',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight:
+                          pw.FontWeight.bold,
+                          color: PdfColors.grey700,
                         ),
                       ),
-
+                      pw.SizedBox(height: 3),
                       pw.Text(
                         invoiceNumber,
                         style: pw.TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight:
                           pw.FontWeight.bold,
                         ),
                       ),
-
                       pw.SizedBox(height: 5),
-
                       pw.Text(
                         'Order #${widget.orderId ?? '-'}',
-                        style:
-                        const pw.TextStyle(
+                        style: const pw.TextStyle(
                           fontSize: 8,
                         ),
                       ),
-
-                      pw.SizedBox(height: 3),
-
+                      pw.SizedBox(height: 2),
                       pw.Text(
                         formattedDate,
-                        style:
-                        const pw.TextStyle(
-                          fontSize: 8,
+                        style: const pw.TextStyle(
+                          fontSize: 7.5,
                           color:
                           PdfColors.grey700,
                         ),
@@ -1470,26 +1959,23 @@ class _MilestoneApp6OrderDetailsScreenState
                 ],
               ),
 
-              pw.SizedBox(height: 12),
+              pw.SizedBox(height: 14),
 
-              pw.Container(
-                height: 2,
-                color: PdfColor.fromHex(
-                  '#E72B43',
-                ),
+              pw.Divider(
+                color: PdfColors.black,
+                thickness: 1.2,
               ),
 
               pw.SizedBox(height: 12),
 
               // ==================================================
-              // CUSTOMER + DELIVERY
+              // BILL TO / DELIVERY TO
               // ==================================================
 
               pw.Row(
                 crossAxisAlignment:
                 pw.CrossAxisAlignment.start,
                 children: [
-
                   pw.Expanded(
                     child: _pdfInfoBox(
                       title: 'BILL TO',
@@ -1499,24 +1985,18 @@ class _MilestoneApp6OrderDetailsScreenState
                               ? 'Customer'
                               : customerName,
                         ),
-
-                        if (customerPhone
-                            .isNotEmpty)
+                        if (customerPhone.isNotEmpty)
                           _pdfSmallText(
                             customerPhone,
                           ),
-
-                        if (customerEmail
-                            .isNotEmpty)
+                        if (customerEmail.isNotEmpty)
                           _pdfSmallText(
                             customerEmail,
                           ),
                       ],
                     ),
                   ),
-
-                  pw.SizedBox(width: 10),
-
+                  pw.SizedBox(width: 12),
                   pw.Expanded(
                     child: _pdfInfoBox(
                       title: 'DELIVERY TO',
@@ -1524,15 +2004,14 @@ class _MilestoneApp6OrderDetailsScreenState
                         _pdfBoldText(
                           address['label']
                               ?.toString()
+                              .trim()
                               .isNotEmpty ==
                               true
                               ? address['label']
                               .toString()
                               : 'Delivery Address',
                         ),
-
-                        if (deliveryAddress
-                            .isNotEmpty)
+                        if (deliveryAddress.isNotEmpty)
                           _pdfSmallText(
                             deliveryAddress,
                           ),
@@ -1542,144 +2021,101 @@ class _MilestoneApp6OrderDetailsScreenState
                 ],
               ),
 
-              pw.SizedBox(height: 12),
+              pw.SizedBox(height: 16),
 
               // ==================================================
-              // ITEMS
+              // ORDERED ITEMS
               // ==================================================
 
               pw.Text(
                 'ORDERED ITEMS',
                 style: pw.TextStyle(
                   fontSize: 10,
-                  fontWeight:
-                  pw.FontWeight.bold,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.7,
                 ),
               ),
 
               pw.SizedBox(height: 6),
 
-              pw.Table(
-                border: pw.TableBorder.all(
-                  color: PdfColor.fromHex(
-                    '#E4E4E4',
+              pw.Container(
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(
+                    color: PdfColors.grey400,
+                    width: .7,
                   ),
-                  width: .6,
                 ),
-                columnWidths: const {
-                  0: pw.FlexColumnWidth(5),
-                  1: pw.FlexColumnWidth(1.2),
-                  2: pw.FlexColumnWidth(2),
-                  3: pw.FlexColumnWidth(2.2),
-                },
-                children: [
-
-                  pw.TableRow(
-                    decoration:
-                    pw.BoxDecoration(
-                      color:
-                      PdfColor.fromHex(
-                        '#F7F7F8',
+                child: pw.Table(
+                  columnWidths: const {
+                    0: pw.FlexColumnWidth(5),
+                    1: pw.FlexColumnWidth(1.1),
+                    2: pw.FlexColumnWidth(2),
+                    3: pw.FlexColumnWidth(2.2),
+                  },
+                  children: [
+                    pw.TableRow(
+                      decoration:
+                      const pw.BoxDecoration(
+                        color: PdfColors.grey200,
                       ),
+                      children: [
+                        _pdfHeaderCell('ITEM'),
+                        _pdfHeaderCell('QTY'),
+                        _pdfHeaderCell(
+                          'PRICE',
+                          right: true,
+                        ),
+                        _pdfHeaderCell(
+                          'AMOUNT',
+                          right: true,
+                        ),
+                      ],
                     ),
-                    children: [
-                      _pdfHeaderCell(
-                        'ITEM',
-                      ),
-                      _pdfHeaderCell(
-                        'QTY',
-                      ),
-                      _pdfHeaderCell(
-                        'PRICE',
-                      ),
-                      _pdfHeaderCell(
-                        'AMOUNT',
-                      ),
-                    ],
-                  ),
+                    ...items.map(
+                          (item) {
+                        final name = itemName(item);
+                        final quantity =
+                        itemQuantity(item);
+                        final price =
+                        itemPrice(item);
+                        final total = calculateItemTotal(item);
 
-                  ...items.map(
-                        (item) {
-                      final menuItem =
-                      _map(
-                        item['menu_item'],
-                      );
-
-                      final name =
-                      _string(
-                        menuItem,
-                        'name',
-                      );
-
-                      final quantity =
-                          _intValue(
-                            item['quantity'],
-                          ) ??
-                              1;
-
-                      final price =
-                          _doubleValue(
-                            item[
-                            'price_at_purchase'
-                            ],
-                          ) ??
-                              _doubleValue(
-                                menuItem[
-                                'price'
-                                ],
-                              ) ??
-                              0;
-
-                      final total =
-                          _doubleValue(
-                            item[
-                            'total_price'
-                            ],
-                          ) ??
-                              price * quantity;
-
-                      return pw.TableRow(
-                        children: [
-
-                          _pdfCell(
-                            name.isEmpty
-                                ? 'Food Item'
-                                : name,
-                          ),
-
-                          _pdfCell(
-                            quantity.toString(),
-                            center: true,
-                          ),
-
-                          _pdfCell(
-                            '₹${price.toStringAsFixed(2)}',
-                            right: true,
-                          ),
-
-                          _pdfCell(
-                            '₹${total.toStringAsFixed(2)}',
-                            right: true,
-                            bold: true,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                        return pw.TableRow(
+                          children: [
+                            _pdfCell(
+                              name,
+                            ),
+                            _pdfCell(
+                              quantity.toString(),
+                              center: true,
+                            ),
+                            _pdfCell(
+                              '₹${price.toStringAsFixed(2)}',
+                              right: true,
+                            ),
+                            _pdfCell(
+                              '₹${total.toStringAsFixed(2)}',
+                              right: true,
+                              bold: true,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
 
-              pw.SizedBox(height: 10),
+              pw.SizedBox(height: 14),
 
               // ==================================================
-              // SUMMARY
+              // PAYMENT + TOTALS
               // ==================================================
 
               pw.Row(
                 crossAxisAlignment:
                 pw.CrossAxisAlignment.start,
                 children: [
-
                   pw.Expanded(
                     child: _pdfInfoBox(
                       title: 'PAYMENT',
@@ -1694,88 +2130,52 @@ class _MilestoneApp6OrderDetailsScreenState
                     ),
                   ),
 
-                  pw.SizedBox(width: 15),
+                  pw.SizedBox(width: 24),
 
                   pw.SizedBox(
                     width: 220,
                     child: pw.Column(
                       children: [
-
                         _pdfAmountRow(
                           'Item Total',
                           itemTotal,
                         ),
-
                         _pdfAmountRow(
                           'Delivery Fee',
                           deliveryFee,
                         ),
-
-                        if (discount > 0)
+                        if (discount != 0)
                           _pdfAmountRow(
                             'Discount',
                             -discount,
-                            valueColor:
-                            PdfColor.fromHex(
-                              '#238B45',
-                            ),
                           ),
-
+                        pw.SizedBox(height: 4),
                         pw.Divider(
-                          color:
-                          PdfColors.grey400,
+                          color: PdfColors.black,
                         ),
-
-                        pw.Container(
-                          padding:
-                          const pw.EdgeInsets
-                              .symmetric(
-                            horizontal: 10,
-                            vertical: 8,
-                          ),
-                          decoration:
-                          pw.BoxDecoration(
-                            color:
-                            PdfColor.fromHex(
-                              '#FFF1F3',
+                        pw.SizedBox(height: 5),
+                        pw.Row(
+                          mainAxisAlignment:
+                          pw.MainAxisAlignment
+                              .spaceBetween,
+                          children: [
+                            pw.Text(
+                              'GRAND TOTAL',
+                              style: pw.TextStyle(
+                                fontSize: 11,
+                                fontWeight:
+                                pw.FontWeight.bold,
+                              ),
                             ),
-                            borderRadius:
-                            pw.BorderRadius
-                                .circular(5),
-                          ),
-                          child: pw.Row(
-                            mainAxisAlignment:
-                            pw.MainAxisAlignment
-                                .spaceBetween,
-                            children: [
-
-                              pw.Text(
-                                'GRAND TOTAL',
-                                style:
-                                pw.TextStyle(
-                                  fontSize: 10,
-                                  fontWeight:
-                                  pw.FontWeight
-                                      .bold,
-                                ),
+                            pw.Text(
+                              '₹${orderTotal.toStringAsFixed(2)}',
+                              style: pw.TextStyle(
+                                fontSize: 14,
+                                fontWeight:
+                                pw.FontWeight.bold,
                               ),
-
-                              pw.Text(
-                                '₹${orderTotal.toStringAsFixed(2)}',
-                                style:
-                                pw.TextStyle(
-                                  fontSize: 13,
-                                  fontWeight:
-                                  pw.FontWeight
-                                      .bold,
-                                  color:
-                                  PdfColor.fromHex(
-                                    '#D9233E',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1790,10 +2190,10 @@ class _MilestoneApp6OrderDetailsScreenState
               // ==================================================
 
               pw.Divider(
-                color: PdfColors.grey300,
+                color: PdfColors.grey400,
               ),
 
-              pw.SizedBox(height: 5),
+              pw.SizedBox(height: 6),
 
               pw.Center(
                 child: pw.Text(
@@ -1811,10 +2211,10 @@ class _MilestoneApp6OrderDetailsScreenState
               pw.Center(
                 child: pw.Text(
                   'This is a computer-generated invoice and does not require a signature.',
+                  textAlign: pw.TextAlign.center,
                   style: const pw.TextStyle(
                     fontSize: 7,
-                    color:
-                    PdfColors.grey600,
+                    color: PdfColors.grey600,
                   ),
                 ),
               ),
@@ -1826,7 +2226,8 @@ class _MilestoneApp6OrderDetailsScreenState
 
     final bytes = await pdf.save();
 
-    final directory = await getTemporaryDirectory();
+    final directory =
+    await getTemporaryDirectory();
 
     final file = File(
       '${directory.path}/invoice_${widget.orderId}.pdf',
@@ -1869,17 +2270,33 @@ class _MilestoneApp6OrderDetailsScreenState
       ),
     );
   }
-  pw.Widget _pdfHeaderCell(String text) {
+  pw.Widget _pdfHeaderCell(
+      String text, {
+        bool center = false,
+        bool right = false,
+      }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(
         horizontal: 6,
         vertical: 6,
       ),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: 7,
-          fontWeight: pw.FontWeight.bold,
+      child: pw.Align(
+        alignment: right
+            ? pw.Alignment.centerRight
+            : center
+            ? pw.Alignment.center
+            : pw.Alignment.centerLeft,
+        child: pw.Text(
+          text,
+          textAlign: right
+              ? pw.TextAlign.right
+              : center
+              ? pw.TextAlign.center
+              : pw.TextAlign.left,
+          style: pw.TextStyle(
+            fontSize: 7,
+            fontWeight: pw.FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -2175,7 +2592,6 @@ class _MilestoneApp6OrderDetailsScreenState
   // ============================================================
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
@@ -2391,41 +2807,108 @@ class _MilestoneApp6OrderDetailsScreenState
   // ============================================================
 
   Widget _statusCard() {
-    final status = _normalizedStatus(
-      _string(_order, 'status'),
-    );
+    final orderStatus =
+    (_order?['status'] ?? '').toString().toLowerCase().trim();
 
-    if (status == 'cancelled' ||
-        status == 'canceled') {
-      return _card(
+    final deliveryStatus =
+    (_delivery?['status'] ?? '').toString().toLowerCase().trim();
+
+    // ------------------------------------------------------------
+    // CURRENT STEP
+    // 0 = Order Placed
+    // 1 = Partner Assigned
+    // 2 = Out for Delivery
+    // 3 = Delivered
+    // ------------------------------------------------------------
+
+    int currentStep = 0;
+
+    if (orderStatus == 'delivered' || deliveryStatus == 'delivered') {
+      currentStep = 3;
+    } else if (orderStatus == 'out_for_delivery' ||
+        deliveryStatus == 'picked') {
+      currentStep = 2;
+    } else if (deliveryStatus == 'assigned') {
+      currentStep = 1;
+    }
+
+    final isCancelled = orderStatus == 'cancelled';
+
+    final steps = [
+      {
+        'title': 'Order Placed',
+        'subtitle': 'Your order is confirmed',
+        'icon': Icons.receipt_long_rounded,
+      },
+      {
+        'title': 'Partner Assigned',
+        'subtitle': 'Delivery partner is ready',
+        'icon': Icons.delivery_dining_rounded,
+      },
+      {
+        'title': 'Out for Delivery',
+        'subtitle': 'Your food is on the way',
+        'icon': Icons.two_wheeler_rounded,
+      },
+      {
+        'title': 'Delivered',
+        'subtitle': 'Enjoy your meal!',
+        'icon': Icons.home_rounded,
+      },
+    ];
+
+    if (isCancelled) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: Colors.red.withOpacity(.15),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.05),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
         child: Row(
           children: [
-            _circleIcon(
-              Icons.cancel_rounded,
-              const Color(0xFFD62828),
-              const Color(0xFFFFE9E9),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.red,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 14),
             const Expanded(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Order Cancelled',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFFD62828),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
                     ),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'This order has been cancelled successfully.',
+                    'This order has been cancelled.',
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 13,
                       color: Colors.black54,
-                      height: 1.35,
                     ),
                   ),
                 ],
@@ -2436,73 +2919,154 @@ class _MilestoneApp6OrderDetailsScreenState
       );
     }
 
-    final steps = [
-      ('Placed', true),
-      (
-      'Preparing',
-      status == 'preparing' ||
-          status == 'out_for_delivery' ||
-          status == 'out for delivery' ||
-          status == 'delivered',
-      ),
-      (
-      'Out for delivery',
-      status == 'out_for_delivery' ||
-          status == 'out for delivery' ||
-          status == 'delivered',
-      ),
-      ('Delivered', status == 'delivered'),
-    ];
+    final current = steps[currentStep];
 
-    return _card(
-      padding: const EdgeInsets.fromLTRB(
-        15,
-        18,
-        15,
-        18,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.black.withOpacity(.05),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.055),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitle(
-            Icons.track_changes_rounded,
-            'Order Status',
-          ),
-          const SizedBox(height: 20),
+          // ========================================================
+          // HEADER
+          // ========================================================
+
           Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Order Status',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF171717),
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Track your order in real time',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Live badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F3),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.circle,
+                      size: 7,
+                      color: Color(0xFFE63958),
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'LIVE',
+                      style: TextStyle(
+                        color: Color(0xFFE63958),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: .7,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // ========================================================
+          // HORIZONTAL TRACKER
+          // ========================================================
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(
               steps.length,
                   (index) {
-                final active = steps[index].$2;
+                final completed = index < currentStep;
+                final active = index == currentStep;
+
                 return Expanded(
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Column(
                           children: [
+                            // ICON
                             Container(
-                              width: 39,
-                              height: 39,
+                              width: active ? 48 : 42,
+                              height: active ? 48 : 42,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: active
-                                    ? const Color(0xFFEF5B6B)
-                                    : const Color(0xFFF0F1F3),
+                                color: completed || active
+                                    ? const Color(0xFFE63958)
+                                    : const Color(0xFFF2F2F2),
+                                border: active
+                                    ? Border.all(
+                                  color: const Color(0xFFFFD6DE),
+                                  width: 5,
+                                )
+                                    : null,
+                                boxShadow: active
+                                    ? [
+                                  BoxShadow(
+                                    color: const Color(0xFFE63958)
+                                        .withOpacity(.22),
+                                    blurRadius: 14,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                                    : [],
                               ),
                               child: Icon(
-                                active
+                                completed
                                     ? Icons.check_rounded
-                                    : Icons.circle_outlined,
-                                size: active ? 22 : 18,
-                                color: active
+                                    : steps[index]['icon'] as IconData,
+                                size: active ? 23 : 20,
+                                color: completed || active
                                     ? Colors.white
-                                    : const Color(0xFFB5B8BE),
+                                    : Colors.black38,
                               ),
                             ),
-                            const SizedBox(height: 8),
+
+                            const SizedBox(height: 9),
+
                             Text(
-                              steps[index].$1,
+                              steps[index]['title'] as String,
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               style: TextStyle(
@@ -2510,25 +3074,57 @@ class _MilestoneApp6OrderDetailsScreenState
                                 height: 1.2,
                                 fontWeight: active
                                     ? FontWeight.w800
-                                    : FontWeight.w500,
+                                    : FontWeight.w600,
                                 color: active
+                                    ? const Color(0xFFE63958)
+                                    : completed
                                     ? Colors.black87
                                     : Colors.black38,
                               ),
                             ),
+
+                            if (active) ...[
+                              const SizedBox(height: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF0F3),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'CURRENT',
+                                  style: TextStyle(
+                                    fontSize: 7.5,
+                                    letterSpacing: .5,
+                                    color: Color(0xFFE63958),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
+
+                      // CONNECTING LINE
                       if (index != steps.length - 1)
                         Expanded(
                           child: Container(
-                            height: 2,
                             margin: const EdgeInsets.only(
-                              bottom: 31,
+                              top: 20,
+                              left: 2,
+                              right: 2,
                             ),
-                            color: steps[index + 1].$2
-                                ? const Color(0xFFEF5B6B)
-                                : const Color(0xFFE4E5E8),
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: index < currentStep
+                                  ? const Color(0xFFE63958)
+                                  : const Color(0xFFE9E9E9),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
                         ),
                     ],
@@ -2537,11 +3133,77 @@ class _MilestoneApp6OrderDetailsScreenState
               },
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // ========================================================
+          // CURRENT STATUS DETAIL
+          // ========================================================
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7F8),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: const Color(0xFFFFE1E6),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    current['icon'] as IconData,
+                    color: const Color(0xFFE63958),
+                    size: 22,
+                  ),
+                ),
+
+                const SizedBox(width: 13),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        current['title'] as String,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF222222),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        current['subtitle'] as String,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Colors.black26,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
-
   // ============================================================
   // RESTAURANT
   // ============================================================
@@ -3839,5 +4501,54 @@ class _MilestoneApp6OrderDetailsScreenState
           ),
         ),
       );
+  }
+}
+
+
+// ============================================================
+// INVOICE PDF VIEWER
+// ============================================================
+//
+// This viewer is intentionally kept in the same Dart file because
+// MilestoneApp6OrderDetailsScreen already calls InvoicePdfViewerScreen.
+// The generated PDF itself is black/white; the viewer also uses a
+// white application background so no pink/purple UI is introduced.
+// ============================================================
+
+class InvoicePdfViewerScreen extends StatelessWidget {
+  final File pdfFile;
+
+  const InvoicePdfViewerScreen({
+    super.key,
+    required this.pdfFile,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: false,
+        title: const Text(
+          'Invoice PDF',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      body: Container(
+        color: Colors.white,
+        child: SfPdfViewer.file(
+          pdfFile,
+          canShowScrollHead: true,
+          canShowScrollStatus: true,
+          enableDoubleTapZooming: true,
+        ),
+      ),
+    );
   }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter/material.dart';
+import 'my_reviews_screen.dart';
 import '../../controllers/auth_controller.dart';
 
 import '../../core/storage/address_storage.dart';
@@ -115,6 +116,9 @@ class MilestoneApp6ProfileScreen extends StatelessWidget {
 // ==========================================================
 // MY ORDERS
 // ==========================================================
+// ==========================================================
+// MY ORDERS
+// ==========================================================
 
               _item(
                 context,
@@ -127,6 +131,26 @@ class MilestoneApp6ProfileScreen extends StatelessWidget {
               ),
 
 // ==========================================================
+// MY REVIEWS
+// ==========================================================
+
+              _item(
+                context,
+                Icons.rate_review_outlined,
+                'My Reviews',
+                trailingText: null,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                      const MilestoneApp6MyReviewsScreen(),
+                    ),
+                  );
+                },
+              ),
+
+// ==========================================================
 // FAVORITE PRODUCTS
 // ==========================================================
 
@@ -135,7 +159,7 @@ class MilestoneApp6ProfileScreen extends StatelessWidget {
                 Icons.favorite_border,
                 'Favorite Products',
                 trailingText:
-                    state.saved.isNotEmpty ? '${state.saved.length}' : null,
+                state.saved.isNotEmpty ? '${state.saved.length}' : null,
                 onTap: () {
                   _showFavoriteProducts(context);
                 },

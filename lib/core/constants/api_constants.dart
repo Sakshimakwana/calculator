@@ -66,4 +66,36 @@ class ApiConstants {
   static String verifyPayment(int orderId) {
     return '/orders/$orderId/payment/verify';
   }
+  static const String myReviews = '/reviews';
+
+  static String deleteReview(int reviewId) {
+    return '/reviews/$reviewId/destroy';
+  }
+  static String addOrderReview(int orderId) {
+    return '/orders/$orderId/reviews';
+  }
+  static String createReview(int orderId) {
+    return '/orders/$orderId/reviews';
+  }
+
+  static const String deliveries =
+      '/deliveries';
+
+  static String assignDelivery(int orderId) {
+    return '/orders/$orderId/delivery';
+  }
+
+
+  static String pickupDelivery(
+      int deliveryId,
+      ) {
+    return '/deliveries/$deliveryId/pickup';
+  }
+
+
+  static String completeDelivery(
+      int deliveryId,
+      ) {
+    return '/deliveries/$deliveryId/delivered';
+  }
 }

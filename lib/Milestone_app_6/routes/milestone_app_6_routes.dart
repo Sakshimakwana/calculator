@@ -11,7 +11,7 @@ import '../screens/milestone_app_6_my_orders_screen.dart';
 import '../screens/milestone_app_6_buy_now_checkout_screen.dart';
 import '../screens/milestone_app_6_categories.dart';
 import '../screens/milestone_app_6_cart.dart';
-import '../screens/milestone_app_6_details.dart';
+import '../screens/milestone_app_6_food_details.dart';
 import '../screens/milestone_app_6_home.dart';
 import '../screens/milestone_app_6_login_screen.dart';
 import '../screens/milestone_app_6_onboarding.dart';

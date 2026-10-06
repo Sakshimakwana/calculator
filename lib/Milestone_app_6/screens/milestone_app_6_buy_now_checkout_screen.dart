@@ -115,6 +115,7 @@ class _MilestoneApp6CheckoutScreenState
 
   late Razorpay _razorpay;
 
+
   /// Backend Tomato order ID.
   int? _pendingBackendOrderId;
 
@@ -484,106 +485,25 @@ class _MilestoneApp6CheckoutScreenState
   /// ==============================================================
 
   void _openRazorpayCheckout({
-    required Map<String, dynamic> paymentData,
     required int backendOrderId,
+    required Map<String, dynamic> paymentData,
   }) {
-    /// ------------------------------------------------------------
-    /// RAZORPAY ORDER ID
-    /// ------------------------------------------------------------
-
     final String? razorpayOrderId =
     paymentData['razorpay_order_id']?.toString();
 
-    /// ------------------------------------------------------------
-    /// AMOUNT
-    /// ------------------------------------------------------------
-
-    final dynamic amountValue =
-    paymentData['amount'];
-
-    /// ------------------------------------------------------------
-    /// CURRENCY
-    /// ------------------------------------------------------------
+    final int amount =
+        int.tryParse(paymentData['amount']?.toString() ?? '0') ?? 0;
 
     final String currency =
         paymentData['currency']?.toString() ?? 'INR';
 
-    /// ------------------------------------------------------------
-    /// VALIDATE RAZORPAY ORDER ID
-    /// ------------------------------------------------------------
-
-    if (razorpayOrderId == null ||
-        razorpayOrderId.isEmpty) {
-      _showSnackBar(
-        'Razorpay order ID was not received.',
-      );
+    if (razorpayOrderId == null || razorpayOrderId.isEmpty) {
+      debugPrint('Razorpay order ID missing');
       return;
     }
 
-    /// ------------------------------------------------------------
-    /// VALIDATE AMOUNT
-    /// ------------------------------------------------------------
-
-    if (amountValue == null) {
-      _showSnackBar(
-        'Payment amount was not received.',
-      );
-      return;
-    }
-
-    /// ------------------------------------------------------------
-    /// PARSE AMOUNT
-    /// ------------------------------------------------------------
-
-    final int? amount =
-    int.tryParse(
-      amountValue.toString(),
-    );
-
-    if (amount == null || amount <= 0) {
-      _showSnackBar(
-        'Invalid Razorpay payment amount.',
-      );
-      return;
-    }
-
-    /// ------------------------------------------------------------
-    /// STORE PENDING PAYMENT DATA
-    /// ------------------------------------------------------------
-
-    _pendingBackendOrderId =
-        backendOrderId;
-
-    _pendingRazorpayOrderId =
-        razorpayOrderId;
-
-    /// ------------------------------------------------------------
-    /// DEBUG
-    /// ------------------------------------------------------------
-
-    debugPrint(
-      '========== OPEN RAZORPAY ==========',
-    );
-
-    debugPrint(
-      'Backend Order ID: $backendOrderId',
-    );
-
-    debugPrint(
-      'Razorpay Order ID: $razorpayOrderId',
-    );
-
-    debugPrint(
-      'Amount: $amount',
-    );
-
-    debugPrint(
-      'Currency: $currency',
-    );
-
-    /// ------------------------------------------------------------
-    /// RAZORPAY OPTIONS
-    /// ------------------------------------------------------------
+    _pendingBackendOrderId = backendOrderId;
+    _pendingRazorpayOrderId = razorpayOrderId;
 
     final Map<String, dynamic> options = {
       'key': razorpayKeyId,
@@ -601,21 +521,12 @@ class _MilestoneApp6CheckoutScreenState
       },
     };
 
-    /// ------------------------------------------------------------
-    /// OPEN RAZORPAY
-    /// ------------------------------------------------------------
+    debugPrint('Opening Razorpay Checkout...');
+    debugPrint('Razorpay Order ID: $razorpayOrderId');
+    debugPrint('Amount: $amount');
+    debugPrint('Currency: $currency');
 
-    try {
-      _razorpay.open(options);
-    } catch (e) {
-      debugPrint(
-        'RAZORPAY OPEN ERROR: $e',
-      );
-
-      _showSnackBar(
-        'Unable to open Razorpay checkout.',
-      );
-    }
+    _razorpay.open(options);
   }
 
   /// ==============================================================

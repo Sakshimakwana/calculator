@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../data/milestone_app_6_cart_item.dart';
-import '../data/milestone_app_6_order.dart';
-import '../state/milestone_app_6_state.dart';
 import 'package:provider/provider.dart';
 import 'package:app_matic_tech_flutter_app/controllers/order_controller.dart';
+import 'package:app_matic_tech_flutter_app/controllers/review_controller.dart';
 import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
+import '../data/milestone_app_6_cart_item.dart';
+import '../state/milestone_app_6_state.dart';
 
 class MilestoneApp6MyOrdersScreen extends StatefulWidget {
   final MilestoneApp6State state;
@@ -22,8 +22,7 @@ class MilestoneApp6MyOrdersScreen extends StatefulWidget {
 
 class _MilestoneApp6MyOrdersScreenState
     extends State<MilestoneApp6MyOrdersScreen> {
-  final TextEditingController _searchController =
-  TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   final Set<String> _submittedReviews = {};
   String _searchText = '';
@@ -51,38 +50,39 @@ class _MilestoneApp6MyOrdersScreenState
 
     _searchController.addListener(() {
       setState(() {
-        _searchText =
-            _searchController.text.trim().toLowerCase();
+        _searchText = _searchController.text.trim().toLowerCase();
       });
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OrderController>().fetchMyOrders(
-        refresh: true,
-      );
+            refresh: true,
+          );
     });
   }
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
-  // ============================================================
-// REVIEW DIALOG
-// ============================================================
 
 // ============================================================
 // REVIEW DIALOG
 // ============================================================
 
-  // ============================================================
+// ============================================================
+// REVIEW DIALOG
+// ============================================================
+
+// ============================================================
 // REVIEW DIALOG
 // ============================================================
 
   Future<void> _showReviewDialog(
-      BuildContext context,
-      MilestoneApp6Order order,
-      ) async {
+    BuildContext context,
+    OrderInfoModel order,
+  ) async {
     int selectedRating = 0;
     String reviewText = '';
 
@@ -92,37 +92,31 @@ class _MilestoneApp6MyOrdersScreenState
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (
-              context,
-              setDialogState,
-              ) {
-            // ========================================================
-            // SUBMIT VALIDATION
-            // ========================================================
+            context,
+            setDialogState,
+          ) {
+// ========================================================
+// SUBMIT VALIDATION
+// ========================================================
 
             final bool canSubmit =
-                selectedRating > 0 &&
-                    reviewText.trim().isNotEmpty;
+                selectedRating > 0 && reviewText.trim().isNotEmpty;
 
             return Dialog(
-              backgroundColor:
-              Theme.of(context).cardColor,
-              insetPadding:
-              const EdgeInsets.symmetric(
+              backgroundColor: Theme.of(context).cardColor,
+              insetPadding: const EdgeInsets.symmetric(
                 horizontal: 24,
                 vertical: 24,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius:
-                BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: ConstrainedBox(
-                constraints:
-                const BoxConstraints(
+                constraints: const BoxConstraints(
                   maxWidth: 625,
                 ),
                 child: Padding(
-                  padding:
-                  const EdgeInsets.fromLTRB(
+                  padding: const EdgeInsets.fromLTRB(
                     30,
                     24,
                     30,
@@ -130,13 +124,11 @@ class _MilestoneApp6MyOrdersScreenState
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
-                      // ==================================================
-                      // TITLE
-                      // ==================================================
+// ==================================================
+// TITLE
+// ==================================================
 
                       Row(
                         children: [
@@ -145,20 +137,16 @@ class _MilestoneApp6MyOrdersScreenState
                               'Write a Review',
                               style: TextStyle(
                                 fontSize: 26,
-                                fontWeight:
-                                FontWeight.w800,
-                                color:
-                                Theme.of(context)
-                                    .brightness ==
-                                    Brightness.dark
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : const Color(
-                                  0xFF10131A,
-                                ),
+                                        0xFF10131A,
+                                      ),
                               ),
                             ),
                           ),
-
                           IconButton(
                             onPressed: () {
                               Navigator.pop(
@@ -169,39 +157,32 @@ class _MilestoneApp6MyOrdersScreenState
                             icon: Icon(
                               Icons.close_rounded,
                               size: 20,
-                              color:
-                              Colors.grey.shade500,
+                              color: Colors.grey.shade500,
                             ),
                           ),
                         ],
                       ),
 
-                      // ==================================================
-                      // SUBTITLE
-                      // ==================================================
+// ==================================================
+// SUBTITLE
+// ==================================================
 
                       RichText(
                         text: TextSpan(
                           style: TextStyle(
                             fontSize: 15,
-                            color:
-                            Colors.grey.shade500,
+                            color: Colors.grey.shade500,
                           ),
                           children: [
                             const TextSpan(
-                              text:
-                              'How was your experience with ',
+                              text: 'How was your experience with ',
                             ),
                             TextSpan(
-                              text:
-                              order.restaurantName,
+                              text: order.restaurant.name,
                               style: TextStyle(
-                                fontWeight:
-                                FontWeight.w600,
-                                color:
-                                Theme.of(context)
-                                    .brightness ==
-                                    Brightness.dark
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : Colors.black,
                               ),
@@ -215,51 +196,39 @@ class _MilestoneApp6MyOrdersScreenState
 
                       const SizedBox(height: 20),
 
-                      // ==================================================
-                      // STAR RATING
-                      // ==================================================
+// ==================================================
+// STAR RATING
+// ==================================================
 
                       Center(
                         child: Row(
-                          mainAxisSize:
-                          MainAxisSize.min,
+                          mainAxisSize: MainAxisSize.min,
                           children: List.generate(
                             5,
-                                (index) {
-                              final int rating =
-                                  index + 1;
+                            (index) {
+                              final int rating = index + 1;
 
                               return GestureDetector(
-                                behavior:
-                                HitTestBehavior
-                                    .opaque,
+                                behavior: HitTestBehavior.opaque,
                                 onTap: () {
                                   setDialogState(() {
-                                    selectedRating =
-                                        rating;
+                                    selectedRating = rating;
                                   });
                                 },
                                 child: Padding(
-                                  padding:
-                                  const EdgeInsets
-                                      .symmetric(
+                                  padding: const EdgeInsets.symmetric(
                                     horizontal: 4,
                                   ),
                                   child: Icon(
-                                    rating <=
-                                        selectedRating
+                                    rating <= selectedRating
                                         ? Icons.star_rounded
-                                        : Icons
-                                        .star_border_rounded,
+                                        : Icons.star_border_rounded,
                                     size: 38,
-                                    color: rating <=
-                                        selectedRating
+                                    color: rating <= selectedRating
                                         ? const Color(
-                                      0xFFFFC107,
-                                    )
-                                        : Colors
-                                        .grey
-                                        .shade300,
+                                            0xFFFFC107,
+                                          )
+                                        : Colors.grey.shade300,
                                   ),
                                 ),
                               );
@@ -275,21 +244,20 @@ class _MilestoneApp6MyOrdersScreenState
                           selectedRating == 0
                               ? 'Tap to rate'
                               : _ratingText(
-                            selectedRating,
-                          ),
+                                  selectedRating,
+                                ),
                           style: TextStyle(
                             fontSize: 12,
-                            color:
-                            Colors.grey.shade500,
+                            color: Colors.grey.shade500,
                           ),
                         ),
                       ),
 
                       const SizedBox(height: 25),
 
-                      // ==================================================
-                      // YOUR REVIEW
-                      // ==================================================
+// ==================================================
+// YOUR REVIEW
+// ==================================================
 
                       Row(
                         children: [
@@ -297,25 +265,19 @@ class _MilestoneApp6MyOrdersScreenState
                             'Your Review',
                             style: TextStyle(
                               fontSize: 14,
-                              fontWeight:
-                              FontWeight.w700,
-                              color:
-                              Theme.of(context)
-                                  .brightness ==
-                                  Brightness.dark
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? Colors.white
                                   : Colors.black,
                             ),
                           ),
-
                           const Spacer(),
-
                           Text(
                             '${reviewText.length} / 500',
                             style: TextStyle(
                               fontSize: 12,
-                              color:
-                              Colors.grey.shade400,
+                              color: Colors.grey.shade400,
                             ),
                           ),
                         ],
@@ -323,26 +285,22 @@ class _MilestoneApp6MyOrdersScreenState
 
                       const SizedBox(height: 8),
 
-                      // ==================================================
-                      // REVIEW TEXT FIELD
-                      // ==================================================
+// ==================================================
+// REVIEW TEXT FIELD
+// ==================================================
 
                       Container(
                         height: 145,
                         decoration: BoxDecoration(
                           border: Border.all(
                             color:
-                            Theme.of(context)
-                                .brightness ==
-                                Brightness.dark
-                                ? Colors.white
-                                .withOpacity(0.10)
-                                : const Color(
-                              0xFFE2E2E2,
-                            ),
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white.withOpacity(0.10)
+                                    : const Color(
+                                        0xFFE2E2E2,
+                                      ),
                           ),
-                          borderRadius:
-                          BorderRadius.circular(
+                          borderRadius: BorderRadius.circular(
                             14,
                           ),
                         ),
@@ -350,38 +308,31 @@ class _MilestoneApp6MyOrdersScreenState
                           maxLength: 500,
                           maxLines: null,
                           expands: true,
-                          textAlignVertical:
-                          TextAlignVertical.top,
+                          textAlignVertical: TextAlignVertical.top,
                           onChanged: (value) {
                             setDialogState(() {
                               reviewText = value;
                             });
                           },
-                          decoration:
-                          const InputDecoration(
+                          decoration: const InputDecoration(
                             counterText: '',
-                            border:
-                            InputBorder.none,
-                            contentPadding:
-                            EdgeInsets.all(10),
-                            hintText:
-                            'Tell us about your experience...',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(10),
+                            hintText: 'Tell us about your experience...',
                           ),
                         ),
                       ),
 
                       const SizedBox(height: 22),
 
-                      // ==================================================
-                      // BUTTONS
-                      // ==================================================
+// ==================================================
+// BUTTONS
+// ==================================================
 
                       Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-
-                          // CANCEL
+// CANCEL
                           SizedBox(
                             height: 42,
                             child: OutlinedButton(
@@ -391,70 +342,51 @@ class _MilestoneApp6MyOrdersScreenState
                                   false,
                                 );
                               },
-                              style:
-                              OutlinedButton
-                                  .styleFrom(
-                                shape:
-                                RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(12),
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child:
-                              const Text('Cancel'),
+                              child: const Text('Cancel'),
                             ),
                           ),
 
                           const SizedBox(width: 12),
 
-                          // SUBMIT
+// SUBMIT
                           SizedBox(
                             height: 42,
                             child: ElevatedButton(
                               onPressed: canSubmit
                                   ? () {
-                                Navigator.pop(
-                                  dialogContext,
-                                  true,
-                                );
-                              }
+                                      Navigator.pop(
+                                        dialogContext,
+                                        true,
+                                      );
+                                    }
                                   : null,
-                              style:
-                              ElevatedButton
-                                  .styleFrom(
+                              style: ElevatedButton.styleFrom(
                                 elevation: 0,
                                 backgroundColor:
-                                Theme.of(context)
-                                    .colorScheme
-                                    .primary,
-                                disabledBackgroundColor:
-                                const Color(
+                                    Theme.of(context).colorScheme.primary,
+                                disabledBackgroundColor: const Color(
                                   0xFFE5E5E5,
                                 ),
-                                foregroundColor:
-                                Colors.white,
-                                disabledForegroundColor:
-                                const Color(
+                                foregroundColor: Colors.white,
+                                disabledForegroundColor: const Color(
                                   0xFF999999,
                                 ),
-                                padding:
-                                const EdgeInsets
-                                    .symmetric(
+                                padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                 ),
-                                shape:
-                                RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: const Text(
                                 'Submit Review',
                                 style: TextStyle(
-                                  fontWeight:
-                                  FontWeight.w700,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
@@ -471,38 +403,69 @@ class _MilestoneApp6MyOrdersScreenState
       },
     );
 
-    // ============================================================
-    // SAVE REVIEW AFTER DIALOG IS COMPLETELY CLOSED
-    // ============================================================
+// ============================================================
+// SAVE REVIEW AFTER DIALOG IS COMPLETELY CLOSED
+// ============================================================
 
     if (submitted == true && mounted) {
-      setState(() {
-        _submittedReviews.add(order.id);
-      });
+      final reviewController = context.read<ReviewController>();
+
+      final success = await reviewController.createReview(
+        orderId: order.id,
+        rating: selectedRating,
+        comment: reviewText.trim(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (success) {
+        setState(() {
+          _submittedReviews.add(
+            order.id.toString(),
+          );
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Review submitted successfully.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              reviewController.errorMessage ?? 'Failed to submit review.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
   List<OrderInfoModel> _filteredOrders(
-      List<OrderInfoModel> orders,
-      ) {
+    List<OrderInfoModel> orders,
+  ) {
     if (_searchText.isEmpty) {
       return orders;
     }
 
     return orders.where((order) {
-      final restaurant =
-      order.restaurant.name.toLowerCase();
+      final restaurant = order.restaurant.name.toLowerCase();
 
-      final status =
-      order.status.toLowerCase();
+      final status = order.status.toLowerCase();
 
-      final orderId =
-      order.id.toString();
+      final orderId = order.id.toString();
 
       final itemNames = order.orderItems
           .map(
             (item) => item.menuItem.name.toLowerCase(),
-      )
+          )
           .join(' ');
 
       return restaurant.contains(_searchText) ||
@@ -516,33 +479,26 @@ class _MilestoneApp6MyOrdersScreenState
   Widget build(BuildContext context) {
     return Consumer<OrderController>(
       builder: (
-          context,
-          orderController,
-          child,
-          ) {
+        context,
+        orderController,
+        child,
+      ) {
         final orders = _filteredOrders(
           orderController.myOrders,
         );
 
         final theme = Theme.of(context);
-        final isDark =
-            theme.brightness == Brightness.dark;
+        final isDark = theme.brightness == Brightness.dark;
 
         return Scaffold(
-          backgroundColor: isDark
-              ? const Color(0xFF0D0D0D)
-              : const Color(0xFFFAFAFA),
-
+          backgroundColor:
+              isDark ? const Color(0xFF0D0D0D) : const Color(0xFFFAFAFA),
           appBar: AppBar(
-            backgroundColor: isDark
-                ? const Color(0xFF0D0D0D)
-                : const Color(0xFFFAFAFA),
-            foregroundColor: isDark
-                ? Colors.white
-                : const Color(0xFF171717),
+            backgroundColor:
+                isDark ? const Color(0xFF0D0D0D) : const Color(0xFFFAFAFA),
+            foregroundColor: isDark ? Colors.white : const Color(0xFF171717),
             elevation: 0,
             scrolledUnderElevation: 0,
-
             leading: IconButton(
               onPressed: () {
                 context.pop();
@@ -551,7 +507,6 @@ class _MilestoneApp6MyOrdersScreenState
                 Icons.arrow_back,
               ),
             ),
-
             title: const Text(
               'My Orders',
               style: TextStyle(
@@ -560,105 +515,82 @@ class _MilestoneApp6MyOrdersScreenState
               ),
             ),
           ),
-
           body: RefreshIndicator(
             onRefresh: () {
-              return context
-                  .read<OrderController>()
-                  .fetchMyOrders(
-                refresh: true,
-              );
+              return context.read<OrderController>().fetchMyOrders(
+                    refresh: true,
+                  );
             },
-
-            child: NotificationListener<
-                ScrollNotification>(
+            child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification is ScrollUpdateNotification) {
                   if (notification.metrics.pixels >=
-                      notification.metrics.maxScrollExtent -
-                          300) {
-                    context
-                        .read<OrderController>()
-                        .loadMoreMyOrders();
+                      notification.metrics.maxScrollExtent - 300) {
+                    context.read<OrderController>().loadMoreMyOrders();
                   }
                 }
 
                 return false;
               },
-
               child: LayoutBuilder(
                 builder: (
-                    context,
-                    constraints,
-                    ) {
+                  context,
+                  constraints,
+                ) {
                   final horizontalPadding =
-                  constraints.maxWidth >= 700
-                      ? 32.0
-                      : 16.0;
+                      constraints.maxWidth >= 700 ? 32.0 : 16.0;
 
-                  // ==================================================
-                  // INITIAL LOADING
-                  // ==================================================
+// ==================================================
+// INITIAL LOADING
+// ==================================================
 
-                  if (orderController
-                      .isLoadingMyOrders &&
+                  if (orderController.isLoadingMyOrders &&
                       orderController.myOrders.isEmpty) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
                   }
 
-                  // ==================================================
-                  // ERROR
-                  // ==================================================
+// ==================================================
+// ERROR
+// ==================================================
 
-                  if (orderController
-                      .myOrdersErrorMessage !=
-                      null &&
+                  if (orderController.myOrdersErrorMessage != null &&
                       orderController.myOrders.isEmpty) {
                     return _errorOrders(
                       context,
-                      orderController
-                          .myOrdersErrorMessage!,
+                      orderController.myOrdersErrorMessage!,
                     );
                   }
 
-                  // ==================================================
-                  // CONTENT
-                  // ==================================================
+// ==================================================
+// CONTENT
+// ==================================================
 
                   return Center(
                     child: ConstrainedBox(
-                      constraints:
-                      const BoxConstraints(
+                      constraints: const BoxConstraints(
                         maxWidth: 1100,
                       ),
                       child: ListView(
-                        physics:
-                        const AlwaysScrollableScrollPhysics(),
-
-                        padding:
-                        EdgeInsets.fromLTRB(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
                           horizontalPadding,
                           12,
                           horizontalPadding,
                           30,
                         ),
-
                         children: [
                           _searchBar(),
-
                           const SizedBox(
                             height: 22,
                           ),
-
                           if (orders.isEmpty)
                             _emptyOrders()
                           else
                             ...orders.map(
-                                  (order) => Padding(
-                                padding:
-                                const EdgeInsets.only(
+                              (order) => Padding(
+                                padding: const EdgeInsets.only(
                                   bottom: 18,
                                 ),
                                 child: _orderCard(
@@ -667,17 +599,13 @@ class _MilestoneApp6MyOrdersScreenState
                                 ),
                               ),
                             ),
-
-                          if (orderController
-                              .isLoadingMoreMyOrders)
+                          if (orderController.isLoadingMoreMyOrders)
                             const Padding(
-                              padding:
-                              EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                 vertical: 20,
                               ),
                               child: Center(
-                                child:
-                                CircularProgressIndicator(),
+                                child: CircularProgressIndicator(),
                               ),
                             ),
                         ],
@@ -692,10 +620,11 @@ class _MilestoneApp6MyOrdersScreenState
       },
     );
   }
+
   Widget _errorOrders(
-      BuildContext context,
-      String message,
-      ) {
+    BuildContext context,
+    String message,
+  ) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -707,9 +636,7 @@ class _MilestoneApp6MyOrdersScreenState
               size: 55,
               color: Colors.red,
             ),
-
             const SizedBox(height: 14),
-
             const Text(
               'Unable to load orders',
               style: TextStyle(
@@ -717,9 +644,7 @@ class _MilestoneApp6MyOrdersScreenState
                 fontWeight: FontWeight.w800,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               message,
               textAlign: TextAlign.center,
@@ -728,16 +653,12 @@ class _MilestoneApp6MyOrdersScreenState
                 fontSize: 13,
               ),
             ),
-
             const SizedBox(height: 18),
-
             FilledButton(
               onPressed: () {
-                context
-                    .read<OrderController>()
-                    .fetchMyOrders(
-                  refresh: true,
-                );
+                context.read<OrderController>().fetchMyOrders(
+                      refresh: true,
+                    );
               },
               child: const Text(
                 'Try Again',
@@ -749,9 +670,9 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
-  // SEARCH
-  // ============================================================
+// ============================================================
+// SEARCH
+// ============================================================
 
   Widget _searchBar() {
     return Container(
@@ -774,22 +695,20 @@ class _MilestoneApp6MyOrdersScreenState
           ),
           suffixIcon: _searchText.isNotEmpty
               ? IconButton(
-            onPressed: () {
-              _searchController.clear();
-            },
-            icon: const Icon(
-              Icons.close,
-            ),
-          )
+                  onPressed: () {
+                    _searchController.clear();
+                  },
+                  icon: const Icon(
+                    Icons.close,
+                  ),
+                )
               : null,
-          hintText:
-          'Search restaurant or ordered items...',
+          hintText: 'Search restaurant or ordered items...',
           hintStyle: const TextStyle(
             color: Color(0xFFA5A5A5),
             fontSize: 14,
           ),
-          contentPadding:
-          const EdgeInsets.symmetric(
+          contentPadding: const EdgeInsets.symmetric(
             vertical: 17,
           ),
         ),
@@ -797,43 +716,34 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
-  // ORDER CARD
-  // ============================================================
+// ============================================================
+// ORDER CARD
+// ============================================================
   Widget _orderCard(
-      BuildContext context,
-      OrderInfoModel order,
-      ) {
+    BuildContext context,
+    OrderInfoModel order,
+  ) {
     final theme = Theme.of(context);
-    final isDark =
-        theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
 
-    final cardColor = isDark
-        ? const Color(0xFF111111)
-        : Colors.white;
+    final cardColor = isDark ? const Color(0xFF111111) : Colors.white;
 
-    final borderColor = isDark
-        ? Colors.white.withOpacity(0.08)
-        : const Color(0xFFE8E8E8);
+    final borderColor =
+        isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE8E8E8);
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
-        context.push(
-          '/order-details',
-          extra: {
-            'state': widget.state,
-            'orderId': order.id,
-          },
+        _openOrderDetails(
+          context,
+          order,
         );
       },
-
       child: Container(
         width: double.infinity,
-
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius:
-          BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: borderColor,
           ),
@@ -847,24 +757,19 @@ class _MilestoneApp6MyOrdersScreenState
             ),
           ],
         ),
-
         clipBehavior: Clip.antiAlias,
-
         child: Column(
           children: [
             _restaurantHeader(
               context,
               order,
             ),
-
             _allOrderItems(
               order,
             ),
-
             _orderInformation(
               order,
             ),
-
             _orderActions(
               context,
               order,
@@ -874,17 +779,17 @@ class _MilestoneApp6MyOrdersScreenState
       ),
     );
   }
-  // ============================================================
-  // RESTAURANT HEADER
-  // ============================================================
+
+// ============================================================
+// RESTAURANT HEADER
+// ============================================================
   Widget _restaurantHeader(
-      BuildContext context,
-      OrderInfoModel order,
-      ) {
+    BuildContext context,
+    OrderInfoModel order,
+  ) {
     final theme = Theme.of(context);
 
-    final isDark =
-        theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -893,41 +798,29 @@ class _MilestoneApp6MyOrdersScreenState
         16,
         14,
       ),
-
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 58,
             height: 58,
-
             decoration: BoxDecoration(
-              borderRadius:
-              BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isDark
-                    ? Colors.white
-                    .withOpacity(0.08)
+                    ? Colors.white.withOpacity(0.08)
                     : Colors.grey.shade200,
               ),
             ),
-
             clipBehavior: Clip.antiAlias,
-
             child: Image.network(
               order.restaurant.imageUrl,
-
               fit: BoxFit.cover,
-
-              errorBuilder:
-                  (context, error, stackTrace) {
+              errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: isDark
                       ? const Color(0xFF242424)
                       : const Color(0xFFF3F3F3),
-
                   child: Icon(
                     Icons.restaurant_rounded,
                     size: 28,
@@ -937,14 +830,10 @@ class _MilestoneApp6MyOrdersScreenState
               },
             ),
           ),
-
           const SizedBox(width: 13),
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
@@ -952,29 +841,24 @@ class _MilestoneApp6MyOrdersScreenState
                       child: Text(
                         order.restaurant.name,
                         maxLines: 1,
-                        overflow:
-                        TextOverflow.ellipsis,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 17,
-                          fontWeight:
-                          FontWeight.w800,
+                          fontWeight: FontWeight.w800,
                           color: isDark
                               ? Colors.white
                               : const Color(
-                            0xFF171717,
-                          ),
+                                  0xFF171717,
+                                ),
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 8),
-
                     Text(
                       '#${order.id}',
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight:
-                        FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                         color: isDark
                             ? Colors.grey.shade500
                             : Colors.grey.shade600,
@@ -982,27 +866,21 @@ class _MilestoneApp6MyOrdersScreenState
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 5),
-
                 Row(
                   children: [
                     Icon(
                       Icons.location_on_outlined,
                       size: 15,
-                      color: isDark
-                          ? Colors.grey.shade500
-                          : Colors.grey.shade600,
+                      color:
+                          isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                     ),
-
                     const SizedBox(width: 4),
-
                     Expanded(
                       child: Text(
                         order.restaurant.address,
                         maxLines: 1,
-                        overflow:
-                        TextOverflow.ellipsis,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark
@@ -1013,9 +891,7 @@ class _MilestoneApp6MyOrdersScreenState
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 9),
-
                 _apiStatusBadge(
                   context,
                   order.status,
@@ -1027,10 +903,11 @@ class _MilestoneApp6MyOrdersScreenState
       ),
     );
   }
+
   Widget _apiStatusBadge(
-      BuildContext context,
-      String status,
-      ) {
+    BuildContext context,
+    String status,
+  ) {
     final color = _apiStatusColor(status);
 
     return Container(
@@ -1038,16 +915,13 @@ class _MilestoneApp6MyOrdersScreenState
         horizontal: 9,
         vertical: 5,
       ),
-
       decoration: BoxDecoration(
         color: color.withOpacity(0.10),
-        borderRadius:
-        BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: color.withOpacity(0.20),
         ),
       ),
-
       child: Text(
         _formatStatus(status),
         style: TextStyle(
@@ -1091,50 +965,37 @@ class _MilestoneApp6MyOrdersScreenState
         .split(' ')
         .map(
           (word) => word.isEmpty
-          ? word
-          : '${word[0].toUpperCase()}'
-          '${word.substring(1).toLowerCase()}',
-    )
+              ? word
+              : '${word[0].toUpperCase()}'
+                  '${word.substring(1).toLowerCase()}',
+        )
         .join(' ');
   }
-  // ============================================================
-  // PRODUCT
-  // ============================================================
+
+// ============================================================
+// PRODUCT
+// ============================================================
   Widget _allOrderItems(
-      OrderInfoModel order,
-      ) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    OrderInfoModel order,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
-
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF161616)
-            : const Color(0xFFFCFCFC),
+        color: isDark ? const Color(0xFF161616) : const Color(0xFFFCFCFC),
       ),
-
       child: Column(
         children: [
-          for (
-          int index = 0;
-          index < order.orderItems.length;
-          index++
-          ) ...[
+          for (int index = 0; index < order.orderItems.length; index++) ...[
             _productRow(
               order.orderItems[index],
             ),
-
-            if (
-            index !=
-                order.orderItems.length - 1)
+            if (index != order.orderItems.length - 1)
               Divider(
                 height: 1,
                 color: isDark
-                    ? Colors.white
-                    .withOpacity(0.07)
+                    ? Colors.white.withOpacity(0.07)
                     : Colors.grey.shade200,
               ),
           ],
@@ -1142,242 +1003,184 @@ class _MilestoneApp6MyOrdersScreenState
       ),
     );
   }
+
   Widget _productRow(
-      OrderItemModel item,
-      ) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    OrderItemModel item,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 10,
       ),
-
       child: Row(
         children: [
           Container(
             width: 52,
             height: 52,
-
             decoration: BoxDecoration(
-              borderRadius:
-              BorderRadius.circular(10),
-              color: isDark
-                  ? const Color(0xFF252525)
-                  : const Color(0xFFF3F3F3),
+              borderRadius: BorderRadius.circular(10),
+              color: isDark ? const Color(0xFF252525) : const Color(0xFFF3F3F3),
             ),
-
-            clipBehavior:
-            Clip.antiAlias,
-
+            clipBehavior: Clip.antiAlias,
             child: Image.network(
               item.menuItem.imageUrl,
-
               fit: BoxFit.cover,
-
-              errorBuilder:
-                  (context, error, stackTrace) {
+              errorBuilder: (context, error, stackTrace) {
                 return Icon(
                   Icons.fastfood_outlined,
                   size: 25,
-                  color: isDark
-                      ? Colors.grey.shade600
-                      : Colors.grey.shade400,
+                  color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                 );
               },
             ),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.menuItem.name,
                   maxLines: 1,
-                  overflow:
-                  TextOverflow.ellipsis,
-
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight:
-                    FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                     color: isDark
                         ? Colors.white
                         : const Color(
-                      0xFF171717,
-                    ),
+                            0xFF171717,
+                          ),
                   ),
                 ),
-
                 const SizedBox(height: 5),
-
                 Text(
                   '₹${item.priceAtPurchase.toStringAsFixed(2)} × ${item.quantity}',
-
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark
-                        ? Colors.grey.shade500
-                        : Colors.grey.shade600,
+                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                   ),
                 ),
               ],
             ),
           ),
-
           const SizedBox(width: 8),
-
           Text(
             '₹${item.totalPrice.toStringAsFixed(2)}',
-
             style: TextStyle(
               fontSize: 13,
-              fontWeight:
-              FontWeight.w900,
+              fontWeight: FontWeight.w900,
               color: isDark
                   ? Colors.white
                   : const Color(
-                0xFF171717,
-              ),
+                      0xFF171717,
+                    ),
             ),
           ),
         ],
       ),
     );
   }
+
   Widget _miniInfo(
-      String text,
-      bool isDark,
-      ) {
+    String text,
+    bool isDark,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 1,
         vertical: 3,
       ),
-
       child: Text(
         text,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: isDark
-              ? Colors.grey.shade400
-              : Colors.grey.shade700,
+          color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
         ),
       ),
     );
   }
 
-  // ============================================================
-  // ORDER INFORMATION
-  // ============================================================
+// ============================================================
+// ORDER INFORMATION
+// ============================================================
   Widget _orderInformation(
-      OrderInfoModel order,
-      ) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    OrderInfoModel order,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final statusColor =
-    _apiStatusColor(order.status);
+    final statusColor = _apiStatusColor(order.status);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 20,
         vertical: 14,
       ),
-
       child: Row(
         children: [
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Order Placed',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark
-                        ? Colors.grey.shade500
-                        : Colors.grey.shade600,
+                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   _formatApiDate(
                     order.createdAt,
                   ),
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight:
-                    FontWeight.w600,
-                    color: isDark
-                        ? Colors.white
-                        : Colors.black,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
               ],
             ),
           ),
-
           const SizedBox(width: 20),
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Delivery Status',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark
-                        ? Colors.grey.shade500
-                        : Colors.grey.shade600,
+                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Row(
                   children: [
                     Container(
                       width: 7,
                       height: 7,
-                      decoration:
-                      BoxDecoration(
+                      decoration: BoxDecoration(
                         color: statusColor,
-                        shape:
-                        BoxShape.circle,
+                        shape: BoxShape.circle,
                       ),
                     ),
-
                     const SizedBox(width: 6),
-
                     Flexible(
                       child: Text(
                         _formatStatus(
                           order.status,
                         ),
                         maxLines: 1,
-                        overflow:
-                        TextOverflow.ellipsis,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight:
-                          FontWeight.w600,
-                          color:
-                          statusColor,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
                         ),
                       ),
                     ),
@@ -1386,33 +1189,24 @@ class _MilestoneApp6MyOrdersScreenState
               ],
             ),
           ),
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
                   'Total',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark
-                        ? Colors.grey.shade500
-                        : Colors.grey.shade600,
+                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   '₹${order.total.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight:
-                    FontWeight.w800,
-                    color: isDark
-                        ? Colors.white
-                        : Colors.black,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
               ],
@@ -1422,11 +1216,11 @@ class _MilestoneApp6MyOrdersScreenState
       ),
     );
   }
+
   String _formatApiDate(
-      String? value,
-      ) {
-    if (value == null ||
-        value.trim().isEmpty) {
+    String? value,
+  ) {
+    if (value == null || value.trim().isEmpty) {
       return '--';
     }
 
@@ -1436,15 +1230,11 @@ class _MilestoneApp6MyOrdersScreenState
       return value;
     }
 
-    final hour = date.hour % 12 == 0
-        ? 12
-        : date.hour % 12;
+    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
 
-    final minute =
-    date.minute.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
 
-    final period =
-    date.hour >= 12 ? 'pm' : 'am';
+    final period = date.hour >= 12 ? 'pm' : 'am';
 
     return '${date.day} '
         '${_month(date.month)} '
@@ -1453,18 +1243,17 @@ class _MilestoneApp6MyOrdersScreenState
   }
 
   Widget _infoItem(
-      String title,
-      String value, {
-        Color? valueColor,
-        bool showDot = false,
-        bool bold = false,
-        bool large = false,
-        bool alignRight = false,
-      }) {
+    String title,
+    String value, {
+    Color? valueColor,
+    bool showDot = false,
+    bool bold = false,
+    bool large = false,
+    bool alignRight = false,
+  }) {
     return Column(
-      crossAxisAlignment: alignRight
-          ? CrossAxisAlignment.end
-          : CrossAxisAlignment.start,
+      crossAxisAlignment:
+          alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Text(
           title,
@@ -1473,11 +1262,9 @@ class _MilestoneApp6MyOrdersScreenState
             color: Colors.grey.shade600,
           ),
         ),
-
         const SizedBox(
           height: 6,
         ),
-
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1494,23 +1281,16 @@ class _MilestoneApp6MyOrdersScreenState
                 width: 6,
               ),
             ],
-
             Flexible(
               child: Text(
                 value,
                 maxLines: 2,
-                overflow:
-                TextOverflow.ellipsis,
-                textAlign: alignRight
-                    ? TextAlign.right
-                    : TextAlign.left,
+                overflow: TextOverflow.ellipsis,
+                textAlign: alignRight ? TextAlign.right : TextAlign.left,
                 style: TextStyle(
                   fontSize: large ? 17 : 14,
-                  fontWeight: bold
-                      ? FontWeight.w900
-                      : FontWeight.w500,
-                  color:
-                  valueColor ?? Colors.black,
+                  fontWeight: bold ? FontWeight.w900 : FontWeight.w500,
+                  color: valueColor ?? Colors.black,
                 ),
               ),
             ),
@@ -1520,11 +1300,11 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
-  // ACTIONS
-  // ============================================================
+// ============================================================
+// ACTIONS
+// ============================================================
 
-  // ============================================================
+// ============================================================
 // ORDER ACTIONS
 // ============================================================
 
@@ -1533,19 +1313,19 @@ class _MilestoneApp6MyOrdersScreenState
 // ============================================================
 
   Widget _orderActions(
-      BuildContext context,
-      OrderInfoModel order,
-      ) {
-    final status =
-    order.status.toLowerCase();
+    BuildContext context,
+    OrderInfoModel order,
+  ) {
+    final status = order.status.toLowerCase();
 
-    final bool isCancelled =
-        status == 'cancelled';
+    final bool isCancelled = status == 'cancelled';
 
-    final bool isDelivered =
-        status == 'delivered';
+    final bool isDelivered = status == 'delivered';
 
     if (isDelivered) {
+      final bool alreadySubmitted =
+          _submittedReviews.contains(order.id.toString());
+
       return Padding(
         padding: const EdgeInsets.fromLTRB(
           20,
@@ -1554,16 +1334,19 @@ class _MilestoneApp6MyOrdersScreenState
           14,
         ),
         child: Align(
-          alignment:
-          Alignment.centerRight,
-          child: _actionButton(
-            label: 'Write a Review',
-            filled: true,
-            onTap: () {
-              // Keep your existing review dialog
-              // after converting it to OrderInfoModel.
-            },
-          ),
+          alignment: Alignment.centerRight,
+          child: alreadySubmitted
+              ? _reviewSubmittedLabel()
+              : _actionButton(
+                  label: 'Write a Review',
+                  filled: true,
+                  onTap: () {
+                    _showReviewDialog(
+                      context,
+                      order,
+                    );
+                  },
+                ),
         ),
       );
     }
@@ -1577,8 +1360,7 @@ class _MilestoneApp6MyOrdersScreenState
           14,
         ),
         child: Align(
-          alignment:
-          Alignment.centerRight,
+          alignment: Alignment.centerRight,
           child: _cancelledLabel(),
         ),
       );
@@ -1586,7 +1368,8 @@ class _MilestoneApp6MyOrdersScreenState
 
     return const SizedBox.shrink();
   }
-  // ============================================================
+
+// ============================================================
 // REVIEW SUBMITTED
 // ============================================================
 
@@ -1595,8 +1378,7 @@ class _MilestoneApp6MyOrdersScreenState
 // ============================================================
 
   Widget _reviewSubmittedLabel() {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SizedBox(
       height: 38,
@@ -1605,9 +1387,7 @@ class _MilestoneApp6MyOrdersScreenState
           horizontal: 16,
         ),
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF12351F)
-              : const Color(0xFFEFFFF4),
+          color: isDark ? const Color(0xFF12351F) : const Color(0xFFEFFFF4),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1634,10 +1414,10 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
-  // BUTTON
-  // ============================================================
-  // ============================================================
+// ============================================================
+// BUTTON
+// ============================================================
+// ============================================================
 // REVIEW BUTTON
 // ============================================================
 
@@ -1647,38 +1427,32 @@ class _MilestoneApp6MyOrdersScreenState
     bool filled = false,
   }) {
     final theme = Theme.of(context);
-    final isDark =
-        theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
 
-    final Color accent =
-        theme.colorScheme.primary;
+    final Color accent = theme.colorScheme.primary;
 
     return SizedBox(
       height: 38,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          backgroundColor:
-          filled ? accent : Colors.transparent,
-          foregroundColor:
-          filled
+          backgroundColor: filled ? accent : Colors.transparent,
+          foregroundColor: filled
               ? Colors.white
               : isDark
-              ? Colors.white
-              : Colors.black87,
+                  ? Colors.white
+                  : Colors.black87,
           side: BorderSide(
             color: filled
                 ? accent
                 : isDark
-                ? Colors.white.withOpacity(0.15)
-                : Colors.grey.shade300,
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.grey.shade300,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(10),
           ),
-          padding:
-          const EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: 16,
           ),
         ),
@@ -1693,14 +1467,12 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
+// ============================================================
 // CANCELLED LABEL
 // ============================================================
 
   Widget _cancelledLabel() {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       height: 34,
@@ -1710,11 +1482,8 @@ class _MilestoneApp6MyOrdersScreenState
       ),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF3A1717)
-            : const Color(0xFFFFEAEA),
-        borderRadius:
-        BorderRadius.circular(9),
+        color: isDark ? const Color(0xFF3A1717) : const Color(0xFFFFEAEA),
+        borderRadius: BorderRadius.circular(9),
       ),
       child: const Text(
         'Order Cancelled',
@@ -1727,21 +1496,20 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
-  // CANCEL
-  // ============================================================
+// ============================================================
+// CANCEL
+// ============================================================
 
   void _confirmCancel(
-      BuildContext context,
-      MilestoneApp6Order order,
-      ) {
+    BuildContext context,
+    OrderInfoModel order,
+  ) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(20),
           ),
           title: const Text(
             'Cancel Order?',
@@ -1751,8 +1519,8 @@ class _MilestoneApp6MyOrdersScreenState
           ),
           content: Text(
             'Are you sure you want to cancel '
-                '${order.food.name} from '
-                '${order.restaurantName}?',
+            '${order.orderItems.isNotEmpty ? order.orderItems.first.menuItem.name : 'this order'} from '
+            '${order.restaurant.name}?',
           ),
           actions: [
             TextButton(
@@ -1767,13 +1535,11 @@ class _MilestoneApp6MyOrdersScreenState
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor:
-                const Color(0xFFD62828),
+                backgroundColor: const Color(0xFFD62828),
               ),
               onPressed: () {
-                final cancelled =
-                widget.state.cancelOrder(
-                  order.id,
+                final cancelled = widget.state.cancelOrder(
+                  order.id.toString(),
                 );
 
                 Navigator.of(
@@ -1788,8 +1554,7 @@ class _MilestoneApp6MyOrdersScreenState
                       content: Text(
                         'Order cancelled successfully.',
                       ),
-                      behavior:
-                      SnackBarBehavior.floating,
+                      behavior: SnackBarBehavior.floating,
                     ),
                   );
                 }
@@ -1804,37 +1569,22 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
-  // ORDER DETAILS
-  // ============================================================
+// ============================================================
+// ORDER DETAILS
+// ============================================================
 
   void _openOrderDetails(
-      BuildContext context,
-      MilestoneApp6Order order,
-      ) {
+    BuildContext context,
+    OrderInfoModel order,
+  ) {
     context.push(
-      '/order-details',
-      extra: {
-        'state': widget.state,
-        'items': [
-          MilestoneApp6CartItemForOrder(
-            order: order,
-          ).item,
-        ],
-        'paymentType': order.paymentType,
-        'subtotal': order.totalPrice,
-        'shipping': 0.0,
-        'discount': 0.0,
-        'totalPayment': order.totalPrice,
-        'minimumPayment': order.totalPrice,
-        'amountPaidNow': order.totalPrice,
-      },
+      '/order-details/${order.id}',
     );
   }
 
-  // ============================================================
-  // EMPTY
-  // ============================================================
+// ============================================================
+// EMPTY
+// ============================================================
 
   Widget _emptyOrders() {
     return Container(
@@ -1845,8 +1595,7 @@ class _MilestoneApp6MyOrdersScreenState
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: Colors.grey.shade200,
         ),
@@ -1858,11 +1607,9 @@ class _MilestoneApp6MyOrdersScreenState
             size: 65,
             color: Colors.grey.shade400,
           ),
-
           const SizedBox(
             height: 15,
           ),
-
           const Text(
             'No orders yet',
             style: TextStyle(
@@ -1870,11 +1617,9 @@ class _MilestoneApp6MyOrdersScreenState
               fontWeight: FontWeight.w800,
             ),
           ),
-
           const SizedBox(
             height: 7,
           ),
-
           Text(
             'Your confirmed orders will appear here.',
             textAlign: TextAlign.center,
@@ -1888,45 +1633,16 @@ class _MilestoneApp6MyOrdersScreenState
     );
   }
 
-  // ============================================================
-  // STATUS COLOR
-  // ============================================================
-
-  Color _statusColor(
-      MilestoneApp6OrderStatus status,
-      ) {
-    switch (status) {
-      case MilestoneApp6OrderStatus.placed:
-        return const Color(0xFFE67E22);
-
-      case MilestoneApp6OrderStatus.preparing:
-        return const Color(0xFFE67E22);
-
-      case MilestoneApp6OrderStatus.outForDelivery:
-        return const Color(0xFF3B82F6);
-
-      case MilestoneApp6OrderStatus.delivered:
-        return const Color(0xFF16A34A);
-
-      case MilestoneApp6OrderStatus.cancelled:
-        return const Color(0xFFD62828);
-    }
-  }
-
-  // ============================================================
-  // DATE
-  // ============================================================
+// ============================================================
+// DATE
+// ============================================================
 
   String _formatDate(DateTime date) {
-    final hour = date.hour % 12 == 0
-        ? 12
-        : date.hour % 12;
+    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
 
-    final minute =
-    date.minute.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
 
-    final period =
-    date.hour >= 12 ? 'pm' : 'am';
+    final period = date.hour >= 12 ? 'pm' : 'am';
 
     return '${date.day} ${_month(date.month)} '
         '${date.year}, '
@@ -1959,27 +1675,6 @@ class _MilestoneApp6MyOrdersScreenState
 
     return id.substring(
       id.length - 6,
-    );
-  }
-}
-
-// ============================================================
-// CART ITEM ADAPTER
-// ============================================================
-
-class MilestoneApp6CartItemForOrder {
-  final MilestoneApp6Order order;
-
-  const MilestoneApp6CartItemForOrder({
-    required this.order,
-  });
-
-  dynamic get item {
-    return MilestoneApp6CartItem(
-      food: order.food,
-      size: order.size,
-      unitPrice: order.unitPrice,
-      quantity: order.quantity,
     );
   }
 }
