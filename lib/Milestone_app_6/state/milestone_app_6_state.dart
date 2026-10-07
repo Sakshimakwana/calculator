@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_order.dart';
-import '../../models/address/milestone_app_6_address_model.dart';
+import '../Address/models/milestone_app_6_address_model.dart';
 
 class MilestoneApp6State extends ChangeNotifier {
 // ================================================================

@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/storage/auth_storage.dart';
-import '../../../../models/auth/login_request_model.dart';
-import '../../../../models/auth/login_response_model.dart';
-import '../../../../models/auth/register_request_model.dart';
-import '../../../../models/auth/register_response_model.dart';
+import '../../models/login_request_model.dart';
+import '../../models/login_response_model.dart';
+import '../../../Register/models/register_request_model.dart';
+import '../../../Register/models/register_response_model.dart';
 import '../auth_repo/auth_repository.dart';
 
 class AuthController extends ChangeNotifier {

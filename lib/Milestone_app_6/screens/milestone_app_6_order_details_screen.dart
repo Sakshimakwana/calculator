@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../core/constants/api_constants.dart';
 import '../../core/storage/auth_storage.dart';
 import '../data/milestone_app_6_cart_item.dart';
-import '../state/milestone_app_6_auth_store.dart';
+import '../Login/state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/generate_invoice_animation/invoice_generation_animation.dart';
 import 'package:pdf/pdf.dart';

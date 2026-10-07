@@ -1,8 +1,8 @@
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/screens/milestone_app_6_address_screen.dart';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/screens/milestone_app_6_select_address_screen.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/screens/milestone_app_6_address_screen.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/screens/milestone_app_6_select_address_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/storage/address_storage.dart';
+import '../Address/data/address_storage/address_storage.dart';
 import '../../core/storage/auth_storage.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../data/milestone_app_6_food.dart';
@@ -19,9 +19,9 @@ import '../screens/milestone_app_6_order_details_screen.dart';
 import '../screens/milestone_app_6_profile.dart';
 import '../screens/milestone_app_6_restaurant_info.dart';
 import '../screens/milestone_app_6_restaurants.dart';
-import '../screens/milestone_app_6_signup_screen.dart';
+import '../Register/screens/milestone_app_6_signup_screen.dart';
 
-import '../state/milestone_app_6_auth_store.dart';
+import '../Login/state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
 
 import '../widgets/milestone_app_6_shell.dart';

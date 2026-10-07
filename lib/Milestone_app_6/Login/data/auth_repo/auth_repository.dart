@@ -1,9 +1,9 @@
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_service.dart';
-import '../../../../models/auth/register_request_model.dart';
-import '../../../../models/auth/register_response_model.dart';
-import '../../../../models/auth/login_response_model.dart';
-import '../../../../models/auth/login_request_model.dart';
+import '../../../Register/models/register_request_model.dart';
+import '../../../Register/models/register_response_model.dart';
+import '../../models/login_response_model.dart';
+import '../../models/login_request_model.dart';
 
 
 class AuthRepository {
