@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../controllers/auth_controller.dart';
+import '../Login/data/auth_controller/auth_controller.dart';
 
 class MilestoneApp6SignupScreen extends StatefulWidget {
   const MilestoneApp6SignupScreen({

@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'my_reviews_screen.dart';
-import '../../controllers/auth_controller.dart';
+import '../Login/data/auth_controller/auth_controller.dart';
 
 import '../../core/storage/address_storage.dart';
 import '../../core/storage/auth_storage.dart';

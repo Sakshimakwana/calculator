@@ -13,7 +13,7 @@ import '../screens/milestone_app_6_categories.dart';
 import '../screens/milestone_app_6_cart.dart';
 import '../screens/milestone_app_6_food_details.dart';
 import '../screens/milestone_app_6_home.dart';
-import '../screens/milestone_app_6_login_screen.dart';
+import '../Login/screens/milestone_app_6_login_screen.dart';
 import '../screens/milestone_app_6_onboarding.dart';
 import '../screens/milestone_app_6_order_details_screen.dart';
 import '../screens/milestone_app_6_profile.dart';
