@@ -6,10 +6,10 @@ import 'my_reviews_screen.dart';
 import '../Login/data/auth_controller/auth_controller.dart';
 
 import '../Address/data/address_storage/address_storage.dart';
-import '../../core/storage/auth_storage.dart';
+import '../Login/auth_storage/auth_storage.dart';
 import '../../services/milestone_app_6_restaurant_api.dart';
-import '../data/milestone_app_6_food.dart';
-import '../data/milestone_app_6_restaurants_data.dart';
+import '../Home/data/milestone_app_6_food.dart';
+import '../Home/data/milestone_app_6_restaurants_data.dart';
 import '../state/milestone_app_6_state.dart';
 import '../theme/milestone_app_6_colors.dart';
 

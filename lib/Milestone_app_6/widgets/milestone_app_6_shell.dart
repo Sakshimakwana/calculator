@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../state/milestone_app_6_state.dart';
 import '../theme/milestone_app_6_colors.dart';
-import 'milestone_app_6_bottom_nav.dart';
+import '../Home/widgets/milestone_app_6_bottom_nav.dart';
 
 class MilestoneApp6Shell extends StatefulWidget {
   final MilestoneApp6State state;

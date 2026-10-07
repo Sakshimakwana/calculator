@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/milestone_app_6_colors.dart';
-import 'milestone_app_6_image.dart';
+import '../../theme/milestone_app_6_colors.dart';
+import '../../widgets/milestone_app_6_image.dart';
 
 class MilestoneApp6RestaurantCard extends StatelessWidget {
   final String name;

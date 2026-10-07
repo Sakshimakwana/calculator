@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../core/constants/api_constants.dart';
-import '../models/restaurant_menu_model.dart';
+import '../Milestone_app_6/Home/models/restaurant_menu_model.dart';
 
 class MilestoneApp6NearbyRestaurantsResponse {
   final List<Map<String, dynamic>> data;

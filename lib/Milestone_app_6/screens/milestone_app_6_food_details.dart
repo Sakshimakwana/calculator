@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../data/milestone_app_6_food.dart';
+import '../Home/data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
 import '../widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_details_shimmer.dart';

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../../../../core/storage/auth_storage.dart';
+import '../../auth_storage/auth_storage.dart';
 import '../../models/login_request_model.dart';
 import '../../models/login_response_model.dart';
 import '../../../Register/models/register_request_model.dart';

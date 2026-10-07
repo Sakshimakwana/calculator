@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../../../core/storage/auth_storage.dart';
+import '../auth_storage/auth_storage.dart';
 
 class MilestoneApp6AuthStore extends ChangeNotifier {
   MilestoneApp6AuthStore._();

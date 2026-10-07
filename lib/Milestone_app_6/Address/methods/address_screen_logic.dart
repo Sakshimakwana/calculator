@@ -2,7 +2,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/widgets/address_screen/address_widgets_address_editor.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/widgets/address_screen/address_widgets_cannot_delete_dialog.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/widgets/address_screen/address_widgets_delete_confirmation.dart';
-import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/services/milestone_app_6_address_api.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';

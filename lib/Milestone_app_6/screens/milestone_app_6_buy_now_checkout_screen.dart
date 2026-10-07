@@ -8,7 +8,7 @@ import '../../controllers/order_controller.dart';
 import '../../models/cart/cart_response_model.dart';
 
 import '../data/milestone_app_6_cart_item.dart';
-import '../data/milestone_app_6_food.dart';
+import '../Home/data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
 import '../widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_image.dart';

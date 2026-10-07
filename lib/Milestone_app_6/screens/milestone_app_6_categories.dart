@@ -1,10 +1,10 @@
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
-import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_api.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/milestone_app_6_restaurants_data.dart';
+import '../Home/data/milestone_app_6_restaurants_data.dart';
 import '../state/milestone_app_6_state.dart';
 
 class MilestoneApp6CategoriesScreen extends StatefulWidget {

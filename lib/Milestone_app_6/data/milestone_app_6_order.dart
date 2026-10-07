@@ -1,5 +1,5 @@
 import 'milestone_app_6_cart_item.dart';
-import 'milestone_app_6_food.dart';
+import '../Home/data/milestone_app_6_food.dart';
 
 enum MilestoneApp6OrderStatus {
   placed,

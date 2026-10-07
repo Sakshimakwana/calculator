@@ -1,25 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/data/milestone_app_6_food.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_category_shimmer.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/data/milestone_app_6_food.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
-import 'package:app_matic_tech_flutter_app/core/storage/auth_storage.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_api.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import '../Address/models/milestone_app_6_address_model.dart';
-import '../../services/milestone_app_6_address_api.dart';
+import '../../Address/models/milestone_app_6_address_model.dart';
+import '../../../services/milestone_app_6_address_api.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
-import '../state/milestone_app_6_state.dart';
-import '../theme/milestone_app_6_colors.dart';
+import '../../state/milestone_app_6_state.dart';
+import '../../theme/milestone_app_6_colors.dart';
 import '../widgets/milestone_app_6_category.dart';
-import '../widgets/milestone_app_6_image.dart';
+import '../../widgets/milestone_app_6_image.dart';
 import '../widgets/milestone_app_6_animated_search_hint.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:app_matic_tech_flutter_app/core/constants/api_constants.dart';
-import 'package:app_matic_tech_flutter_app/models/restaurant_menu_model.dart';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/RestaurantShimmerCard.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/RestaurantShimmerCard.dart';
 
 class _ApiFoodEntry {
   final MilestoneApp6Restaurant restaurant;
@@ -58,7 +55,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
   List<MilestoneApp6Restaurant> _nearbyRestaurants = [];
 
   final MilestoneApp6RestaurantApi _restaurantApi =
-      MilestoneApp6RestaurantApi();
+  MilestoneApp6RestaurantApi();
 
 // =============================================================
 // RESTAURANT PAGINATION
@@ -96,8 +93,11 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
     return _nearbyRestaurants.where((restaurant) {
       return restaurant.menus.any(
-        (menu) {
-          return menu.name.trim().toLowerCase() == selectedCategory;
+            (menu) {
+          final String menuName = menu.name.trim().toLowerCase();
+
+          return menuName == selectedCategory &&
+              menu.menuItems.isNotEmpty;
         },
       );
     }).toList();
@@ -175,7 +175,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
     _searchHintTimer = Timer.periodic(
       const Duration(seconds: 3),
-      (_) {
+          (_) {
         if (!mounted) return;
 
         if (_searchController.text.trim().isEmpty && !_isListening) {
@@ -407,13 +407,9 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
       List<MilestoneApp6Restaurant> restaurants = response.data
           .map(
             (json) => MilestoneApp6Restaurant.fromJson(json),
-          )
+      )
           .toList();
 
-      restaurants = await _loadMenusForRestaurants(
-        token,
-        restaurants,
-      );
 
       if (!mounted) return;
 
@@ -462,156 +458,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     }
   }
 
-  Future<RestaurantMenuResponse> _loadRestaurantMenus(
-    String token,
-    int restaurantId,
-  ) async {
-    final uri = Uri.parse(
-      '${ApiConstants.baseUrl}${ApiConstants.restaurantMenus(restaurantId)}',
-    );
-
-    debugPrint(
-      'MENU API REQUEST: $uri',
-    );
-
-    final response = await http.get(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    ).timeout(
-      const Duration(seconds: 30),
-    );
-
-    debugPrint(
-      'MENU API STATUS: ${response.statusCode}',
-    );
-
-    if (response.statusCode == 401) {
-      throw Exception(
-        'Unauthorized while loading menu for restaurant $restaurantId.',
-      );
-    }
-
-    if (response.statusCode == 404) {
-      throw Exception(
-        'Menu not found for restaurant $restaurantId.',
-      );
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Failed to load menu for restaurant $restaurantId. '
-        'Status: ${response.statusCode}',
-      );
-    }
-
-    if (response.body.trim().isEmpty) {
-      return RestaurantMenuResponse(
-        success: true,
-        message: 'No menu data.',
-        data: const [],
-      );
-    }
-
-    final dynamic decoded = jsonDecode(response.body);
-
-    if (decoded is! Map<String, dynamic>) {
-      throw Exception(
-        'Invalid menu API response for restaurant $restaurantId.',
-      );
-    }
-
-    return RestaurantMenuResponse.fromJson(
-      decoded,
-    );
-  }
-
-  Future<MilestoneApp6Restaurant> _loadMenusForRestaurant(
-    String token,
-    MilestoneApp6Restaurant restaurant,
-  ) async {
-    if (restaurant.id <= 0) {
-      debugPrint(
-        'MENU API SKIPPED: invalid restaurant id for ${restaurant.name}',
-      );
-      return restaurant;
-    }
-
-    try {
-      final RestaurantMenuResponse menuResponse = await _loadRestaurantMenus(
-        token,
-        restaurant.id,
-      );
-
-      final List<MilestoneApp6Menu> menus = menuResponse.data.map((apiMenu) {
-        final List<MilestoneApp6MenuItem> items =
-            apiMenu.menuItems.map((apiItem) {
-          return MilestoneApp6MenuItem(
-            id: apiItem.id,
-            name: apiItem.name,
-            image: apiItem.imageUrl,
-            price: apiItem.price.toString(),
-            availability: apiItem.availability,
-          );
-        }).toList();
-
-        return MilestoneApp6Menu(
-          id: apiMenu.id,
-          name: apiMenu.name,
-          menuItems: items,
-        );
-      }).toList();
-
-      debugPrint(
-        'MENU LOADED: ${restaurant.name} -> ${menus.length} categories',
-      );
-
-      for (final menu in menus) {
-        debugPrint(
-          'CATEGORY: ${menu.name}',
-        );
-
-        for (final item in menu.menuItems) {
-          debugPrint(
-            'FOOD: ${item.name} - ${item.price}',
-          );
-        }
-      }
-
-      return restaurant.copyWith(
-        menus: menus,
-      );
-    } catch (e) {
-      debugPrint(
-        'MENU API ERROR for ${restaurant.name} (${restaurant.id}): $e',
-      );
-
-// Keep the restaurant visible even if its menu API fails.
-      return restaurant;
-    }
-  }
-
-  Future<List<MilestoneApp6Restaurant>> _loadMenusForRestaurants(
-    String token,
-    List<MilestoneApp6Restaurant> restaurants,
-  ) async {
-    final List<MilestoneApp6Restaurant> result = [];
-
-    for (final restaurant in restaurants) {
-      final updatedRestaurant = await _loadMenusForRestaurant(
-        token,
-        restaurant,
-      );
-
-      result.add(updatedRestaurant);
-    }
-
-    return result;
-  }
-
 // =============================================================
 // LOAD NEXT RESTAURANT PAGE
 // ==============================================================
@@ -654,13 +500,10 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
       List<MilestoneApp6Restaurant> newRestaurants = response.data
           .map(
             (json) => MilestoneApp6Restaurant.fromJson(json),
-          )
+      )
+
           .toList();
 
-      newRestaurants = await _loadMenusForRestaurants(
-        token,
-        newRestaurants,
-      );
 
       if (!mounted) return;
 
@@ -703,22 +546,29 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
     for (final restaurant in _nearbyRestaurants) {
       for (final menu in restaurant.menus) {
+        // Ignore empty categories
+        if (menu.menuItems.isEmpty) {
+          continue;
+        }
+
         final String name = menu.name.trim();
 
         if (name.isEmpty) {
           continue;
         }
 
-        final String key = name.toLowerCase();
-
         categoryNames.putIfAbsent(
-          key,
-          () => name,
+          name.toLowerCase(),
+              () => name,
         );
       }
     }
 
-    return categoryNames.values.toList();
+    final List<String> categories = categoryNames.values.toList();
+
+    debugPrint('HOME FINAL CATEGORIES: $categories');
+
+    return categories;
   }
 
 // ==============================================================
@@ -880,8 +730,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ==============================================================
 
   List<_ApiFoodEntry> _filteredRestaurantApiFoods(
-    MilestoneApp6Restaurant restaurant,
-  ) {
+      MilestoneApp6Restaurant restaurant,
+      ) {
     final List<_ApiFoodEntry> foods = _restaurantApiFoods(restaurant);
 
     final String selectedCategory = _selectedCategory.trim().toLowerCase();
@@ -900,8 +750,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ==============================================================
 
   List<_ApiFoodEntry> _restaurantApiFoods(
-    MilestoneApp6Restaurant restaurant,
-  ) {
+      MilestoneApp6Restaurant restaurant,
+      ) {
     final List<_ApiFoodEntry> result = [];
 
     for (final menu in restaurant.menus) {
@@ -1236,8 +1086,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 
   Widget _buildRestaurantPaginationFooter() {
     if (_isLoadingMoreRestaurants) {
-      final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
       return Padding(
         padding: const EdgeInsets.fromLTRB(
           16,
@@ -1325,11 +1173,11 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
         borderRadius: BorderRadius.circular(16),
         border: isDark
             ? Border.all(
-                color: Colors.white.withOpacity(0.06),
-              )
+          color: Colors.white.withOpacity(0.06),
+        )
             : Border.all(
-                color: const Color(0xFFEAEAEA),
-              ),
+          color: const Color(0xFFEAEAEA),
+        ),
         boxShadow: [
           BoxShadow(
             color: isDark
@@ -1367,45 +1215,45 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // IMAGE
                   isClosed
                       ? ColorFiltered(
-                          colorFilter: const ColorFilter.matrix(
-                            <double>[
-                              0.2126,
-                              0.7152,
-                              0.0722,
-                              0,
-                              0,
-                              0.2126,
-                              0.7152,
-                              0.0722,
-                              0,
-                              0,
-                              0.2126,
-                              0.7152,
-                              0.0722,
-                              0,
-                              0,
-                              0,
-                              0,
-                              0,
-                              1,
-                              0,
-                            ],
-                          ),
-                          child: MilestoneApp6Image(
-                            url: restaurant.image,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            borderRadius: BorderRadius.zero,
-                          ),
-                        )
+                    colorFilter: const ColorFilter.matrix(
+                      <double>[
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                      ],
+                    ),
+                    child: MilestoneApp6Image(
+                      url: restaurant.image,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  )
                       : MilestoneApp6Image(
-                          url: restaurant.image,
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                          borderRadius: BorderRadius.zero,
-                        ),
+                    url: restaurant.image,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.zero,
+                  ),
 
 // =================================================
 // CLOSED OVERLAY
@@ -1505,8 +1353,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                               color: isClosed
                                   ? secondaryColor
                                   : const Color(
-                                      0xFF2E9D55,
-                                    ),
+                                0xFF2E9D55,
+                              ),
                             ),
                             const SizedBox(
                               width: 3,
@@ -1598,15 +1446,17 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // CATEGORY
 // =================================================
 
-                  if (restaurant.menus.isNotEmpty)
+                  if (restaurant.menus
+                      .where((menu) => menu.menuItems.isNotEmpty)
+                      .map((menu) => menu.name.trim())
+                      .where((name) => name.isNotEmpty)
+                      .toSet()
+                      .isNotEmpty)
                     Text(
                       restaurant.menus
-                          .map(
-                            (menu) => menu.name.trim(),
-                          )
-                          .where(
-                            (name) => name.isNotEmpty,
-                          )
+                          .where((menu) => menu.menuItems.isNotEmpty)
+                          .map((menu) => menu.name.trim())
+                          .where((name) => name.isNotEmpty)
                           .toSet()
                           .take(2)
                           .join(' • '),
@@ -1644,7 +1494,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
         final bool isClosed = !restaurant.isOpen;
 
         final List<_ApiFoodEntry> restaurantFoods =
-            _filteredRestaurantApiFoods(restaurant);
+        _filteredRestaurantApiFoods(restaurant);
 
 // When a category/search is selected, don't show a restaurant
 // that has no matching API food/menu item.
@@ -1678,8 +1528,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
             borderRadius: BorderRadius.circular(20),
             border: isDark
                 ? Border.all(
-                    color: Colors.white.withOpacity(0.06),
-                  )
+              color: Colors.white.withOpacity(0.06),
+            )
                 : null,
             boxShadow: [
               BoxShadow(
@@ -1712,39 +1562,39 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                   width: double.infinity,
                   child: isClosed
                       ? ColorFiltered(
-                          colorFilter: const ColorFilter.matrix([
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                          ]),
-                          child: MilestoneApp6Image(
-                            url: restaurant.image,
-                            fit: BoxFit.cover,
-                            borderRadius: BorderRadius.zero,
-                          ),
-                        )
+                    colorFilter: const ColorFilter.matrix([
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
+                    ]),
+                    child: MilestoneApp6Image(
+                      url: restaurant.image,
+                      fit: BoxFit.cover,
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  )
                       : MilestoneApp6Image(
-                          url: restaurant.image,
-                          fit: BoxFit.cover,
-                          borderRadius: BorderRadius.zero,
-                        ),
+                    url: restaurant.image,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.zero,
+                  ),
                 ),
 
 // ------------------------------------------------------
@@ -1805,8 +1655,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                                 color: isClosed
                                     ? const Color(0xFF888888)
                                     : (isDark
-                                        ? const Color(0xFFBDBDBD)
-                                        : const Color(0xFF555555)),
+                                    ? const Color(0xFFBDBDBD)
+                                    : const Color(0xFF555555)),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -1873,10 +1723,10 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                             physics: const BouncingScrollPhysics(),
                             itemCount: restaurantFoods.length,
                             separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             itemBuilder: (context, index) {
                               final _ApiFoodEntry entry =
-                                  restaurantFoods[index];
+                              restaurantFoods[index];
 
                               return SizedBox(
                                 width: 190,
@@ -1938,7 +1788,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     final Color titleColor = isDark ? Colors.white : const Color(0xFF171717);
 
     final Color secondaryColor =
-        isDark ? const Color(0xFFBDBDBD) : const Color(0xFF666666);
+    isDark ? const Color(0xFFBDBDBD) : const Color(0xFF666666);
 
     return Container(
       decoration: BoxDecoration(
@@ -1946,8 +1796,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
         borderRadius: BorderRadius.circular(16),
         border: isDark
             ? Border.all(
-                color: Colors.white.withOpacity(0.06),
-              )
+          color: Colors.white.withOpacity(0.06),
+        )
             : null,
         boxShadow: [
           BoxShadow(
@@ -1963,8 +1813,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
       child: InkWell(
         onTap: isAvailable
             ? () {
-                context.push('/food/${item.id}');
-              }
+          context.push('/food/${item.id}');
+        }
             : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2306,60 +2156,15 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
           ),
         ),
 
-// ==========================================================
-// RESTAURANT API LOADING
-// ==========================================================
-
-        if (_isLoadingRestaurants)
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: 12,
-              ),
-              child: LinearProgressIndicator(
-                minHeight: 2,
-              ),
-            ),
-          ),
-
-// ==========================================================
-// BANNER
-// ==========================================================
-
         SliverToBoxAdapter(
           child: _banner(context),
         ),
-
-// ==========================================================
-// POPULAR RESTAURANTS
-// ==========================================================
-//
-// SliverToBoxAdapter(
-//   child: _sectionTitle(
-//     context,
-//     'Popular Restaurants',
-//         () {
-//       context.push(
-//         '/restaurants',
-//       );
-//     },
-//   ),
-// ),
-//
-// SliverToBoxAdapter(
-//   child:
-//   _buildNearbyRestaurantsHorizontal(),
-// ),
-
-// ==========================================================
-// ALL RESTAURANTS
-// ==========================================================
 
         SliverToBoxAdapter(
           child: _sectionTitle(
             context,
             'All Restaurants',
-            () {
+                () {
               context.push(
                 '/restaurants',
               );
@@ -2401,6 +2206,13 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ==============================================================
 
   Widget _buildCategoryRow() {
+    // Show category shimmer while restaurant/category data is loading.
+    if (_isLoadingRestaurants && _nearbyRestaurants.isEmpty) {
+      return const MilestoneApp6HomeCategoryShimmer(
+        itemCount: 5,
+      );
+    }
+
     final List<String> apiCategories = _apiCategories;
 
     if (apiCategories.isEmpty) {
@@ -2443,7 +2255,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ----------------------------------------------------------
         if (!isAll) {
           final MilestoneApp6Menu? selectedMenu =
-              _findCategoryMenu(categoryName);
+          _findCategoryMenu(categoryName);
 
           if (selectedMenu != null && selectedMenu.menuItems.isNotEmpty) {
             final String apiImage = selectedMenu.menuItems.first.image.trim();
@@ -2475,12 +2287,13 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
   }
 
   MilestoneApp6Menu? _findCategoryMenu(
-    String categoryName,
-  ) {
+      String categoryName,
+      ) {
     for (final restaurant in _nearbyRestaurants) {
       for (final menu in restaurant.menus) {
         if (menu.name.trim().toLowerCase() ==
-            categoryName.trim().toLowerCase()) {
+            categoryName.trim().toLowerCase() &&
+            menu.menuItems.isNotEmpty) {
           return menu;
         }
       }
@@ -2494,8 +2307,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ==============================================================
 
   Widget _buildEmptyFoodState(
-    BuildContext context,
-  ) {
+      BuildContext context,
+      ) {
     final ThemeData theme = Theme.of(context);
 
     final bool hasSearch = _searchController.text.trim().isNotEmpty;
@@ -2564,8 +2377,8 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ==============================================================
 
   Widget _banner(
-    BuildContext context,
-  ) {
+      BuildContext context,
+      ) {
     final double width = MediaQuery.sizeOf(context).width;
 
     final bool isTablet = width >= 700;
@@ -2617,7 +2430,7 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                 width: isTablet ? width * .48 : width * .52,
                 child: MilestoneApp6Image(
                   url:
-                      'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000',
+                  'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000',
                   fit: BoxFit.cover,
                   borderRadius: BorderRadius.zero,
                 ),
@@ -2726,10 +2539,10 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
 // ==============================================================
 
   Widget _sectionTitle(
-    BuildContext context,
-    String title,
-    VoidCallback onTap,
-  ) {
+      BuildContext context,
+      String title,
+      VoidCallback onTap,
+      ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         20,
@@ -2811,10 +2624,10 @@ class MilestoneApp6HomeStickyHeaderDelegate
 
   @override
   Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+      BuildContext context,
+      double shrinkOffset,
+      bool overlapsContent,
+      ) {
     return ClipRect(
       child: Material(
         color: Theme.of(context).scaffoldBackgroundColor,
@@ -2829,8 +2642,8 @@ class MilestoneApp6HomeStickyHeaderDelegate
 
   @override
   bool shouldRebuild(
-    covariant MilestoneApp6HomeStickyHeaderDelegate oldDelegate,
-  ) {
+      covariant MilestoneApp6HomeStickyHeaderDelegate oldDelegate,
+      ) {
     return minHeight != oldDelegate.minHeight ||
         maxHeight != oldDelegate.maxHeight ||
         child != oldDelegate.child;

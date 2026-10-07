@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants/api_constants.dart';
-import '../../core/storage/auth_storage.dart';
+import '../Login/auth_storage/auth_storage.dart';
 import '../data/milestone_app_6_cart_item.dart';
 import '../Login/state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';

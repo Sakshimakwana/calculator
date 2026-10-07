@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../state/milestone_app_6_state.dart';
 import '../theme/milestone_app_6_colors.dart';
-import '../widgets/milestone_app_6_button.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_button.dart';
 import '../widgets/milestone_app_6_image.dart';
 
 class MilestoneApp6OnboardingScreen

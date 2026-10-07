@@ -1,4 +1,4 @@
-import 'milestone_app_6_food.dart';
+import '../Home/data/milestone_app_6_food.dart';
 
 class MilestoneApp6CartItem {
   final MilestoneApp6Food food;
