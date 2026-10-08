@@ -1,7 +1,9 @@
 import 'dart:async';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_category_shimmer.dart';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/data/milestone_app_6_food.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_banner.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_category_row.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_empty_food_state.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_section_title.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_api.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +13,6 @@ import '../../Address/models/milestone_app_6_address_model.dart';
 import '../../../services/milestone_app_6_address_api.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../../state/milestone_app_6_state.dart';
-import '../../theme/milestone_app_6_colors.dart';
-import '../widgets/milestone_app_6_category.dart';
 import '../../widgets/milestone_app_6_image.dart';
 import '../widgets/milestone_app_6_animated_search_hint.dart';
 import 'package:flutter/cupertino.dart';
@@ -287,12 +287,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
           }
         }
       }
-
-      // ------------------------------------------------------------
-      // FALLBACK
-      // ------------------------------------------------------------
-      // If selected ID doesn't exist but addresses are available,
-      // use the first address.
 
       if (selectedAddress == null && addresses.isNotEmpty) {
         selectedAddress = addresses.first;
@@ -2137,15 +2131,25 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
                     child: _buildSearchBar(),
                   ),
 
-// ------------------------------------------------
-// CATEGORY
-// ------------------------------------------------
-
                   SizedBox(
                     height: 86,
-                    child: _buildCategoryRow(),
-                  ),
+                    child: MilestoneApp6HomeCategoryRow(
+                      isLoading: _isLoadingRestaurants &&
+                          _nearbyRestaurants.isEmpty,
 
+                      categories: _apiCategories,
+
+                      selectedCategory: _selectedCategory,
+
+                      findCategoryMenu: _findCategoryMenu,
+
+                      onCategorySelected: (category) {
+                        setState(() {
+                          _selectedCategory = category ?? '';
+                        });
+                      },
+                    ),
+                  ),
                   Container(
                     height: 1,
                     color: Theme.of(context).dividerColor.withOpacity(.25),
@@ -2157,17 +2161,14 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
         ),
 
         SliverToBoxAdapter(
-          child: _banner(context),
+          child: MilestoneApp6HomeBanner(),
         ),
 
         SliverToBoxAdapter(
-          child: _sectionTitle(
-            context,
-            'All Restaurants',
-                () {
-              context.push(
-                '/restaurants',
-              );
+          child: MilestoneApp6HomeSectionTitle(
+            title: 'All Restaurants',
+            onSeeAll: () {
+              context.push('/restaurants');
             },
           ),
         ),
@@ -2183,14 +2184,11 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
         if (_searchController.text.trim().isNotEmpty &&
             _filteredNearbyRestaurants.isEmpty)
           SliverToBoxAdapter(
-            child: _buildEmptyFoodState(
-              context,
+            child: MilestoneApp6HomeEmptyFoodState(
+              hasSearch: _searchController.text.trim().isNotEmpty,
+              onClearSearch: _clearSearch,
             ),
           ),
-
-// ==========================================================
-// BOTTOM SPACE
-// ==========================================================
 
         const SliverToBoxAdapter(
           child: SizedBox(
@@ -2198,91 +2196,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
           ),
         ),
       ],
-    );
-  }
-
-// ==============================================================
-// CATEGORY ROW
-// ==============================================================
-
-  Widget _buildCategoryRow() {
-    // Show category shimmer while restaurant/category data is loading.
-    if (_isLoadingRestaurants && _nearbyRestaurants.isEmpty) {
-      return const MilestoneApp6HomeCategoryShimmer(
-        itemCount: 5,
-      );
-    }
-
-    final List<String> apiCategories = _apiCategories;
-
-    if (apiCategories.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final List<String> categories = [
-      'All',
-      ...apiCategories,
-    ];
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 6,
-      ),
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      itemCount: categories.length,
-      separatorBuilder: (_, __) => const SizedBox(width: 10),
-      itemBuilder: (context, index) {
-        final String categoryName = categories[index];
-
-        final bool isAll = categoryName.toLowerCase() == 'all';
-
-        final bool selected = isAll
-            ? _selectedCategory.isEmpty
-            : _selectedCategory.toLowerCase() == categoryName.toLowerCase();
-
-// ----------------------------------------------------------
-// ALL CATEGORY
-// Use a fixed network image.
-// ----------------------------------------------------------
-        String categoryImage =
-            'https://images.unsplash.com/photo-1547592180-85f173990554?w=300';
-
-// ----------------------------------------------------------
-// OTHER CATEGORIES
-// Use image coming from API.
-// ----------------------------------------------------------
-        if (!isAll) {
-          final MilestoneApp6Menu? selectedMenu =
-          _findCategoryMenu(categoryName);
-
-          if (selectedMenu != null && selectedMenu.menuItems.isNotEmpty) {
-            final String apiImage = selectedMenu.menuItems.first.image.trim();
-
-            if (apiImage.isNotEmpty) {
-              categoryImage = apiImage;
-            }
-          }
-        }
-
-        return MilestoneApp6CategoryChip(
-          category: MilestoneApp6Category(
-            categoryName,
-            categoryImage,
-          ),
-          selected: selected,
-          onTap: () {
-            setState(() {
-              if (isAll) {
-                _selectedCategory = '';
-              } else {
-                _selectedCategory = categoryName;
-              }
-            });
-          },
-        );
-      },
     );
   }
 
@@ -2302,290 +2215,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     return null;
   }
 
-// ==============================================================
-// EMPTY FOOD STATE
-// ==============================================================
-
-  Widget _buildEmptyFoodState(
-      BuildContext context,
-      ) {
-    final ThemeData theme = Theme.of(context);
-
-    final bool hasSearch = _searchController.text.trim().isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 30,
-        vertical: 50,
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(.10),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.search_off_rounded,
-              size: 36,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(
-            height: 16,
-          ),
-          Text(
-            'No food found',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(
-            height: 6,
-          ),
-          Text(
-            hasSearch
-                ? 'Try another search or category.'
-                : 'No items are available in this category.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.hintColor,
-            ),
-          ),
-          const SizedBox(
-            height: 18,
-          ),
-          if (hasSearch)
-            OutlinedButton.icon(
-              onPressed: _clearSearch,
-              icon: const Icon(
-                Icons.clear_rounded,
-              ),
-              label: const Text(
-                'Clear Search',
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-// ==============================================================
-// BANNER
-// ==============================================================
-
-  Widget _banner(
-      BuildContext context,
-      ) {
-    final double width = MediaQuery.sizeOf(context).width;
-
-    final bool isTablet = width >= 700;
-
-    final double bannerHeight = isTablet ? 150.0 : 140.0;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        15,
-        10,
-        15,
-        10,
-      ),
-      child: SizedBox(
-        height: bannerHeight,
-        width: double.infinity,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-// ----------------------------------------------------
-// BACKGROUND
-// ----------------------------------------------------
-
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      MilestoneApp6Colors.green,
-                      Color(
-                        0xFFFCE4EC,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-// ----------------------------------------------------
-// IMAGE
-// ----------------------------------------------------
-
-              Positioned(
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: isTablet ? width * .48 : width * .52,
-                child: MilestoneApp6Image(
-                  url:
-                  'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000',
-                  fit: BoxFit.cover,
-                  borderRadius: BorderRadius.zero,
-                ),
-              ),
-
-// ----------------------------------------------------
-// OVERLAY
-// ----------------------------------------------------
-
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        stops: const [
-                          0.0,
-                          0.38,
-                          0.65,
-                          1.0,
-                        ],
-                        colors: [
-                          Colors.black.withOpacity(
-                            .40,
-                          ),
-                          Colors.black.withOpacity(
-                            .25,
-                          ),
-                          Colors.black.withOpacity(
-                            .08,
-                          ),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-// ----------------------------------------------------
-// CONTENT
-// ----------------------------------------------------
-
-              Positioned(
-                left: 18,
-                top: 15,
-                bottom: 15,
-                child: SizedBox(
-                  width: isTablet ? width * .42 : width * .43,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Delicious Food\nDelivered to You',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          height: 1.05,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () {
-                          context.go(
-                            '/categories',
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 13,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: MilestoneApp6Colors.cream,
-                            borderRadius: BorderRadius.circular(
-                              10,
-                            ),
-                          ),
-                          child: const Text(
-                            'Order Now',
-                            style: TextStyle(
-                              color: Colors.black54,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-// ==============================================================
-// SECTION TITLE
-// ==============================================================
-
-  Widget _sectionTitle(
-      BuildContext context,
-      String title,
-      VoidCallback onTap,
-      ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        12,
-        20,
-        14,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          const SizedBox(
-            width: 12,
-          ),
-          GestureDetector(
-            onTap: onTap,
-            child: Text(
-              'See All',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-// ==============================================================
-// SEARCH BAR
-// ==============================================================
-
   Widget _buildSearchBar() {
     return HomeSearchBar(
       controller: _searchController,
@@ -2597,10 +2226,6 @@ class _MilestoneApp6HomeScreenState extends State<MilestoneApp6HomeScreen> {
     );
   }
 }
-
-// ==================================================================
-// STICKY HEADER DELEGATE
-// ==================================================================
 
 class MilestoneApp6HomeStickyHeaderDelegate
     extends SliverPersistentHeaderDelegate {
