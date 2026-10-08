@@ -70,12 +70,10 @@ class MilestoneApp6HomeStickyContent
               ),
             ),
 
-            // ======================================================
-            // CATEGORY ROW
-            // ======================================================
+          SizedBox(height: 2),
 
             SizedBox(
-              height: 86,
+              height: 90,
               child: MilestoneApp6HomeCategoryRow(
                 isLoading: isLoadingCategories,
                 categories: categories,
@@ -84,10 +82,6 @@ class MilestoneApp6HomeStickyContent
                 onCategorySelected: onCategorySelected,
               ),
             ),
-
-            // ======================================================
-            // DIVIDER
-            // ======================================================
 
             Container(
               height: 1,
