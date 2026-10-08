@@ -1,6 +1,6 @@
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
-import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_api.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/data/service/milestone_app_6_restaurant_api.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

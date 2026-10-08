@@ -7,8 +7,8 @@ import '../../Address/data/address_storage/address_storage.dart';
 import '../../Address/models/milestone_app_6_address_model.dart';
 import '../../Login/auth_storage/auth_storage.dart';
 import '../../state/milestone_app_6_state.dart';
-import '../../../services/milestone_app_6_address_api.dart';
-import '../../../services/milestone_app_6_restaurant_api.dart';
+import '../../Address/data/service/milestone_app_6_address_api.dart';
+import '../data/service/milestone_app_6_restaurant_api.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 
 class MilestoneApp6HomeLogic {

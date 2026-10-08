@@ -6,7 +6,7 @@ import 'package:app_matic_tech_flutter_app/controllers/cart_controller.dart';
 import 'package:app_matic_tech_flutter_app/models/cart/cart_response_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
-import 'package:app_matic_tech_flutter_app/services/milestone_app_6_address_api.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/service/milestone_app_6_address_api.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/models/milestone_app_6_address_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_button.dart';

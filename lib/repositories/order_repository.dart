@@ -1,7 +1,7 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/constants/api_constants.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/network/api_service.dart';
 import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
 
-import '../core/constants/api_constants.dart';
-import '../core/network/api_service.dart';
 import '../models/order/my_orders_response_model.dart';
 
 class OrderRepository {

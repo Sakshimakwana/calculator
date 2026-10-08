@@ -1,5 +1,5 @@
-import '../core/constants/api_constants.dart';
-import '../core/network/api_service.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/constants/api_constants.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/network/api_service.dart';
 import '../models/review/review_response_model.dart';
 
 class ReviewRepository {

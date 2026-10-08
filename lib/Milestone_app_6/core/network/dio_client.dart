@@ -1,7 +1,7 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
 import 'package:dio/dio.dart';
 
 import '../constants/api_constants.dart';
-import '../../Milestone_app_6/Login/auth_storage/auth_storage.dart';
 
 class DioClient {
   DioClient._();

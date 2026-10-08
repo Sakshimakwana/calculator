@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../data/milestone_app_6_restaurants_data.dart';
-import '../../../core/constants/api_constants.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/constants/api_constants.dart';
 import '../../Login/auth_storage/auth_storage.dart';
 import '../models/restaurant_menu_model.dart';
 
