@@ -4,8 +4,8 @@ import 'package:app_matic_tech_flutter_app/services/milestone_app_6_restaurant_a
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../Home/data/milestone_app_6_restaurants_data.dart';
-import '../state/milestone_app_6_state.dart';
+import '../data/milestone_app_6_restaurants_data.dart';
+import '../../state/milestone_app_6_state.dart';
 
 class MilestoneApp6CategoriesScreen extends StatefulWidget {
   final MilestoneApp6State state;

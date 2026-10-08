@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../Address/data/address_storage/address_storage.dart';
-import '../Login/auth_storage/auth_storage.dart';
-import '../../services/milestone_app_6_restaurant_api.dart';
-import '../Home/data/milestone_app_6_restaurants_data.dart';
-import '../state/milestone_app_6_state.dart';
-import '../Home/widgets/RestaurantShimmerCard.dart';
-import '../Home/widgets/milestone_app_6_restaurant_list_card.dart';
+import '../../Address/data/address_storage/address_storage.dart';
+import '../../Login/auth_storage/auth_storage.dart';
+import '../../../services/milestone_app_6_restaurant_api.dart';
+import '../data/milestone_app_6_restaurants_data.dart';
+import '../../state/milestone_app_6_state.dart';
+import '../widgets/RestaurantShimmerCard.dart';
+import '../widgets/milestone_app_6_restaurant_list_card.dart';
 
 class MilestoneApp6RestaurantsScreen extends StatefulWidget {
 final MilestoneApp6State state;
