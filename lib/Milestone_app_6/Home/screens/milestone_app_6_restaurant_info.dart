@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:provider/provider.dart';
-import 'package:app_matic_tech_flutter_app/controllers/cart_controller.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_controller/cart_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
@@ -10,8 +10,8 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/au
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/data/milestone_app_6_restaurants_data.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/models/restaurant_menu_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/widgets/milestone_app_6_image.dart';
-import '../../../models/cart/cart_response_model.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/common_widgets/milestone_app_6_image.dart';
+import '../../cart/model/cart_response_model.dart';
 
 class MilestoneApp6RestaurantInfoScreen extends StatefulWidget {
   final MilestoneApp6Restaurant restaurant;

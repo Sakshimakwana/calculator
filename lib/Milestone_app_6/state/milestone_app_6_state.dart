@@ -2,7 +2,7 @@
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/service/milestone_app_6_address_api.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../data/milestone_app_6_cart_item.dart';
+import '../cart/data/milestone_app_6_cart_item.dart';
 import '../Home/data/milestone_app_6_food.dart';
 import '../data/milestone_app_6_order.dart';
 import '../Address/models/milestone_app_6_address_model.dart';

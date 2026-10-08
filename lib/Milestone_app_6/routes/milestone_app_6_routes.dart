@@ -4,27 +4,24 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../Address/data/address_storage/address_storage.dart';
 import '../Login/auth_storage/auth_storage.dart';
-import '../data/milestone_app_6_cart_item.dart';
+import '../cart/data/milestone_app_6_cart_item.dart';
 import '../Home/data/milestone_app_6_food.dart';
 import '../Home/data/milestone_app_6_restaurants_data.dart';
 import '../screens/milestone_app_6_my_orders_screen.dart';
 import '../screens/milestone_app_6_buy_now_checkout_screen.dart';
 import '../Home/screens/milestone_app_6_categories.dart';
-import '../screens/milestone_app_6_cart.dart';
-import '../Home/screens/milestone_app_6_food_details.dart';
+import '../cart/screens/milestone_app_6_cart.dart';
 import '../Home/screens/milestone_app_6_home.dart';
 import '../Login/screens/milestone_app_6_login_screen.dart';
-import '../screens/milestone_app_6_onboarding.dart';
+import '../onboarding/screens/milestone_app_6_onboarding.dart';
 import '../screens/milestone_app_6_order_details_screen.dart';
 import '../screens/milestone_app_6_profile.dart';
 import '../Home/screens/milestone_app_6_restaurant_info.dart';
 import '../Home/screens/milestone_app_6_restaurants.dart';
 import '../Register/screens/milestone_app_6_signup_screen.dart';
-
 import '../Login/state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
-
-import '../widgets/milestone_app_6_shell.dart';
+import '../common_widgets/milestone_app_6_shell.dart';
 
 class MilestoneApp6Routes {
   final MilestoneApp6State state;
@@ -35,10 +32,6 @@ class MilestoneApp6Routes {
     final auth = MilestoneApp6AuthStore.instance;
 
     router = GoRouter(
-      // ================================================================
-      // INITIAL LOCATION
-      // ================================================================
-
       initialLocation:
       !state.onboardingDone
           ? '/onboarding'
@@ -48,25 +41,13 @@ class MilestoneApp6Routes {
           : '/select-address'
           : '/login',
 
-      // ================================================================
-      // REFRESH ROUTER WHEN STATE CHANGES
-      // ================================================================
-
       refreshListenable: Listenable.merge([
         state,
         auth,
       ]),
 
-      // ================================================================
-      // REDIRECT
-      // ================================================================
-
       redirect: (context, routeState) {
         final path = routeState.uri.path;
-
-        // --------------------------------------------------------------
-        // ROUTE TYPES
-        // --------------------------------------------------------------
 
         final bool isOnboarding =
             path == '/onboarding';
@@ -89,10 +70,6 @@ class MilestoneApp6Routes {
         final bool isAuthRoute =
             isLogin || isSignup;
 
-        // ==============================================================
-        // 1. ONBOARDING NOT COMPLETED
-        // ==============================================================
-
         if (!state.onboardingDone) {
           if (!isOnboarding) {
             return '/onboarding';
@@ -100,10 +77,6 @@ class MilestoneApp6Routes {
 
           return null;
         }
-
-        // ==============================================================
-        // 2. ONBOARDING COMPLETED
-        // ==============================================================
 
         if (isOnboarding) {
           if (!auth.isLoggedIn) {
@@ -117,27 +90,14 @@ class MilestoneApp6Routes {
           return '/home';
         }
 
-        // ==============================================================
-        // 3. USER NOT LOGGED IN
-        // ==============================================================
-
         if (!auth.isLoggedIn) {
           // Login/signup are allowed.
           if (isAuthRoute) {
             return null;
           }
 
-          // Everything else requires login.
           return '/login';
         }
-
-        // ==============================================================
-        // 4. USER IS LOGGED IN
-        // ==============================================================
-
-        // --------------------------------------------------------------
-        // Login/signup should not be shown again.
-        // --------------------------------------------------------------
 
         if (auth.isLoggedIn && isAuthRoute) {
           if (!AddressStorage.hasSelectedAddress) {
@@ -147,49 +107,19 @@ class MilestoneApp6Routes {
           return '/home';
         }
 
-        // --------------------------------------------------------------
-        // Address flow is allowed after login.
-        //
-        // This is VERY IMPORTANT.
-        //
-        // Logged-in user can visit:
-        //
-        // /select-address
-        // /add-address
-        // --------------------------------------------------------------
-
         if (auth.isLoggedIn && isAddressFlow) {
           return null;
         }
-
-        // --------------------------------------------------------------
-        // Logged-in user without selected address
-        //
-        // Don't allow Home or other main app screens until an address
-        // has been selected.
-        // --------------------------------------------------------------
 
         if (auth.isLoggedIn &&
             !AddressStorage.hasSelectedAddress) {
           return '/select-address';
         }
 
-        // --------------------------------------------------------------
-        // Logged-in user with selected address.
-        // --------------------------------------------------------------
-
         return null;
       },
 
-      // ================================================================
-      // ROUTES
-      // ================================================================
-
       routes: [
-        // ================================================================
-        // ONBOARDING
-        // ================================================================
-
         GoRoute(
           path: '/onboarding',
           pageBuilder: (
@@ -205,10 +135,6 @@ class MilestoneApp6Routes {
           },
         ),
 
-        // ================================================================
-        // LOGIN
-        // ================================================================
-
         GoRoute(
           path: '/login',
           pageBuilder: (
@@ -221,10 +147,6 @@ class MilestoneApp6Routes {
             );
           },
         ),
-
-        // ================================================================
-        // SIGN UP
-        // ================================================================
 
         GoRoute(
           path: '/signup',
@@ -239,15 +161,6 @@ class MilestoneApp6Routes {
           },
         ),
 
-        // ================================================================
-        // SELECT ADDRESS
-        //
-        // IMPORTANT:
-        // Outside ShellRoute.
-        //
-        // Therefore bottom navigation is NOT shown.
-        // ================================================================
-
         GoRoute(
           path: '/select-address',
           pageBuilder: (
@@ -260,21 +173,6 @@ class MilestoneApp6Routes {
             );
           },
         ),
-
-        // ================================================================
-        // ADD NEW ADDRESS
-        //
-        // IMPORTANT:
-        // Outside ShellRoute.
-        //
-        // Select Address
-        //       ↓
-        // Add New Address
-        //       ↓
-        // Save
-        //       ↓
-        // Home
-        // ================================================================
 
         GoRoute(
           path: '/add-address',
@@ -291,11 +189,6 @@ class MilestoneApp6Routes {
           },
         ),
 
-        // ================================================================
-        // MAIN APP
-        // SHELL ROUTE + BOTTOM NAVIGATION
-        // ================================================================
-
         ShellRoute(
           builder: (
               context,
@@ -309,10 +202,6 @@ class MilestoneApp6Routes {
           },
 
           routes: [
-            // ============================================================
-            // HOME
-            // ============================================================
-
             GoRoute(
               path: '/home',
               pageBuilder: (
@@ -327,10 +216,6 @@ class MilestoneApp6Routes {
                 );
               },
             ),
-
-            // ============================================================
-            // CATEGORIES
-            // ============================================================
 
             GoRoute(
               path: '/categories',
@@ -347,10 +232,6 @@ class MilestoneApp6Routes {
               },
             ),
 
-            // ============================================================
-            // RESTAURANTS
-            // ============================================================
-
             GoRoute(
               path: '/restaurants',
               pageBuilder: (
@@ -365,49 +246,6 @@ class MilestoneApp6Routes {
                 );
               },
             ),
-
-            // ============================================================
-            // RESTAURANT BY NAME
-            // ============================================================
-            //
-            // GoRoute(
-            //   path: '/restaurant/:name',
-            //   builder: (
-            //       context,
-            //       routeState,
-            //       ) {
-            //     final encodedName =
-            //         routeState.pathParameters['name'] ??
-            //             '';
-            //
-            //     final name =
-            //     Uri.decodeComponent(
-            //       encodedName,
-            //     );
-            //
-            //     final restaurant =
-            //     restaurants.firstWhere(
-            //           (item) =>
-            //       item.name
-            //           .trim()
-            //           .toLowerCase() ==
-            //           name
-            //               .trim()
-            //               .toLowerCase(),
-            //       orElse: () =>
-            //       restaurants.first,
-            //     );
-            //
-            //     return MilestoneApp6RestaurantInfoScreen(
-            //       restaurant: restaurant,
-            //       state: state,
-            //     );
-            //   },
-            // ),
-
-            // ============================================================
-            // RESTAURANT INFO
-            // ============================================================
 
             GoRoute(
               path: '/restaurant-info',
@@ -453,14 +291,6 @@ class MilestoneApp6Routes {
               },
             ),
 
-            // ============================================================
-            // PROFILE ADDRESS
-            //
-            // This is your EXISTING profile address route.
-            //
-            // Keep it if the user can manage addresses from Profile.
-            // ============================================================
-
             GoRoute(
               path: '/profile/address',
               pageBuilder: (
@@ -476,10 +306,6 @@ class MilestoneApp6Routes {
               },
             ),
 
-            // ============================================================
-            // CART
-            // ============================================================
-
             GoRoute(
               path: '/cart',
               pageBuilder: (
@@ -494,10 +320,6 @@ class MilestoneApp6Routes {
                 );
               },
             ),
-
-            // ============================================================
-            // PROFILE
-            // ============================================================
 
             GoRoute(
               path: '/profile',
@@ -516,49 +338,6 @@ class MilestoneApp6Routes {
           ],
         ),
 
-        // ================================================================
-        // FOOD DETAILS
-        //
-        // Outside ShellRoute.
-        // Bottom navigation hidden.
-        // ================================================================
-
-        // GoRoute(
-        //   path: '/food/:id',
-        //   pageBuilder: (
-        //       context,
-        //       routeState,
-        //       ) {
-        //     final foodId =
-        //     routeState.pathParameters['id'];
-        //
-        //     if (foodId == null ||
-        //         foodId.isEmpty) {
-        //       return const NoTransitionPage<void>(
-        //         child: Scaffold(
-        //           body: Center(
-        //             child: Text(
-        //               'Food information is missing.',
-        //             ),
-        //           ),
-        //         ),
-        //       );
-        //     }
-        //
-        //     return _page(
-        //       routeState,
-        //       MilestoneApp6FoodDetailsScreen(
-        //         state: state,
-        //         id: foodId,
-        //       ),
-        //     );
-        //   },
-        // ),
-
-        // ================================================================
-        // MY ORDERS
-        // ================================================================
-
         GoRoute(
           path: '/my-orders',
           pageBuilder: (
@@ -574,10 +353,6 @@ class MilestoneApp6Routes {
           },
         ),
 
-        // ================================================================
-        // CHECKOUT
-        // ================================================================
-
         GoRoute(
           path: '/checkout',
           pageBuilder: (
@@ -586,11 +361,6 @@ class MilestoneApp6Routes {
               ) {
             final extra =
                 routeState.extra;
-
-            // ============================================================
-            // CASE 1
-            // CART CHECKOUT
-            // ============================================================
 
             if (extra
             is MilestoneApp6State) {
@@ -601,11 +371,6 @@ class MilestoneApp6Routes {
                 ),
               );
             }
-
-            // ============================================================
-            // CASE 2
-            // BUY NOW CHECKOUT ARGS
-            // ============================================================
 
             if (extra
             is MilestoneApp6CheckoutArgs) {
@@ -618,11 +383,6 @@ class MilestoneApp6Routes {
                 ),
               );
             }
-
-            // ============================================================
-            // CASE 3
-            // OLD MAP-BASED BUY NOW
-            // ============================================================
 
             if (extra
             is Map<String, dynamic>) {
@@ -689,11 +449,6 @@ class MilestoneApp6Routes {
                 ),
               );
             }
-
-            // ============================================================
-            // CASE 4
-            // OLD QUERY PARAMETER BUY NOW
-            // ============================================================
 
             final foodId =
             routeState
@@ -777,10 +532,6 @@ class MilestoneApp6Routes {
               );
             }
 
-            // ============================================================
-            // NOTHING VALID
-            // ============================================================
-
             return _checkoutError(
               routeState,
               'Checkout information is missing.',
@@ -788,26 +539,12 @@ class MilestoneApp6Routes {
           },
         ),
 
-        // ================================================================
-        // ORDER DETAILS
-        // ================================================================
-// ================================================================
-// ORDER DETAILS
-// ================================================================
-
         GoRoute(
           path: '/order-details/:orderId',
           pageBuilder: (
               context,
               routeState,
               ) {
-
-            // --------------------------------------------------------------
-            // GET ORDER ID FROM URL
-            // Example:
-            // /order-details/222
-            // orderId = 222
-            // --------------------------------------------------------------
 
             final String? orderId =
             routeState.pathParameters['orderId'];
@@ -825,10 +562,6 @@ class MilestoneApp6Routes {
               '==========================================',
             );
 
-            // --------------------------------------------------------------
-            // CHECK ORDER ID
-            // --------------------------------------------------------------
-
             if (orderId == null ||
                 orderId.trim().isEmpty) {
               return _orderError(
@@ -837,29 +570,12 @@ class MilestoneApp6Routes {
               );
             }
 
-            // --------------------------------------------------------------
-            // OPEN ORDER DETAILS SCREEN
-            // --------------------------------------------------------------
-            //
-            // The Order Details screen itself calls:
-            //
-            // GET /orders/{orderId}
-            //
-            // so the backend remains the source of truth.
-            // --------------------------------------------------------------
-
             return _page(
               routeState,
               MilestoneApp6OrderDetailsScreen(
                 state: state,
                 auth: auth,
-
-                // IMPORTANT
                 orderId: orderId,
-
-                // These are required by your existing constructor.
-                // The Order Details screen gets the real order
-                // information from the backend using orderId.
                 items: const [],
 
                 paymentType: 'Cash on Delivery',
@@ -877,10 +593,6 @@ class MilestoneApp6Routes {
       ],
     );
   }
-
-  // ================================================================
-  // CHECKOUT PAGE
-  // ================================================================
 
   CustomTransitionPage<void> _checkoutPage(
       GoRouterState routeState,
@@ -926,10 +638,6 @@ class MilestoneApp6Routes {
     );
   }
 
-  // ================================================================
-  // CHECKOUT ERROR
-  // ================================================================
-
   NoTransitionPage<void> _checkoutError(
       GoRouterState routeState,
       String message,
@@ -961,11 +669,6 @@ class MilestoneApp6Routes {
       ),
     );
   }
-
-  // ================================================================
-  // ORDER ERROR
-  // ================================================================
-
   NoTransitionPage<void> _orderError(
       GoRouterState routeState,
       String message,
@@ -1000,10 +703,6 @@ class MilestoneApp6Routes {
     );
   }
 
-  // ================================================================
-  // DOUBLE PARSER
-  // ================================================================
-
   double? _toDouble(
       Object? value,
       ) {
@@ -1024,10 +723,6 @@ class MilestoneApp6Routes {
     );
   }
 
-  // ================================================================
-  // INT PARSER
-  // ================================================================
-
   int? _toInt(
       Object? value,
       ) {
@@ -1043,10 +738,6 @@ class MilestoneApp6Routes {
       value.toString(),
     );
   }
-
-  // ================================================================
-  // COMMON PAGE
-  // ================================================================
 
   CustomTransitionPage<void> _page(
       GoRouterState routeState,

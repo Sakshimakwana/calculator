@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:app_matic_tech_flutter_app/controllers/order_controller.dart';
 import 'package:app_matic_tech_flutter_app/controllers/review_controller.dart';
 import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
-import '../data/milestone_app_6_cart_item.dart';
+import '../cart/data/milestone_app_6_cart_item.dart';
 import '../state/milestone_app_6_state.dart';
 
 class MilestoneApp6MyOrdersScreen extends StatefulWidget {

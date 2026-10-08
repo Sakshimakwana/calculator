@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../theme/milestone_app_6_colors.dart';
-import '../../widgets/milestone_app_6_image.dart';
+import '../../common_widgets/milestone_app_6_image.dart';
 
 class MilestoneApp6HomeBanner extends StatelessWidget {
   const MilestoneApp6HomeBanner({

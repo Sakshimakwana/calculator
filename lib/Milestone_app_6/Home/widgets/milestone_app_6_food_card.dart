@@ -1,12 +1,12 @@
 
-import 'package:app_matic_tech_flutter_app/models/cart/cart_response_model.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/model/cart_response_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/milestone_app_6_food.dart';
 import '../../state/milestone_app_6_state.dart';
-import '../../widgets/milestone_app_6_image.dart';
+import '../../common_widgets/milestone_app_6_image.dart';
 import 'package:provider/provider.dart';
-import '../../../controllers/cart_controller.dart';
+import '../../cart/data/cart_controller/cart_controller.dart';
 
 class MilestoneApp6FoodCard extends StatelessWidget {
   final MilestoneApp6Food food;

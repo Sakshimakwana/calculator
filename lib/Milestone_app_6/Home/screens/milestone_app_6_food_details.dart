@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/milestone_app_6_food.dart';
 import '../../state/milestone_app_6_state.dart';
-import '../../widgets/milestone_app_6_button.dart';
-import '../../widgets/milestone_app_6_details_shimmer.dart';
-import '../../widgets/milestone_app_6_image.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/common_widgets/milestone_app_6_button.dart';
+import '../../common_widgets/milestone_app_6_details_shimmer.dart';
+import '../../common_widgets/milestone_app_6_image.dart';
 
 class MilestoneApp6FoodDetailsScreen extends StatefulWidget {
   final String id;

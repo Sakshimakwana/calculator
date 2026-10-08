@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/milestone_app_6_image.dart';
+import '../../common_widgets/milestone_app_6_image.dart';
 
 class MilestoneApp6RestaurantCard extends StatelessWidget {
   final String name;

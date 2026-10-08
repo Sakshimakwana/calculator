@@ -3,15 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
-import '../../controllers/cart_controller.dart';
+import '../cart/data/cart_controller/cart_controller.dart';
 import '../../controllers/order_controller.dart';
-import '../../models/cart/cart_response_model.dart';
+import '../cart/model/cart_response_model.dart';
 
-import '../data/milestone_app_6_cart_item.dart';
+import '../cart/data/milestone_app_6_cart_item.dart';
 import '../Home/data/milestone_app_6_food.dart';
 import '../state/milestone_app_6_state.dart';
-import '../widgets/milestone_app_6_button.dart';
-import '../widgets/milestone_app_6_image.dart';
+import '../common_widgets/milestone_app_6_button.dart';
+import '../common_widgets/milestone_app_6_image.dart';
 
 const String razorpayKeyId = 'rzp_test_TZROdQUkcaHWjq';
 

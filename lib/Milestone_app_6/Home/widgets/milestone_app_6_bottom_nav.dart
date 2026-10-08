@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/milestone_app_6_state.dart';
-import '../../../controllers/cart_controller.dart';
+import '../../cart/data/cart_controller/cart_controller.dart';
 
 class MilestoneApp6BottomNav extends StatelessWidget {
   final MilestoneApp6State state;

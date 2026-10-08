@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/milestone_app_6_food.dart';
-import '../../widgets/milestone_app_6_image.dart';
+import '../../common_widgets/milestone_app_6_image.dart';
 
 class MilestoneApp6CategoryChip extends StatelessWidget {
   final MilestoneApp6Category category;
