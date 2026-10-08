@@ -68,10 +68,6 @@ class _MilestoneApp6HomeScreenState
           onRefresh: logic.refreshHome,
         ),
 
-        // ========================================================
-        // APP BAR
-        // ========================================================
-
         MilestoneApp6HomeAppBar(
           fullname: logic.fullname,
           selectedAddress:
@@ -91,6 +87,7 @@ class _MilestoneApp6HomeScreenState
             await logic.loadNearbyRestaurants();
           },
         ),
+
 
         SliverPersistentHeader(
           pinned: true,

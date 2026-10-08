@@ -59,7 +59,7 @@ class MilestoneApp6HomeStickyContent
             // ======================================================
 
             SizedBox(
-              height: 58,
+              height: 50,
               child: HomeSearchBar(
                 controller: searchController,
                 searchHintIndex: searchHintIndex,

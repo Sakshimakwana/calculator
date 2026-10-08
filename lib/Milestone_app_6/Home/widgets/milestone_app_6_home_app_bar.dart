@@ -24,7 +24,7 @@ class MilestoneApp6HomeAppBar extends StatelessWidget {
       pinned: false,
       floating: false,
       snap: false,
-      expandedHeight: 110,
+      expandedHeight: 100,
       backgroundColor:
       Theme.of(context).scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
@@ -177,7 +177,6 @@ class MilestoneApp6HomeAppBar extends StatelessWidget {
                     color: Theme.of(context).hintColor,
                   ),
                 ),
-                const SizedBox(height: 12),
               ],
             ),
           ),
