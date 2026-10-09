@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../models/review/review_model.dart';
-import '../repositories/review_repository.dart';
+import '../../models/review_model.dart';
+import '../review_repo/review_repository.dart';
 
 class ReviewController extends ChangeNotifier {
   final ReviewRepository repository;

@@ -3,7 +3,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_repo/cart_repository.dart';
 import 'package:app_matic_tech_flutter_app/repositories/delivery_repository_impl.dart';
 import 'package:app_matic_tech_flutter_app/repositories/order_repository.dart';
-import 'package:app_matic_tech_flutter_app/repositories/review_repository.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_reviews/data/review_repo/review_repository.dart';
 import 'package:flutter/material.dart';
 import 'Milestone_app_6/routes/milestone_app_6_routes.dart';
 import 'Milestone_app_6/state/milestone_app_6_state.dart';
@@ -11,7 +11,7 @@ import 'Milestone_app_6/theme/milestone_app_6_theme.dart';
 import 'package:provider/provider.dart';
 import 'controllers/delivery_controller.dart';
 import 'controllers/order_controller.dart';
-import 'controllers/review_controller.dart';
+import 'Milestone_app_6/profile/my_reviews/data/review_controller/review_controller.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/network/api_service.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/network/dio_client.dart';
 import 'Milestone_app_6/Login/auth_storage/auth_storage.dart';

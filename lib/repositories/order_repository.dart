@@ -9,11 +9,6 @@ class OrderRepository {
 
   OrderRepository(this.apiService);
 
-  // ============================================================
-  // PLACE ORDER
-  // POST /orders/store
-  // ============================================================
-
   Future<Map<String, dynamic>> placeOrder({
     required int addressId,
     String? deliveryInstructions,
@@ -30,11 +25,6 @@ class OrderRepository {
       response.data as Map,
     );
   }
-
-  // ============================================================
-  // MY ORDERS
-  // GET /orders?page=1&per_page=6
-  // ============================================================
 
   Future<MyOrdersResponseModel> fetchMyOrders({
     int page = 1,
@@ -56,11 +46,6 @@ class OrderRepository {
     return MyOrdersResponseModel.fromJson(data);
   }
 
-  // ============================================================
-  // ORDER INFO
-  // GET /orders/{orderId}
-  // ============================================================
-
   Future<OrderInfoResponseModel> fetchOrderInfo(
       int orderId,
       ) async {
@@ -76,21 +61,6 @@ class OrderRepository {
     return OrderInfoResponseModel.fromJson(data);
   }
 
-  // ============================================================
-  // CREATE PAYMENT
-  // POST /orders/{orderId}/payment
-  //
-  // COD:
-  // {
-  //   "payment_method": "cod"
-  // }
-  //
-  // RAZORPAY:
-  // {
-  //   "payment_method": "razorpay"
-  // }
-  // ============================================================
-
   Future<Map<String, dynamic>> makePayment({
     required int orderId,
     required Map<String, dynamic> paymentData,
@@ -104,17 +74,6 @@ class OrderRepository {
       response.data as Map,
     );
   }
-
-  // ============================================================
-  // VERIFY RAZORPAY PAYMENT
-  // POST /orders/{orderId}/payment/verify
-  //
-  // {
-  //   "razorpay_order_id": "...",
-  //   "razorpay_payment_id": "...",
-  //   "razorpay_signature": "..."
-  // }
-  // ============================================================
 
   Future<Map<String, dynamic>> verifyPayment({
     required int orderId,
