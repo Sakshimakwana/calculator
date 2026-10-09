@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
+import '../../../order details_and_checkout/order_details/models/order/order_info_model.dart';
 import 'my_order_product_row.dart';
 
 class MyOrderItems extends StatelessWidget {

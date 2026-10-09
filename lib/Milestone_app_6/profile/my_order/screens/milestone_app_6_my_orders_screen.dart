@@ -1,3 +1,5 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/data/controllers/order_controller.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/models/order/order_info_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_order/my_order_widgets/my_order_card.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_order/my_order_widgets/my_orders_empty_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_order/my_order_widgets/my_orders_error_state.dart';
@@ -5,9 +7,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_order/my_o
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:app_matic_tech_flutter_app/controllers/order_controller.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_reviews/data/review_controller/review_controller.dart';
-import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
 
 class MilestoneApp6MyOrdersScreen extends StatefulWidget {

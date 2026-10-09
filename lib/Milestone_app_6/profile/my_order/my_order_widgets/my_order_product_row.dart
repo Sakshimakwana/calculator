@@ -1,5 +1,6 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/models/order/order_info_model.dart';
 import 'package:flutter/material.dart';
-import 'package:app_matic_tech_flutter_app/models/order/order_info_model.dart';
+
 
 class MyOrderProductRow extends StatelessWidget {
   final OrderItemModel item;

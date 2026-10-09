@@ -1,8 +1,7 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/data/repositories/delivery_repository.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/models/delivery/delivery_model.dart';
 import 'package:flutter/foundation.dart';
 
-
-import '../models/delivery/delivery_model.dart';
-import '../repositories/delivery_repository.dart';
 
 class DeliveryController
     extends ChangeNotifier {

@@ -1,8 +1,7 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/data/repositories/order_repository.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/models/order/order_info_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-
-import '../models/order/order_info_model.dart';
-import '../repositories/order_repository.dart';
 
 class OrderController extends ChangeNotifier {
   final OrderRepository repository;
