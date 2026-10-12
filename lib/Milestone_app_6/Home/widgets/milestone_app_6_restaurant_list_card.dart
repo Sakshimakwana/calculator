@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/screens/milestone_app_6_animated_open_dot.dart';
 import 'package:flutter/material.dart';
 
 import '../data/milestone_app_6_restaurants_data.dart';
@@ -109,14 +110,11 @@ class MilestoneApp6RestaurantListCard
                     ),
                     Row(
                       children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 13,
-                          color: restaurant.isOpen
-                              ? Colors.green
-                              : Colors.red,
+                        MilestoneApp6AnimatedOpenDot(
+                          isOpen: restaurant.isOpen,
+                          size: 18,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         Text(
                           restaurant.isOpen ? 'Open now' : 'Closed now',
                           style: TextStyle(
@@ -129,6 +127,7 @@ class MilestoneApp6RestaurantListCard
                         ),
                       ],
                     ),
+
                   ],
                 ),
                 ),
