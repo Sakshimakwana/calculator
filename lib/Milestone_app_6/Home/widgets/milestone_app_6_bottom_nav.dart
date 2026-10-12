@@ -29,59 +29,64 @@ class MilestoneApp6BottomNav extends StatelessWidget {
   }
 
   @override
+
+  @override
   Widget build(BuildContext context) {
-    final index = _index(context);
+    return AnimatedBuilder(
+      animation: state,
+      builder: (context, _) {
+        final int index = _index(context);
 
-    return Consumer<CartController>(
-      builder: (context, cartController, _) {
-        // Number of different products currently in the cart.
-        final int cartCount =
-            cartController.cartItems.length;
+        // Hide navigation while Home shows its error screen.
+        if (index == 0 && state.isHomeNetworkError) {
+          return const SizedBox.shrink();
+        }
 
-        return NavigationBar(
-          selectedIndex: index,
+        return Consumer<CartController>(
+          builder: (context, cartController, _) {
+            final int cartCount =
+                cartController.cartItems.length;
 
-          onDestinationSelected: (value) {
-            const paths = [
-              '/home',
-              '/cart',
-              '/profile',
-            ];
+            return NavigationBar(
+              selectedIndex: index,
+              onDestinationSelected: (value) {
+                const paths = [
+                  '/home',
+                  '/cart',
+                  '/profile',
+                ];
 
-            context.go(paths[value]);
+                context.go(paths[value]);
+              },
+              destinations: [
+                const NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Badge(
+                    isLabelVisible: cartCount > 0,
+                    label: Text('$cartCount'),
+                    child: const Icon(
+                      Icons.shopping_cart_outlined,
+                    ),
+                  ),
+                  selectedIcon: Badge(
+                    isLabelVisible: cartCount > 0,
+                    label: Text('$cartCount'),
+                    child: const Icon(Icons.shopping_cart),
+                  ),
+                  label: 'Cart',
+                ),
+                const NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            );
           },
-
-          destinations: [
-            const NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-
-            NavigationDestination(
-              icon: Badge(
-                isLabelVisible: cartCount > 0,
-                label: Text('$cartCount'),
-                child: const Icon(
-                  Icons.shopping_cart_outlined,
-                ),
-              ),
-              selectedIcon: Badge(
-                isLabelVisible: cartCount > 0,
-                label: Text('$cartCount'),
-                child: const Icon(
-                  Icons.shopping_cart,
-                ),
-              ),
-              label: 'Cart',
-            ),
-
-            const NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
         );
       },
     );

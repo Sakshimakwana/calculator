@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../Address/models/milestone_app_6_address_model.dart';
 
 class MilestoneApp6HomeAppBar extends StatelessWidget {
@@ -65,16 +66,33 @@ class MilestoneApp6HomeAppBar extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   Flexible(
-                    child: isLoadingAddress
-                        ? SizedBox(
-                      width: 70,
-                      height: 12,
-                      child: LinearProgressIndicator(
-                        borderRadius:
-                        BorderRadius.circular(10),
-                        color: primaryColor,
-                        backgroundColor:
-                        primaryColor.withOpacity(0.12),
+                    child:isLoadingAddress
+                        ? Shimmer.fromColors(
+                      baseColor: primaryColor.withOpacity(0.15),
+                      highlightColor: primaryColor.withOpacity(0.40),
+                      period: const Duration(milliseconds: 1200),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 55,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 95,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        ],
                       ),
                     )
                         : selectedAddress == null

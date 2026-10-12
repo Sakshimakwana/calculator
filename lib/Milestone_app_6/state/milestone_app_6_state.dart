@@ -136,6 +136,15 @@ _selectedAddress = null;
 notifyListeners();
 }
 
+  bool isHomeNetworkError = false;
+
+  void setHomeNetworkError(bool value) {
+    if (isHomeNetworkError == value) return;
+
+    isHomeNetworkError = value;
+    notifyListeners();
+  }
+
 // ================================================================
 // CART COUNT
 // ================================================================

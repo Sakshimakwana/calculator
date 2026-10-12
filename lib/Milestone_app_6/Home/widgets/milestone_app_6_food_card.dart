@@ -248,35 +248,28 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
                 children: [
-                  // ==================================================
-                  // IMAGE
-                  // ==================================================
-
                   SizedBox(
-                    height: 129,
                     width: double.infinity,
-                    child: MilestoneApp6Image(
-                      url: food.image,
-                      fit: BoxFit.cover,
-                      borderRadius:
-                      const BorderRadius.vertical(
-                        top: Radius.circular(16),
+                    height: 450,
+                    child: ClipRect(
+                      child: MilestoneApp6Image(
+                        url: food.image,
+                        fit: BoxFit.cover,
+                        borderRadius: BorderRadius.zero,
                       ),
                     ),
                   ),
+
 
                   // ==================================================
                   // CONTENT
                   // ==================================================
 
-                  Expanded(
+                  SizedBox(
+                    height: 224,
+                    width: double.infinity,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        10,
-                        7,
-                        10,
-                        7,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
                       child: Column(
                         crossAxisAlignment:
                         CrossAxisAlignment.start,

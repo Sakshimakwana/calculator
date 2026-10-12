@@ -6,10 +6,10 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/mileston
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_section_title.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_sticky_content.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_sticky_header.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/common_widgets/milestone_app_6_something_went_wrong_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../state/milestone_app_6_state.dart';
 
 class MilestoneApp6HomeScreen extends StatefulWidget {
@@ -28,6 +28,7 @@ class MilestoneApp6HomeScreen extends StatefulWidget {
 class _MilestoneApp6HomeScreenState
     extends State<MilestoneApp6HomeScreen> {
   late final MilestoneApp6HomeLogic logic;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -35,14 +36,26 @@ class _MilestoneApp6HomeScreenState
 
     logic = MilestoneApp6HomeLogic(
       appState: widget.state,
-      onChanged: () {
-        if (mounted) {
+        onChanged: () {
+          if (!mounted) return;
+
           setState(() {});
-        }
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+
+            final bool hasError =
+                logic.restaurantError != null;
+
+            if (widget.state.isHomeNetworkError != hasError) {
+              widget.state.setHomeNetworkError(hasError);
+            }
+          });
       },
     );
 
     logic.initialize();
+
   }
 
   @override
@@ -53,10 +66,13 @@ class _MilestoneApp6HomeScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (logic.restaurantError != null) {
+      return SomethingWentWrongScreen(
+        onRetry: logic.loadNearbyRestaurants,
+      );
+    }
     final bool hasSearch =
-        logic.searchController.text
-            .trim()
-            .isNotEmpty;
+        logic.searchController.text.trim().isNotEmpty;
 
     return CustomScrollView(
       controller:

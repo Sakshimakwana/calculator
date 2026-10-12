@@ -21,12 +21,12 @@ class MilestoneApp6Image extends StatelessWidget {
     return ClipRRect(
       borderRadius: borderRadius,
 
+
       child: Image.network(
         url,
-        width: width,
-        height: height,
+        width: width ?? double.infinity,
+        height: height ?? double.infinity,
         fit: fit,
-
         loadingBuilder: (
             context,
             child,
@@ -38,7 +38,6 @@ class MilestoneApp6Image extends StatelessWidget {
 
           return _placeholder(context);
         },
-
         errorBuilder: (
             context,
             error,
@@ -52,20 +51,13 @@ class MilestoneApp6Image extends StatelessWidget {
 
   Widget _placeholder(BuildContext context) {
     return Container(
-      width: width,
-      height: height,
-
-      color: Theme.of(context)
-          .colorScheme
-          .surfaceContainerHighest,
-
+      width: width ?? double.infinity,
+      height: height ?? double.infinity,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       alignment: Alignment.center,
-
       child: Icon(
         Icons.restaurant_rounded,
-        color: Theme.of(context)
-            .colorScheme
-            .onSurfaceVariant,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         size: 30,
       ),
     );
