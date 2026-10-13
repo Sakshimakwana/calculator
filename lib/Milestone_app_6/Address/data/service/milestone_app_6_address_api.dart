@@ -388,17 +388,28 @@ class MilestoneApp6AddressApi {
     debugPrint('==========================================');
 
     if (response.statusCode != 200 &&
-        response.statusCode != 201) {
-      throw Exception(
-        'Failed to update address: '
-            '${response.statusCode}\n'
-            '${response.body}',
-      );
+    response.statusCode != 201) {
+    throw Exception(
+    'Failed to update address: '
+    '${response.statusCode}\n'
+    '${response.body}',
+    );
     }
 
-    return _parseAddressResponse(
-      response.body,
+// Clear the old cached address list after a successful update.
+    await _clearAddressListCache(token);
+
+    debugPrint('ADDRESS CACHE CLEARED AFTER UPDATE');
+
+    final updatedAddress = _parseAddressResponse(
+    response.body,
     );
+
+    debugPrint('UPDATED ADDRESS ID: ${updatedAddress.id}');
+    debugPrint('UPDATED ADDRESS LABEL: ${updatedAddress.label}');
+
+    return updatedAddress;
+
   }
 
   // ============================================================

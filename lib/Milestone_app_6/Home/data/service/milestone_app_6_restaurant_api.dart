@@ -110,31 +110,58 @@ class MilestoneApp6RestaurantApi {
     );
   }
 
-
   Future<http.Response> _getWithCache(
       Uri uri,
-      String token,
-      ) async {
+      String token, {
+        bool forceRefresh = false,
+      }) async {
     final key = _cacheKey(token, uri);
 
-    // Reuse an identical request already in progress.
-    final pending = _inFlightGets[key];
-    if (pending != null) {
-      debugPrint('REQUEST ALREADY IN PROGRESS: $uri');
-      return pending;
-    }
+    // Use cache only for normal requests.
+    if (!forceRefresh) {
+      final cachedBody = await _readCachedBody(key);
 
-    final request = _performCachedGet(uri, token, key);
-    _inFlightGets[key] = request;
-
-    try {
-      return await request;
-    } finally {
-      if (identical(_inFlightGets[key], request)) {
-        _inFlightGets.remove(key);
+      if (cachedBody != null) {
+        debugPrint('RESTAURANT CACHE HIT: $uri');
+        return http.Response(cachedBody, 200);
       }
     }
+
+    debugPrint(
+      forceRefresh
+          ? 'RESTAURANT FORCE REFRESH: $uri'
+          : 'RESTAURANT CACHE MISS: $uri',
+    );
+
+    try {
+      final response = await http
+          .get(uri, headers: _headers(token))
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        // Replace the old cache with the latest API response.
+        await _saveCachedBody(key, response.body);
+      }
+
+      return response;
+    } catch (e) {
+      // Do not fall back to stale cache during a forced refresh.
+      if (forceRefresh) rethrow;
+
+      final staleBody = await _readCachedBody(
+        key,
+        allowStale: true,
+      );
+
+      if (staleBody != null) {
+        debugPrint('STALE CACHE USED: $uri');
+        return http.Response(staleBody, 200);
+      }
+
+      rethrow;
+    }
   }
+
 
   Future<http.Response> _performCachedGet(
       Uri uri,
@@ -186,10 +213,11 @@ class MilestoneApp6RestaurantApi {
   fetchNearbyRestaurantsPage({
     required String token,
     required int addressId,
-    int page = 1,
-    int perPage = 6,
-    bool openNow = false,
-    bool includeMenus = true,
+    required int page,
+    required int perPage,
+    required bool openNow,
+    required bool includeMenus,
+    bool forceRefresh = false, // ADD THIS LINE
   }) async {
     // ------------------------------------------------------------
     // VALIDATION
@@ -275,7 +303,11 @@ class MilestoneApp6RestaurantApi {
     late final http.Response response;
 
     try {
-      response = await _getWithCache(uri, token);
+      response = await _getWithCache(
+        uri,
+        token,
+        forceRefresh: forceRefresh,
+      );
     } on TimeoutException {
       throw Exception(
         'Nearby restaurant API request timed out.',

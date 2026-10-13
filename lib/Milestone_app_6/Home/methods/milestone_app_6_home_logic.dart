@@ -27,12 +27,19 @@ class MilestoneApp6HomeLogic {
   bool _isFetchingAddress = false;
   bool _isFetchingRestaurants = false;
   bool _mounted = false;
+  bool _refreshRestaurantsAfterCurrentRequest = false;
 
   void initialize() {
     if (_initialized) return;
 
     _initialized = true;
     _mounted = true;
+
+// Get the currently selected address immediately.
+    selectedApiAddress = appState.selectedAddress;
+
+// Listen for address changes from the Address screen.
+    appState.addListener(_onAppStateChanged);
 
     homeScrollController.addListener(onHomeScroll);
     searchController.addListener(onSearchChanged);
@@ -55,6 +62,35 @@ class MilestoneApp6HomeLogic {
 
     _loadInitialHomeData();
   }
+
+  void _onAppStateChanged() {
+    if (!_mounted) return;
+
+    final int? previousAddressId = selectedApiAddress?.id;
+
+    selectedApiAddress = appState.selectedAddress;
+    isLoadingAddress = false;
+
+    debugPrint(
+      'HOME ADDRESS UPDATED: ${selectedApiAddress?.label}',
+    );
+
+    debugPrint(
+      'HOME ADDRESS ID: ${selectedApiAddress?.id}',
+    );
+
+    notify();
+
+    if (selectedApiAddress?.id != previousAddressId &&
+        selectedApiAddress?.id != null) {
+      debugPrint('ADDRESS CHANGED: Refreshing restaurants');
+
+      loadNearbyRestaurants(forceRefresh: true);
+    }
+  }
+
+
+
 
   Future<void> _loadInitialHomeData() async {
     await loadSelectedAddress();
@@ -417,8 +453,17 @@ class MilestoneApp6HomeLogic {
   // ============================================================
   // LOAD RESTAURANTS - PAGE 1
   // ============================================================
-  Future<void> loadNearbyRestaurants() async {
-    if (!_mounted || _isFetchingRestaurants) return;
+  Future<void> loadNearbyRestaurants({
+    bool forceRefresh = false,
+  }) async {
+    if (!_mounted) return;
+
+    if (_isFetchingRestaurants) {
+      if (forceRefresh) {
+        _refreshRestaurantsAfterCurrentRequest = true;
+      }
+      return;
+    }
 
     _isFetchingRestaurants = true;
 
@@ -545,9 +590,17 @@ class MilestoneApp6HomeLogic {
   }
 
   notify();
-  } finally {
-  _isFetchingRestaurants = false;
-  }
+  }finally {
+      _isFetchingRestaurants = false;
+
+      if (_mounted && _refreshRestaurantsAfterCurrentRequest) {
+        _refreshRestaurantsAfterCurrentRequest = false;
+
+        Future.microtask(
+              () => loadNearbyRestaurants(forceRefresh: true),
+        );
+      }
+    }
   }
 
   // ============================================================
@@ -594,9 +647,7 @@ class MilestoneApp6HomeLogic {
         return;
       }
 
-      final response =
-      await restaurantApi
-          .fetchNearbyRestaurantsPage(
+      final response = await restaurantApi.fetchNearbyRestaurantsPage(
         token: token,
         addressId: addressId,
         page: nextPage,
@@ -869,8 +920,12 @@ class MilestoneApp6HomeLogic {
   // DISPOSE
   // ============================================================
 
+
   Future<void> dispose() async {
     _mounted = false;
+
+    // Remove the listener to prevent memory leaks.
+    appState.removeListener(_onAppStateChanged);
 
     searchHintTimer?.cancel();
 
@@ -883,11 +938,11 @@ class MilestoneApp6HomeLogic {
     );
 
     homeScrollController.dispose();
-
     searchController.dispose();
 
     if (isListening) {
       await speech.stop();
     }
   }
+
 }

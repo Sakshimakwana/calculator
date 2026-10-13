@@ -99,8 +99,9 @@ class _MilestoneApp6HomeScreenState
               return;
             }
 
+            // Refresh selected address and nearby restaurants
             await logic.loadSelectedAddress();
-            await logic.loadNearbyRestaurants();
+            await logic.loadNearbyRestaurants(forceRefresh: true);
           },
         ),
 

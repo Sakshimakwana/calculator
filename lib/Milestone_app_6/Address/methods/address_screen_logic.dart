@@ -140,9 +140,7 @@ class AddressScreenLogic {
     }
 
     try {
-      await AddressStorage.saveSelectedAddressId(
-        address.id,
-      );
+      await AddressStorage.saveSelectedAddressId(address.id);
 
       _state.setAddress(address);
 
