@@ -6,7 +6,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/mileston
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_section_title.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_sticky_content.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_sticky_header.dart';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/common_widgets/milestone_app_6_something_went_wrong_screen.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/somthing_went_wrong/screen/milestone_app_6_something_went_wrong_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

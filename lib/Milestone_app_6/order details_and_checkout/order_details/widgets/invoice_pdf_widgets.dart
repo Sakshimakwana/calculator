@@ -128,10 +128,10 @@ class InvoicePdfWidgets {
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.only(bottom: 5),
-      decoration: const pw.BoxDecoration(
+      decoration: pw.BoxDecoration(
         border: pw.Border(
           bottom: pw.BorderSide(
-            color: PdfColors.black,
+            color: PdfColor.fromHex('#D9233E'),
             width: 0.8,
           ),
         ),
@@ -141,6 +141,7 @@ class InvoicePdfWidgets {
         style: pw.TextStyle(
           fontSize: 11,
           fontWeight: pw.FontWeight.bold,
+          color: PdfColor.fromHex('#D9233E'),
         ),
       ),
     );

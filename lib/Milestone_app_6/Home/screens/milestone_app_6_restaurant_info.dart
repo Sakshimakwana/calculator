@@ -12,6 +12,8 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/models/restauran
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/common_widgets/milestone_app_6_image.dart';
 import '../../cart/model/cart_response_model.dart';
+import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MilestoneApp6RestaurantInfoScreen extends StatefulWidget {
   final MilestoneApp6Restaurant restaurant;
@@ -51,6 +53,117 @@ class _MilestoneApp6RestaurantInfoScreenState
     });
   }
 
+  static const Duration _menuCacheDuration = Duration(minutes: 5);
+
+  String _menuCacheKey(String token, Uri uri) {
+    final hash = sha256.convert(
+      utf8.encode('$token|$uri'),
+    ).toString();
+
+    return 'restaurant_menu_cache_$hash';
+  }
+
+  Future<String?> _readMenuCache(
+      String key, {
+        bool allowStale = false,
+      }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(key);
+
+    if (raw == null) return null;
+
+    try {
+      final saved = jsonDecode(raw) as Map<String, dynamic>;
+      final savedAt = saved['savedAt'] as int;
+      final body = saved['body'] as String;
+
+      final age =
+          DateTime.now().millisecondsSinceEpoch - savedAt;
+
+      if (age < 0) return null;
+
+      if (age < _menuCacheDuration.inMilliseconds) {
+        return body;
+      }
+
+      // Use older data for up to 24 hours if the network fails.
+      if (allowStale &&
+          age < const Duration(hours: 24).inMilliseconds) {
+        return body;
+      }
+    } catch (e) {
+      debugPrint('MENU CACHE READ ERROR: $e');
+    }
+
+    return null;
+  }
+
+  Future<void> _saveMenuCache(
+      String key,
+      String body,
+      ) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      key,
+      jsonEncode({
+        'savedAt': DateTime.now().millisecondsSinceEpoch,
+        'body': body,
+      }),
+    );
+  }
+
+  Future<http.Response> _getMenuWithCache({
+    required Uri uri,
+    required String token,
+  }) async {
+    final key = _menuCacheKey(token, uri);
+
+    // 1. Return cached menu data when it is less than five minutes old.
+    final cachedBody = await _readMenuCache(key);
+
+    if (cachedBody != null) {
+      debugPrint('MENU CACHE HIT: $uri');
+      return http.Response(cachedBody, 200);
+    }
+
+    debugPrint('MENU CACHE MISS: $uri');
+
+    try {
+      // 2. Otherwise request fresh data from the API.
+      final response = await http
+          .get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      )
+          .timeout(const Duration(seconds: 30));
+
+      // Cache successful responses only.
+      if (response.statusCode == 200) {
+        await _saveMenuCache(key, response.body);
+      }
+
+      return response;
+    } catch (e) {
+      // 3. If the network fails, try previously saved data.
+      final staleBody = await _readMenuCache(
+        key,
+        allowStale: true,
+      );
+
+      if (staleBody != null) {
+        debugPrint('MENU STALE CACHE USED: $uri');
+        return http.Response(staleBody, 200);
+      }
+
+      rethrow;
+    }
+  }
+
   Future<void> _loadRestaurantMenu() async {
     if (!mounted) return;
 
@@ -84,14 +197,10 @@ class _MilestoneApp6RestaurantInfoScreenState
       debugPrint('URL: $uri');
       debugPrint('========================================');
 
-      final http.Response response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final http.Response response = await _getMenuWithCache(
+        uri: uri,
+        token: token,
+      );
 
       debugPrint('MENU STATUS: ${response.statusCode}');
       debugPrint('MENU RESPONSE: ${response.body}');
@@ -1006,52 +1115,48 @@ class _MilestoneApp6RestaurantInfoScreenState
 // ==============================================================
 
     if (cartController.cartItems.isNotEmpty) {
+      final existingCartItem = cartController.cartItems.first;
+
       final int existingRestaurantId =
-          cartController.cartItems.first.restaurantId;
+          existingCartItem.restaurantId;
 
       if (existingRestaurantId != widget.restaurant.id) {
-        final String existingRestaurant =
-            cartController.cartItems.first.restaurant.name.trim().isEmpty
-                ? 'another restaurant'
-                : cartController.cartItems.first.restaurant.name;
+        final String existingRestaurantName =
+        existingCartItem.restaurant.name.trim().isNotEmpty
+            ? existingCartItem.restaurant.name.trim()
+            : 'another restaurant';
+
+        final String selectedRestaurantName =
+            widget.restaurant.name;
 
         final bool? shouldReplace = await _showReplaceCartDialog(
           context,
-          currentRestaurant: existingRestaurant,
-          newRestaurant: widget.restaurant.name,
+          currentRestaurant: existingRestaurantName,
+          newRestaurant: selectedRestaurantName,
         );
 
         if (!mounted || shouldReplace != true) {
           return;
         }
 
-// ==========================================================
-// REPLACE CART
-// Delete every existing cart row through the
-// verified DELETE /carts/{cartId}/destroy API.
-// ==========================================================
-
         final bool cleared = await cartController.clearCart();
 
         if (!mounted) return;
 
         if (!cleared) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  cartController.errorMessage ??
-                      'Unable to replace the existing cart.',
-                ),
-                behavior: SnackBarBehavior.floating,
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                cartController.errorMessage ??
+                    'Unable to replace the existing cart.',
               ),
-            );
-
+            ),
+          );
           return;
         }
       }
     }
+
 
 // ==============================================================
 // ADD NEW PRODUCT
@@ -1148,6 +1253,7 @@ class _MilestoneApp6RestaurantInfoScreenState
                 height: 1.5,
               ),
               children: [
+
                 const TextSpan(
                   text: 'Your cart contains items from ',
                 ),
@@ -1166,32 +1272,48 @@ class _MilestoneApp6RestaurantInfoScreenState
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const TextSpan(
-                  text: '?',
-                ),
+                const TextSpan(text: '?'),
               ],
             ),
           ),
           actions: [
-            OutlinedButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(false);
-              },
-              child: const Text(
-                'Keep Existing',
-              ),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(true);
-              },
-              child: const Text(
-                'Replace Cart',
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(false);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                    ),
+                    minimumSize: const Size(0, 42),
+                  ),
+                  child: const Text(
+                    'Keep Existing',
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                    ),
+                    minimumSize: const Size(0, 42),
+                  ),
+                  child: const Text(
+                    'Replace Cart',
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
+              ],
             ),
           ],
         );

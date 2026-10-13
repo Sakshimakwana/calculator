@@ -6,6 +6,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/order details_and_che
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/data/controllers/delivery_controller.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/order%20details_and_checkout/order_details/data/controllers/order_controller.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_reviews/data/review_repo/review_repository.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/somthing_went_wrong/screen/milestone_app_6_internet_guard.dart';
 import 'package:flutter/material.dart';
 import 'Milestone_app_6/routes/milestone_app_6_routes.dart';
 import 'Milestone_app_6/state/milestone_app_6_state.dart';
@@ -21,16 +22,14 @@ import 'Milestone_app_6/Login/data/auth_controller/auth_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await AuthStorage.init();
   await AddressStorage.init();
 
-  final state =
-  MilestoneApp6State();
-
+  final state = MilestoneApp6State();
   await state.load();
 
-  final routes =
-  MilestoneApp6Routes(state);
+  final routes = MilestoneApp6Routes(state);
 
   runApp(
     MultiProvider(
@@ -101,20 +100,33 @@ class MilestoneApp6App
       builder: (context, _) {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
-
           title: 'Foodie',
+          theme: MilestoneApp6Theme.light,
+          darkTheme: MilestoneApp6Theme.dark,
+          themeMode: state.themeMode,
+          routerConfig: routes.router,
 
-          theme:
-          MilestoneApp6Theme.light,
+          builder: (context, child) {
+            return MilestoneApp6InternetGuard(
+              onConnectionRestored: () async {
+                debugPrint('Internet restored. Refreshing data...');
 
-          darkTheme:
-          MilestoneApp6Theme.dark,
+                try {
+                  await Future.wait([
+                    context.read<CartController>().fetchCart(),
+                    context
+                        .read<OrderController>()
+                        .fetchMyOrders(refresh: true),
+                  ]);
 
-          themeMode:
-          state.themeMode,
-
-          routerConfig:
-          routes.router,
+                  debugPrint('Cart and orders refreshed.');
+                } catch (e) {
+                  debugPrint('Data refresh failed: $e');
+                }
+              },
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
         );
       },
     );

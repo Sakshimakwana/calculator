@@ -389,6 +389,7 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.4,
+
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -399,6 +400,7 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
+
                     ),
                   ),
                 ],
@@ -411,7 +413,7 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.black,
+                color: Colors.black45,
               ),
               child: Text(
                 invoiceNumber,
@@ -462,10 +464,11 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
       children: [
         const Text(
           'ITEMS',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w900,
             letterSpacing: 1,
+            color: Color(0xFFD9233E),
           ),
         ),
         const SizedBox(height: 8),
@@ -677,6 +680,7 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
           total,
           bold: true,
           large: true,
+          valueColor: const Color(0xFFD9233E),
         ),
       ],
     );
@@ -794,7 +798,7 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
               title,
               style: TextStyle(
                 fontSize: 9,
-                color: Colors.grey.shade500,
+                color: Colors.grey.shade900,
               ),
             ),
           ),
@@ -815,12 +819,14 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
     );
   }
 
+
   Widget _amountRow(
-    String title,
-    double amount, {
-    bool bold = false,
-    bool large = false,
-  }) {
+      String title,
+      double amount, {
+        bool bold = false,
+        bool large = false,
+        Color? valueColor,
+      }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -839,12 +845,14 @@ class InvoiceGenerationAnimationState extends State<InvoiceGenerationAnimation>
             style: TextStyle(
               fontSize: large ? 15 : 10,
               fontWeight: bold ? FontWeight.w900 : FontWeight.w700,
+              color: valueColor,
             ),
           ),
         ],
       ),
     );
   }
+
 
   List<Map<String, dynamic>> _items() {
     final candidates = [

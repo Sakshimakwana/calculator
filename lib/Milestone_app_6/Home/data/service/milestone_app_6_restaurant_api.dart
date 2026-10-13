@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../models/restaurant_menu_model.dart';
@@ -47,6 +49,134 @@ class MilestoneApp6RestaurantApi {
       'Accept': 'application/json',
     };
   }
+
+  static final Map<String, Future<http.Response>> _inFlightGets = {};
+  static const Duration _cacheDuration = Duration(minutes: 5);
+
+  String _cacheKey(String token, Uri uri) {
+    final hash = sha256.convert(
+      utf8.encode('$token|$uri'),
+    ).toString();
+
+    return 'restaurant_api_cache_$hash';
+  }
+
+  Future<String?> _readCachedBody(
+      String key, {
+        bool allowStale = false,
+      }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(key);
+
+    if (raw == null) return null;
+
+    try {
+      final saved = jsonDecode(raw) as Map<String, dynamic>;
+      final savedAt = saved['savedAt'] as int;
+      final body = saved['body'] as String;
+
+      final age =
+          DateTime.now().millisecondsSinceEpoch - savedAt;
+
+      if (age < 0) return null;
+
+      if (age < _cacheDuration.inMilliseconds) {
+        return body;
+      }
+
+      if (allowStale &&
+          age < const Duration(hours: 24).inMilliseconds) {
+        return body;
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
+  Future<void> _saveCachedBody(
+      String key,
+      String body,
+      ) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      key,
+      jsonEncode({
+        'savedAt': DateTime.now().millisecondsSinceEpoch,
+        'body': body,
+      }),
+    );
+  }
+
+
+  Future<http.Response> _getWithCache(
+      Uri uri,
+      String token,
+      ) async {
+    final key = _cacheKey(token, uri);
+
+    // Reuse an identical request already in progress.
+    final pending = _inFlightGets[key];
+    if (pending != null) {
+      debugPrint('REQUEST ALREADY IN PROGRESS: $uri');
+      return pending;
+    }
+
+    final request = _performCachedGet(uri, token, key);
+    _inFlightGets[key] = request;
+
+    try {
+      return await request;
+    } finally {
+      if (identical(_inFlightGets[key], request)) {
+        _inFlightGets.remove(key);
+      }
+    }
+  }
+
+  Future<http.Response> _performCachedGet(
+      Uri uri,
+      String token,
+      String key,
+      ) async {
+    final cachedBody = await _readCachedBody(key);
+
+    if (cachedBody != null) {
+      debugPrint('CACHE HIT: $uri');
+      return http.Response(cachedBody, 200);
+    }
+
+    debugPrint('CACHE MISS: $uri');
+
+    try {
+      final response = await http
+          .get(uri, headers: _headers(token))
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        await _saveCachedBody(key, response.body);
+      }
+
+      return response;
+    } catch (e) {
+      final staleBody = await _readCachedBody(
+        key,
+        allowStale: true,
+      );
+
+      if (staleBody != null) {
+        debugPrint('STALE CACHE USED: $uri');
+        return http.Response(staleBody, 200);
+      }
+
+      rethrow;
+    }
+  }
+
+
+
 
   // ==============================================================
   // PAGINATED NEARBY RESTAURANTS API
@@ -145,14 +275,7 @@ class MilestoneApp6RestaurantApi {
     late final http.Response response;
 
     try {
-      response = await http
-          .get(
-        uri,
-        headers: _headers(token),
-      )
-          .timeout(
-        const Duration(seconds: 30),
-      );
+      response = await _getWithCache(uri, token);
     } on TimeoutException {
       throw Exception(
         'Nearby restaurant API request timed out.',

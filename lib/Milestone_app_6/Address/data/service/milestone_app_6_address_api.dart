@@ -3,6 +3,9 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/models/milest
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../../../core/constants/api_constants.dart';
+import 'dart:async';
+import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MilestoneApp6AddressApi {
   // ============================================================
@@ -15,6 +18,84 @@ class MilestoneApp6AddressApi {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
+  }
+  static final Map<String, Future<http.Response>>
+  _addressRequests = {};
+
+  String _addressCacheKey(String token, Uri uri) {
+    final tokenHash = sha256.convert(
+      utf8.encode(token),
+    ).toString();
+
+    final requestHash = sha256.convert(
+      utf8.encode(uri.toString()),
+    ).toString();
+
+    return 'address_list_cache_${tokenHash}_$requestHash';
+  }
+
+  Future<http.Response> _getAddressesWithCache(
+      Uri uri,
+      String token,
+      ) async {
+    final key = _addressCacheKey(token, uri);
+
+    final pending = _addressRequests[key];
+    if (pending != null) {
+      debugPrint('ADDRESS REQUEST ALREADY IN PROGRESS: $uri');
+      return pending;
+    }
+
+    final request = _performAddressGet(uri, token, key);
+    _addressRequests[key] = request;
+
+    try {
+      return await request;
+    } finally {
+      if (identical(_addressRequests[key], request)) {
+        _addressRequests.remove(key);
+      }
+    }
+  }
+
+  Future<http.Response> _performAddressGet(
+      Uri uri,
+      String token,
+      String key,
+      ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(key);
+
+    if (saved != null) {
+      try {
+        final cached = jsonDecode(saved) as Map<String, dynamic>;
+        final body = cached['body'] as String;
+
+        debugPrint('ADDRESS CACHE HIT: $uri');
+        return http.Response(body, 200);
+      } catch (_) {
+        await prefs.remove(key);
+      }
+    }
+
+    debugPrint('ADDRESS CACHE MISS: $uri');
+
+    final response = await http.get(
+      uri,
+      headers: _headers(token),
+    );
+
+    if (response.statusCode == 200) {
+      await prefs.setString(
+        key,
+        jsonEncode({
+          'savedAt': DateTime.now().millisecondsSinceEpoch,
+          'body': response.body,
+        }),
+      );
+    }
+
+    return response;
   }
 
   // ============================================================
@@ -49,9 +130,9 @@ class MilestoneApp6AddressApi {
     debugPrint('URL: $uri');
     debugPrint('==========================================');
 
-    final response = await http.get(
+    final response = await _getAddressesWithCache(
       uri,
-      headers: _headers(token),
+      token,
     );
 
     debugPrint('');
@@ -93,6 +174,24 @@ class MilestoneApp6AddressApi {
       ),
     )
         .toList();
+  }
+
+  Future<void> _clearAddressListCache(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final tokenHash = sha256.convert(
+      utf8.encode(token),
+    ).toString();
+
+    final prefix = 'address_list_cache_${tokenHash}_';
+
+    final keys = prefs.getKeys()
+        .where((key) => key.startsWith(prefix))
+        .toList();
+
+    for (final key in keys) {
+      await prefs.remove(key);
+    }
   }
 
   // ============================================================
@@ -225,6 +324,8 @@ class MilestoneApp6AddressApi {
       );
     }
 
+    await _clearAddressListCache(token);
+
     return _parseAddressResponse(
       response.body,
     );
@@ -340,8 +441,10 @@ class MilestoneApp6AddressApi {
     debugPrint(response.body);
     debugPrint('==========================================');
 
+
     if (response.statusCode == 200) {
       if (response.body.trim().isEmpty) {
+        await _clearAddressListCache(token);
         return true;
       }
 
@@ -349,11 +452,13 @@ class MilestoneApp6AddressApi {
 
       if (decoded is Map &&
           decoded['success'] == true) {
+        await _clearAddressListCache(token);
         return true;
       }
 
       if (decoded is Map &&
           decoded['message'] != null) {
+        await _clearAddressListCache(token);
         return true;
       }
 
@@ -366,6 +471,7 @@ class MilestoneApp6AddressApi {
     }
 
     if (response.statusCode == 204) {
+      await _clearAddressListCache(token);
       return true;
     }
 
