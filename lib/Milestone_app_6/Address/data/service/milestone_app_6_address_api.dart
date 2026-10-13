@@ -21,6 +21,7 @@ class MilestoneApp6AddressApi {
   }
   static final Map<String, Future<http.Response>>
   _addressRequests = {};
+  static final Map<String, http.Response> _addressResponseCache = {};
 
   String _addressCacheKey(String token, Uri uri) {
     final tokenHash = sha256.convert(
@@ -40,24 +41,29 @@ class MilestoneApp6AddressApi {
       ) async {
     final key = _addressCacheKey(token, uri);
 
-    final pending = _addressRequests[key];
-    if (pending != null) {
-      debugPrint('ADDRESS REQUEST ALREADY IN PROGRESS: $uri');
-      return pending;
+    // Return the successful response without another API request.
+    final cachedResponse = _addressResponseCache[key];
+
+    if (cachedResponse != null) {
+      debugPrint('ADDRESS MEMORY CACHE HIT: $uri');
+      return cachedResponse;
     }
 
-    final request = _performAddressGet(uri, token, key);
-    _addressRequests[key] = request;
+    // Reuse an existing request if one is already running.
+    return _addressRequests.putIfAbsent(key, () async {
+      final response = await _performAddressGet(
+        uri,
+        token,
+        key,
+      );
 
-    try {
-      return await request;
-    } finally {
-      if (identical(_addressRequests[key], request)) {
-        _addressRequests.remove(key);
+      if (response.statusCode == 200) {
+        _addressResponseCache[key] = response;
       }
-    }
-  }
 
+      return response;
+    });
+  }
   Future<http.Response> _performAddressGet(
       Uri uri,
       String token,
@@ -179,9 +185,9 @@ class MilestoneApp6AddressApi {
   Future<void> _clearAddressListCache(String token) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final tokenHash = sha256.convert(
-      utf8.encode(token),
-    ).toString();
+    final tokenHash = sha256
+        .convert(utf8.encode(token))
+        .toString();
 
     final prefix = 'address_list_cache_${tokenHash}_';
 
@@ -191,7 +197,10 @@ class MilestoneApp6AddressApi {
 
     for (final key in keys) {
       await prefs.remove(key);
+      _addressResponseCache.remove(key);
     }
+
+    debugPrint('ADDRESS CACHE CLEARED');
   }
 
   // ============================================================

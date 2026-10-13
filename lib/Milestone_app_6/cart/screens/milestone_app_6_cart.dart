@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/methods/cart_screen_logic.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -49,23 +50,42 @@ class _MilestoneApp6CartScreenState
       state: state,
     );
 
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
+      // 1. Display the saved address immediately.
+      final int? savedAddressId = AddressStorage.selectedAddressId;
+      final cachedAddress = state.selectedAddress;
+
+      if (cachedAddress != null &&
+          cachedAddress.id == savedAddressId) {
+        _logic.selectedApiAddress = cachedAddress;
+        _logic.isLoadingAddress = false;
+
+        debugPrint(
+          'CART: Immediately showing saved address '
+              '${cachedAddress.id}',
+        );
+
+        setState(() {});
+      } else {
+        // 2. Load the address only if no matching address exists.
+        await _logic.loadAddressFromApi(
+          onChanged: () {
+            if (mounted) setState(() {});
+          },
+        );
+      }
+
+      if (!mounted) return;
+
+      // 3. Load cart items after address initialization.
       await context.read<CartController>().fetchCart();
 
-      await _logic.loadAddressFromApi(
-        onChanged: () {
-          if (mounted) {
-            setState(() {});
-          }
-        },
-      );
-
-      if (mounted) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     });
+
   }
 
   @override
@@ -183,6 +203,7 @@ class _MilestoneApp6CartScreenState
                     state: state,
                     onAddressChanged: () async {
                       await _logic.loadAddressFromApi(
+                        forceRefresh: true,
                         onChanged: () {
                           if (mounted) {
                             setState(() {});
@@ -190,6 +211,7 @@ class _MilestoneApp6CartScreenState
                         },
                       );
                     },
+
                   ),
 
                   const SizedBox(height: 20),

@@ -29,6 +29,8 @@ class MilestoneApp6CartScreenLogic {
   List<MilestoneApp6Address> addresses = [];
 
   MilestoneApp6Address? selectedApiAddress;
+  static MilestoneApp6Address? _cachedSelectedAddress;
+  static List<MilestoneApp6Address> _cachedAddresses = [];
 
   bool isLoadingAddress = true;
 
@@ -73,7 +75,27 @@ class MilestoneApp6CartScreenLogic {
 
   Future<void> loadAddressFromApi({
     VoidCallback? onChanged,
+    bool forceRefresh = false,
   }) async {
+    final int? savedAddressId = AddressStorage.selectedAddressId;
+
+// Reuse cached addresses when Cart is reopened.
+    if (!forceRefresh &&
+        savedAddressId != null &&
+        _cachedSelectedAddress != null &&
+        _cachedSelectedAddress!.id == savedAddressId) {
+      selectedApiAddress = _cachedSelectedAddress;
+      addresses = List<MilestoneApp6Address>.from(_cachedAddresses);
+      isLoadingAddress = false;
+
+      debugPrint(
+        'CART ADDRESS: Loaded from cache: ${selectedApiAddress!.id}',
+      );
+
+      onChanged?.call();
+      return;
+    }
+
     isLoadingAddress = true;
     onChanged?.call();
 
@@ -81,16 +103,14 @@ class MilestoneApp6CartScreenLogic {
       final token = AuthStorage.token;
 
       if (token == null || token.isEmpty) {
-        isLoadingAddress = false;
         addresses = [];
         selectedApiAddress = null;
-
+        isLoadingAddress = false;
         onChanged?.call();
 
         if (context.mounted) {
           context.go('/login');
         }
-
         return;
       }
 
@@ -99,14 +119,10 @@ class MilestoneApp6CartScreenLogic {
         token: token,
       );
 
-      final selectedAddressId =
+      final int? selectedAddressId =
           AddressStorage.selectedAddressId;
 
       MilestoneApp6Address? selectedAddress;
-
-      // ----------------------------------------------------------
-      // FIND PREVIOUSLY SELECTED ADDRESS
-      // ----------------------------------------------------------
 
       if (selectedAddressId != null &&
           selectedAddressId > 0) {
@@ -118,10 +134,6 @@ class MilestoneApp6CartScreenLogic {
         }
       }
 
-      // ----------------------------------------------------------
-      // SELECT FIRST ADDRESS IF NONE SELECTED
-      // ----------------------------------------------------------
-
       if (selectedAddress == null &&
           fetchedAddresses.isNotEmpty) {
         selectedAddress = fetchedAddresses.first;
@@ -131,31 +143,32 @@ class MilestoneApp6CartScreenLogic {
         );
       }
 
-      // ----------------------------------------------------------
-      // UPDATE GLOBAL STATE
-      // ----------------------------------------------------------
+      addresses = fetchedAddresses;
+      selectedApiAddress = selectedAddress;
+
+// Save the successful API result in Cart's memory cache.
+      _cachedAddresses = List<MilestoneApp6Address>.from(fetchedAddresses);
+      _cachedSelectedAddress = selectedAddress;
 
       if (selectedAddress != null) {
         state.setAddress(selectedAddress);
       }
 
-      addresses = fetchedAddresses;
-      selectedApiAddress = selectedAddress;
       isLoadingAddress = false;
-
       onChanged?.call();
-    } catch (e) {
+
       debugPrint(
-        'CART ADDRESS API ERROR: $e',
+        'CART ADDRESS: Loaded address '
+            '${selectedAddress?.id}',
       );
+    } catch (e) {
+      debugPrint('CART ADDRESS API ERROR: $e');
 
-      addresses = [];
-      selectedApiAddress = null;
       isLoadingAddress = false;
-
       onChanged?.call();
     }
   }
+
 
   // ============================================================
   // UPDATE CART QUANTITY
