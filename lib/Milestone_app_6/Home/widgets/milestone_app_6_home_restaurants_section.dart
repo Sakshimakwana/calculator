@@ -108,7 +108,7 @@ class MilestoneApp6HomeRestaurantsSection
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 16,
-            childAspectRatio: 0.68,
+            childAspectRatio: 0.76,
           ),
           itemCount: restaurants.length,
           itemBuilder: (context, index) {
@@ -152,23 +152,6 @@ class MilestoneApp6HomeRestaurantsSection
 
         _buildPaginationFooter(context),
       ],
-    );
-  }
-
-  // ============================================================
-  // RESTAURANT CARD
-  // ============================================================
-
-  Widget _buildRestaurantCard(
-      BuildContext context,
-      MilestoneApp6Restaurant restaurant,
-      ) {
-    return MilestoneApp6RestaurantCard(
-      name: restaurant.name,
-      image: restaurant.image,
-      rating: restaurant.rating.toString(),
-      time: '',
-      isOpen: restaurant.isOpen,
     );
   }
 
