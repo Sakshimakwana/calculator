@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 
-import '../state/milestone_app_6_state.dart';
-import '../theme/milestone_app_6_colors.dart';
-import '../Home/widgets/milestone_app_6_bottom_nav.dart';
+import '../../state/milestone_app_6_state.dart';
+import '../../theme/milestone_app_6_colors.dart';
+import 'milestone_app_6_bottom_nav.dart';
 
 class MilestoneApp6Shell extends StatefulWidget {
   final MilestoneApp6State state;
@@ -112,86 +112,69 @@ class _MilestoneApp6ShellState
   Widget build(BuildContext context) {
     final tablet =
         MediaQuery.sizeOf(context).width >= 700;
-
     return Scaffold(
-      // ==========================================================
-      // BODY
-      // ==========================================================
-
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          return _handleScrollNotification(
-            context,
-            notification,
-          );
-        },
-
-        child: Row(
-          children: [
-            // ======================================================
-            // TABLET SIDEBAR
-            // ======================================================
-
-            if (tablet)
-              _sideBar(context),
-
-            // ======================================================
-            // MAIN CONTENT
-            // ======================================================
-
-            Expanded(
-              child: widget.child,
-            ),
-          ],
-        ),
-      ),
-
-      // ==========================================================
-      // MOBILE BOTTOM NAVIGATION
-      // ==========================================================
-
-      bottomNavigationBar: tablet
-          ? null
-          : ValueListenableBuilder<bool>(
-        valueListenable:
-        _bottomNavVisible,
-        builder: (
-            context,
-            visible,
-            child,
-            ) {
-          return AnimatedContainer(
-            duration:
-            const Duration(
-              milliseconds: 280,
-            ),
-            curve:
-            Curves.easeInOut,
-
-            // =================================================
-            // FULL BAR HEIGHT
-            // =================================================
-
-            height: visible ? 80 : 0,
-
-            child: ClipRect(
-              child: Align(
-                alignment:
-                Alignment.topCenter,
-
-                heightFactor:
-                visible ? 1.0 : 0.0,
-
-                child:
-                MilestoneApp6BottomNav(
-                  state: widget.state,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+    body: Stack(
+    children: [
+    // HOME CONTENT — scrolls behind the floating bar.
+    Positioned.fill(
+    child: NotificationListener<ScrollNotification>(
+    onNotification: (notification) {
+    return _handleScrollNotification(
+    context,
+    notification,
     );
+    },
+    child: Row(
+    children: [
+    if (tablet) _sideBar(context),
+    Expanded(
+    child: widget.child,
+    ),
+    ],
+    ),
+    ),
+    ),
+
+    // FLOATING MOBILE NAVIGATION — overlays the content.
+    if (!tablet)
+    Positioned(
+    left: 20,
+    right: 20,
+    bottom: 0,
+    child: ValueListenableBuilder<bool>(
+    valueListenable: _bottomNavVisible,
+    builder: (context, visible, child) {
+    return AnimatedSlide(
+    duration: const Duration(milliseconds: 250),
+    curve: Curves.easeOutCubic,
+    offset: visible
+    ? Offset.zero
+        : const Offset(0, 1.5),
+    child: AnimatedOpacity(
+    duration: const Duration(milliseconds: 200),
+    opacity: visible ? 1 : 0,
+    child: IgnorePointer(
+    ignoring: !visible,
+    child: Padding(
+    padding: EdgeInsets.only(
+    bottom: MediaQuery.of(context)
+        .padding
+        .bottom + 12,
+    ),
+    child: MilestoneApp6BottomNav(
+    state: widget.state,
+    ),
+    ),
+    ),
+    ),
+    );
+    },
+    ),
+    ),
+    ],
+    ),
+    );
+
   }
 
   // ==============================================================

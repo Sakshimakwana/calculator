@@ -24,19 +24,15 @@ class MilestoneApp6HomeStickyHeaderDelegate
       double shrinkOffset,
       bool overlapsContent,
       ) {
-    return Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      elevation: overlapsContent ? 3 : 0,
-      shadowColor: Colors.black.withOpacity(.12),
+    return SizedBox.expand(
       child: child,
     );
   }
 
   @override
   bool shouldRebuild(
-      covariant MilestoneApp6HomeStickyHeaderDelegate
-      oldDelegate,
-      ) {
+    covariant MilestoneApp6HomeStickyHeaderDelegate oldDelegate,
+  ) {
     return minHeight != oldDelegate.minHeight ||
         maxHeight != oldDelegate.maxHeight ||
         child != oldDelegate.child;

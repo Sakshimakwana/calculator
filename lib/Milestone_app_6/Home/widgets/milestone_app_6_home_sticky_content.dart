@@ -4,30 +4,18 @@ import 'package:flutter/material.dart';
 import 'milestone_app_6_home_category_row.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 
-class MilestoneApp6HomeStickyContent
-    extends StatelessWidget {
+class MilestoneApp6HomeStickyContent extends StatelessWidget {
   final TextEditingController searchController;
-
   final int searchHintIndex;
-
   final List<String> searchHints;
-
   final bool isListening;
-
   final VoidCallback onMicTap;
-
   final VoidCallback onClear;
-
   final bool isLoadingCategories;
-
   final List<String> categories;
-
   final String selectedCategory;
 
-  final MilestoneApp6Menu? Function(
-      String categoryName,
-      ) findCategoryMenu;
-
+  final MilestoneApp6Menu? Function(String categoryName) findCategoryMenu;
   final ValueChanged<String?> onCategorySelected;
 
   const MilestoneApp6HomeStickyContent({
@@ -47,19 +35,20 @@ class MilestoneApp6HomeStickyContent
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: SafeArea(
-        top: true,
-        bottom: false,
-        child: Column(
-          children: [
-            // ======================================================
-            // SEARCH BAR
-            // ======================================================
+    final theme = Theme.of(context);
 
-            SizedBox(
-              height: 50,
+
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+            child: SizedBox(
+              height: 44,
               child: HomeSearchBar(
                 controller: searchController,
                 searchHintIndex: searchHintIndex,
@@ -69,29 +58,40 @@ class MilestoneApp6HomeStickyContent
                 onClear: onClear,
               ),
             ),
+          ),
 
-          SizedBox(height: 2),
-
-            SizedBox(
-              height: 90,
-              child: MilestoneApp6HomeCategoryRow(
-                isLoading: isLoadingCategories,
-                categories: categories,
-                selectedCategory: selectedCategory,
-                findCategoryMenu: findCategoryMenu,
-                onCategorySelected: onCategorySelected,
+          // Heading
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 4),
+            child: Text(
+              'What are you craving?',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
               ),
             ),
+          ),
 
-            Container(
-              height: 1,
-              color: Theme.of(context)
-                  .dividerColor
-                  .withOpacity(.25),
+          // Existing categories
+          SizedBox(
+            height: 82,
+            child: MilestoneApp6HomeCategoryRow(
+              isLoading: isLoadingCategories,
+              categories: categories,
+              selectedCategory: selectedCategory,
+              findCategoryMenu: findCategoryMenu,
+              onCategorySelected: onCategorySelected,
             ),
-          ],
-        ),
+          ),
+
+          Container(
+            height: 1,
+            color: theme.dividerColor.withOpacity(0.18),
+          ),
+        ],
       ),
     );
+
   }
 }

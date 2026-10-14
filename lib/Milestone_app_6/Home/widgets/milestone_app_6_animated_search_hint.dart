@@ -39,16 +39,13 @@ class _HomeSearchBarState extends State<HomeSearchBar>
 
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 500),
     );
 
-    _focusNode = FocusNode();
-
-    _focusNode.addListener(() {
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    _focusNode = FocusNode()
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
   }
 
   @override
@@ -61,7 +58,6 @@ class _HomeSearchBarState extends State<HomeSearchBar>
         !widget.isListening) {
       _oldIndex = _newIndex;
       _newIndex = widget.searchHintIndex;
-
       _animationController.forward(from: 0);
     }
   }
@@ -75,13 +71,10 @@ class _HomeSearchBarState extends State<HomeSearchBar>
 
   String _getHintText(int index) {
     if (widget.searchHints.isEmpty) {
-      return 'Search for "Food"';
+      return 'Search for dishes or restaurants';
     }
 
-    final String category =
-    widget.searchHints[index % widget.searchHints.length];
-
-    return 'Search for "$category"';
+    return 'Search for "${widget.searchHints[index % widget.searchHints.length]}"';
   }
 
   void _openSearch() {
@@ -90,179 +83,152 @@ class _HomeSearchBarState extends State<HomeSearchBar>
 
   @override
   Widget build(BuildContext context) {
-    final bool hasText = widget.controller.text.trim().isNotEmpty;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hasText = widget.controller.text.trim().isNotEmpty;
+    final showTextField = hasText || _focusNode.hasFocus;
 
-    final bool showTextField =
-        hasText || _focusNode.hasFocus;
+    final background = isDark ? const Color(0xFF2D2924) : const Color(0xFFF2E6D8);
+
+    final foreground = isDark ? Colors.white70 : const Color(0xFF786858);
 
     return Container(
-      height: 54,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      height: 44,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1E8),
-        borderRadius: BorderRadius.circular(16),
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.dividerColor.withOpacity(0.10),
+        ),
       ),
       child: Row(
         children: [
-          const SizedBox(width: 15),
-
-          // ============================================================
-          // SEARCH ICON
-          // ============================================================
-
-          const Icon(
+          const SizedBox(width: 13),
+          Icon(
             Icons.search_rounded,
-            size: 23,
-            color: Color(0xFFE87961),
+            size: 21,
+            color: foreground,
           ),
-
-          const SizedBox(width: 10),
-
-          // ============================================================
-          // SEARCH CONTENT
-          // ============================================================
-
+          const SizedBox(width: 9),
           Expanded(
             child: SizedBox(
               height: 24,
               child: widget.isListening
-                  ? const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Listening...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Color(0xFF8E6D63),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              )
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Listening...',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: foreground,
+                        ),
+                      ),
+                    )
                   : showTextField
-                  ? TextField(
-                controller: widget.controller,
-                focusNode: _focusNode,
-                autofocus: false,
-                textInputAction: TextInputAction.search,
-                keyboardType: TextInputType.text,
-                maxLines: 1,
-                cursorColor: const Color(0xFFE87961),
-                decoration: const InputDecoration(
-                  filled: false,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                  isDense: true,
-                ),
-                style: const TextStyle(
-                  color: Color(0xFF3D2924),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              )
-                  : GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _openSearch,
-                child: ClipRect(
-                  child: AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      final double value = CurvedAnimation(
-                        parent: _animationController,
-                        curve: Curves.easeInOutCubic,
-                      ).value;
+                      ? TextField(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          textInputAction: TextInputAction.search,
+                          maxLines: 1,
+                          cursorColor: theme.colorScheme.primary,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Search for dishes or restaurants',
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                          ),
+                        )
+                      : GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _openSearch,
+                          child: ClipRect(
+                            child: AnimatedBuilder(
+                              animation: _animationController,
+                              builder: (context, child) {
+                                final value = Curves.easeInOutCubic.transform(
+                                  _animationController.value,
+                                );
 
-                      return Stack(
-                        clipBehavior: Clip.hardEdge,
-                        alignment: Alignment.centerLeft,
-                        children: [
-                          // OLD HINT: CENTER → TOP
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              -24 * value,
-                            ),
-                            child: Text(
-                              _getHintText(_oldIndex),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF8E6D63),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                                return Stack(
+                                  alignment: Alignment.centerLeft,
+                                  children: [
+                                    Transform.translate(
+                                      offset: Offset(0, -20 * value),
+                                      child: _hint(
+                                        _getHintText(_oldIndex),
+                                        foreground,
+                                      ),
+                                    ),
+                                    Transform.translate(
+                                      offset: Offset(
+                                        0,
+                                        20 * (1 - value),
+                                      ),
+                                      child: _hint(
+                                        _getHintText(_newIndex),
+                                        foreground,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
-
-                          // NEW HINT: BOTTOM → CENTER
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              24 * (1 - value),
-                            ),
-                            child: Text(
-                              _getHintText(_newIndex),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF8E6D63),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
+                        ),
             ),
           ),
-
-          // ============================================================
-          // CLEAR BUTTON
-          // ============================================================
-
           if (hasText)
             IconButton(
               onPressed: widget.onClear,
-              splashRadius: 20,
               tooltip: 'Clear search',
-              icon: const Icon(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(
+                minWidth: 34,
+                minHeight: 40,
+              ),
+              icon: Icon(
                 Icons.close_rounded,
-                size: 20,
-                color: Color(0xFF8E6D63),
+                size: 18,
+                color: foreground,
               ),
             ),
-
-          // ============================================================
-          // MICROPHONE
-          // ============================================================
-
           IconButton(
             onPressed: widget.onMicTap,
-            splashRadius: 22,
             tooltip: 'Voice search',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(
+              minWidth: 42,
+              minHeight: 40,
+            ),
             icon: Icon(
-              widget.isListening
-                  ? Icons.mic_rounded
-                  : Icons.mic_none_rounded,
-              size: 22,
-              color: widget.isListening
-                  ? const Color(0xFFE85D5D)
-                  : const Color(0xFF8E6D63),
+              widget.isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+              size: 21,
+              color: widget.isListening ? Colors.redAccent : foreground,
             ),
           ),
-
           const SizedBox(width: 3),
         ],
+      ),
+    );
+  }
+
+  Widget _hint(String text, Color color) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: color,
       ),
     );
   }

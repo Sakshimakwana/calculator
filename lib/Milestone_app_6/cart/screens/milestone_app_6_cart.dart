@@ -2,7 +2,6 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/methods/cart_screen_logic.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_controller/cart_controller.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/widgets/cart_app_bar.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/widgets/cart_bottom_checkout_bar.dart';
@@ -79,13 +78,9 @@ class _MilestoneApp6CartScreenState
       }
 
       if (!mounted) return;
-
-      // 3. Load cart items after address initialization.
       await context.read<CartController>().fetchCart();
-
       if (mounted) setState(() {});
     });
-
   }
 
   @override

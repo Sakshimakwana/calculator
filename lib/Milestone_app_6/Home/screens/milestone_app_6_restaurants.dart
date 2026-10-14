@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../Address/data/address_storage/address_storage.dart';
@@ -6,7 +7,7 @@ import '../data/service/milestone_app_6_restaurant_api.dart';
 import '../data/milestone_app_6_restaurants_data.dart';
 import '../../state/milestone_app_6_state.dart';
 import '../widgets/RestaurantShimmerCard.dart';
-import '../widgets/milestone_app_6_restaurant_list_card.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_restaurant_card.dart';
 
 class MilestoneApp6RestaurantsScreen extends StatefulWidget {
   final MilestoneApp6State state;
@@ -28,14 +29,14 @@ class _MilestoneApp6RestaurantsScreenState
 // ================================================================
 
   final MilestoneApp6RestaurantApi _restaurantApi =
-      MilestoneApp6RestaurantApi();
+  MilestoneApp6RestaurantApi();
 
 // ================================================================
 // RESTAURANTS
 // ================================================================
 
   final List<MilestoneApp6Restaurant> _restaurants =
-      <MilestoneApp6Restaurant>[];
+  <MilestoneApp6Restaurant>[];
 
 // ================================================================
 // LOADING
@@ -210,9 +211,9 @@ class _MilestoneApp6RestaurantsScreenState
       final List<MilestoneApp6Restaurant> apiRestaurants = response.data
           .map(
             (json) => MilestoneApp6Restaurant.fromJson(
-              json,
-            ),
-          )
+          json,
+        ),
+      )
           .toList();
 
       if (!mounted) {
@@ -398,9 +399,9 @@ class _MilestoneApp6RestaurantsScreenState
       final List<MilestoneApp6Restaurant> newRestaurants = response.data
           .map(
             (json) => MilestoneApp6Restaurant.fromJson(
-              json,
-            ),
-          )
+          json,
+        ),
+      )
           .toList();
 
       if (!mounted) {
@@ -480,9 +481,9 @@ class _MilestoneApp6RestaurantsScreenState
 // ================================================================
 
   void _openRestaurant(
-    BuildContext context,
-    MilestoneApp6Restaurant restaurant,
-  ) {
+      BuildContext context,
+      MilestoneApp6Restaurant restaurant,
+      ) {
 // IMPORTANT:
 // Pass the actual API restaurant object.
 //
@@ -532,10 +533,10 @@ class _MilestoneApp6RestaurantsScreenState
 // ================================================================
 
   Widget _buildBody(
-    BuildContext context,
-    ThemeData theme,
-    bool isTablet,
-  ) {
+      BuildContext context,
+      ThemeData theme,
+      bool isTablet,
+      ) {
 // --------------------------------------------------------------
 // INITIAL LOADING
 // --------------------------------------------------------------
@@ -644,223 +645,44 @@ class _MilestoneApp6RestaurantsScreenState
       onRefresh: _refreshRestaurants,
       child: GridView.builder(
         controller: _scrollController,
-
         physics: const AlwaysScrollableScrollPhysics(),
-
-        padding: EdgeInsets.fromLTRB(
-          isTablet ? 24 : 16,
-          16,
-          isTablet ? 24 : 16,
-          24,
-        ),
-
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: isTablet ? 3 : 1,
-          crossAxisSpacing: 16,
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
           mainAxisSpacing: 16,
-          mainAxisExtent: isTablet ? 135 : 115,
+          childAspectRatio: 0.76,
         ),
-
-// ------------------------------------------------------------
-// ADD ONE EXTRA ITEM ONLY DURING PAGINATION
-// ------------------------------------------------------------
-
         itemCount: _restaurants.length + (_isLoadingMoreRestaurants ? 1 : 0),
-
         itemBuilder: (context, index) {
-// ----------------------------------------------------------
-// PAGINATION SHIMMER
-// ----------------------------------------------------------
-
           if (index >= _restaurants.length) {
             return const MilestoneApp6RestaurantShimmer();
           }
 
-// ----------------------------------------------------------
-// RESTAURANT
-// ----------------------------------------------------------
-
           final restaurant = _restaurants[index];
 
-// ----------------------------------------------------------
-// RESTAURANT CARD
-// ----------------------------------------------------------
+          final categories = restaurant.menus
+              .where((menu) => menu.menuItems.isNotEmpty)
+              .map((menu) => menu.name.trim())
+              .where((name) => name.isNotEmpty)
+              .toSet()
+              .take(2)
+              .join(' • ');
 
-          return _buildRestaurantCard(
-            context,
-            theme,
-            restaurant,
+          return MilestoneApp6RestaurantCard(
+            name: restaurant.name,
+            image: restaurant.image,
+            rating: restaurant.rating.toString(),
+            time: '',
+            isOpen: restaurant.isOpen,
+            distance: restaurant.distance,
+            address: restaurant.address,
+            categories: categories,
+            onTap: () => _openRestaurant(context, restaurant),
           );
         },
       ),
     );
   }
 
-// ================================================================
-// RESTAURANT CARD
-// ================================================================
-
-  Widget _buildRestaurantCard(
-    BuildContext context,
-    ThemeData theme,
-    MilestoneApp6Restaurant restaurant,
-  ) {
-    return Stack(
-      children: [
-// ------------------------------------------------------------
-// CARD
-// ------------------------------------------------------------
-
-        Positioned.fill(
-          child: MilestoneApp6RestaurantListCard(
-            restaurant: restaurant,
-            onTap: () {
-              _openRestaurant(
-                context,
-                restaurant,
-              );
-            },
-          ),
-        ),
-
-// ------------------------------------------------------------
-// FAVORITE
-// ------------------------------------------------------------
-
-        Positioned(
-          top: 8,
-          right: 8,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                widget.state.toggleRestaurantSaved(
-                  restaurant.name,
-                );
-              },
-              borderRadius: BorderRadius.circular(30),
-              child: AnimatedBuilder(
-                animation: widget.state,
-                builder: (context, child) {
-                  final isFavorite = widget.state.isRestaurantSaved(
-                    restaurant.name,
-                  );
-
-                  return AnimatedContainer(
-                    duration: const Duration(
-                      milliseconds: 180,
-                    ),
-                    curve: Curves.easeOut,
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: theme.brightness == Brightness.dark
-                          ? const Color(
-                              0xFF303030,
-                            )
-                          : Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: theme.brightness == Brightness.dark
-                            ? Colors.white.withOpacity(
-                                0.08,
-                              )
-                            : const Color(
-                                0xFFE5E5E5,
-                              ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(
-                            0.08,
-                          ),
-                          blurRadius: 6,
-                          offset: const Offset(
-                            0,
-                            2,
-                          ),
-                        ),
-                      ],
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(
-                        milliseconds: 180,
-                      ),
-                      transitionBuilder: (
-                        child,
-                        animation,
-                      ) {
-                        return ScaleTransition(
-                          scale: animation,
-                          child: child,
-                        );
-                      },
-                      child: Icon(
-                        isFavorite
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        key: ValueKey(
-                          isFavorite,
-                        ),
-                        size: 19,
-                        color: isFavorite
-                            ? Colors.red
-                            : theme.iconTheme.color?.withOpacity(
-                                0.65,
-                              ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-
-// ------------------------------------------------------------
-// ARROW
-// ------------------------------------------------------------
-
-        Positioned(
-          right: 10,
-          bottom: 10,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                _openRestaurant(
-                  context,
-                  restaurant,
-                );
-              },
-              borderRadius: BorderRadius.circular(
-                30,
-              ),
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: theme.brightness == Brightness.dark
-                      ? const Color(
-                          0xFF303030,
-                        )
-                      : const Color(
-                          0xFFF5F5F5,
-                        ),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  size: 21,
-                  color: theme.iconTheme.color?.withOpacity(
-                    0.65,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

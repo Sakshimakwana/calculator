@@ -106,60 +106,62 @@ class _MilestoneApp6HomeScreenState
         ),
 
 
+
         SliverPersistentHeader(
           pinned: true,
           delegate: MilestoneApp6HomeStickyHeaderDelegate(
-            minHeight: 175,
-            maxHeight: 175,
-            child: MilestoneApp6HomeStickyContent(
-              searchController: logic.searchController,
-              searchHintIndex: logic.searchHintIndex,
-              searchHints: logic.searchHints,
-              isListening: logic.isListening,
-              onMicTap: () {
-                FocusScope.of(context).unfocus();
+            minHeight: 180,
+            maxHeight: 180,
+            child: Material(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: MilestoneApp6HomeStickyContent(
+                searchController: logic.searchController,
+                searchHintIndex: logic.searchHintIndex,
+                searchHints: logic.searchHints,
+                isListening: logic.isListening,
+                onMicTap: () {
+                  FocusScope.of(context).unfocus();
 
-                logic.toggleListening(
-                  onUnavailable: () {
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Speech recognition is not available.',
+                  logic.toggleListening(
+                    onUnavailable: () {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Speech recognition is not available.',
+                            ),
+                            behavior: SnackBarBehavior.floating,
                           ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                  },
-                );
-              },
-              onClear: logic.clearSearch,
-              isLoadingCategories:
-              logic.isLoadingRestaurants &&
-                  logic.nearbyRestaurants.isEmpty,
-              categories: logic.apiCategories,
-              selectedCategory: logic.selectedCategory,
-              findCategoryMenu: logic.findCategoryMenu,
-              onCategorySelected: logic.selectCategory,
+                        );
+                    },
+                  );
+                },
+                onClear: logic.clearSearch,
+                isLoadingCategories: logic.isLoadingRestaurants &&
+                    logic.nearbyRestaurants.isEmpty,
+                categories: logic.apiCategories,
+                selectedCategory: logic.selectedCategory,
+                findCategoryMenu: logic.findCategoryMenu,
+                onCategorySelected: logic.selectCategory,
+              ),
             ),
           ),
         ),
 
 
-        const SliverToBoxAdapter(
-          child: MilestoneApp6HomeBanner(),
-        ),
+
+        // const SliverToBoxAdapter(
+        //   child: MilestoneApp6HomeBanner(),
+        // ),
 
 
         SliverToBoxAdapter(
           child:
           MilestoneApp6HomeSectionTitle(
-            title: 'All Restaurants',
+            title: 'Top Picks Near You',
             onSeeAll: () {
-              context.push(
-                '/restaurants',
-              );
+              context.push('/restaurants');
             },
           ),
         ),

@@ -21,7 +21,7 @@ import '../Home/screens/milestone_app_6_restaurants.dart';
 import '../Register/screens/milestone_app_6_signup_screen.dart';
 import '../Login/state/milestone_app_6_auth_store.dart';
 import '../state/milestone_app_6_state.dart';
-import '../common_widgets/milestone_app_6_shell.dart';
+import '../Home/widgets/milestone_app_6_bottom_nav_structure.dart';
 
 class MilestoneApp6Routes {
   final MilestoneApp6State state;
