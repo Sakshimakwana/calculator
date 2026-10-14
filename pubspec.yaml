@@ -142,3 +142,4 @@ flutter:
     - assets/fonts/NotoSans-Bold.ttf
     - assets/images/tomato_logo.png
     - assets/animations/Green Pulse Dot.json
+    - assets/animations/Empty_cart_animation.json
