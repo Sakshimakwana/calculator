@@ -99,32 +99,18 @@ class _MilestoneApp6CartScreenState
           ) {
         final items = controller.cartItems;
 
-        return Scaffold(
-          // ======================================================
-          // APP BAR
-          // ======================================================
 
+        return Scaffold(
           appBar: MilestoneApp6CartAppBar(
             hasItems: items.isNotEmpty,
             onClear: () async {
               await _logic.confirmClearCart(context);
-
-              if (mounted) {
-                setState(() {});
-              }
+              if (mounted) setState(() {});
             },
           ),
-
-          // ======================================================
-          // BODY
-          // ======================================================
-
-          body: _buildBody(
-            context,
-            controller,
-            items,
-          ),
+          body: _buildBody(context, controller, items),
         );
+
       },
     );
   }
@@ -138,20 +124,11 @@ class _MilestoneApp6CartScreenState
       CartController controller,
       List items,
       ) {
-    // ------------------------------------------------------------
-    // LOADING
-    // ------------------------------------------------------------
-
     if (controller.isLoading && items.isEmpty) {
       return const MilestoneApp6CartShimmer();
     }
 
-    // ------------------------------------------------------------
-    // ERROR
-    // ------------------------------------------------------------
-
-    if (controller.errorMessage != null &&
-        items.isEmpty) {
+    if (controller.errorMessage != null && items.isEmpty) {
       return MilestoneApp6CartErrorState(
         message: controller.errorMessage!,
         onRetry: () {
@@ -160,173 +137,117 @@ class _MilestoneApp6CartScreenState
       );
     }
 
-    // ------------------------------------------------------------
-    // EMPTY CART
-    // ------------------------------------------------------------
-
     if (items.isEmpty) {
       return const MilestoneApp6CartEmptyState();
     }
 
-    // ------------------------------------------------------------
-    // CART CONTENT
-    // ------------------------------------------------------------
-
     return SafeArea(
-      child: Column(
-        children: [
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: controller.fetchCart,
-              child: ListView(
-                physics:
-                const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  12,
-                  16,
-                  20,
-                ),
-                children: [
-                  // =================================================
-                  // DELIVERY ADDRESS
-                  // =================================================
-
-                  MilestoneApp6CartDeliveryAddress(
-                    address: _logic.selectedApiAddress,
-                    isLoading: _logic.isLoadingAddress,
-                    state: state,
-                    onAddressChanged: () async {
-                      await _logic.loadAddressFromApi(
-                        forceRefresh: true,
-                        onChanged: () {
-                          if (mounted) {
-                            setState(() {});
-                          }
-                        },
-                      );
-                    },
-
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // =================================================
-                  // ITEMS HEADER
-                  // =================================================
-
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Your Items',
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${items.length} item${items.length == 1 ? '' : 's'}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color:
-                          Theme.of(context).hintColor,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // =================================================
-                  // CART ITEMS
-                  // =================================================
-
-                  ...items.map(
-                        (item) {
-                      return MilestoneApp6CartItem(
-                        item: item,
-                        onUpdateQuantity: (
-                            context,
-                            item,
-                            quantity,
-                            ) async {
-                          await _logic.updateQuantity(
-                            item,
-                            quantity,
-                          );
-
-                          if (mounted) {
-                            setState(() {});
-                          }
-                        },
-                        onDelete: (
-                            context,
-                            item,
-                            ) async {
-                          await _logic
-                              .confirmDeleteCartItem(
-                            context,
-                            item,
-                          );
-
-                          if (mounted) {
-                            setState(() {});
-                          }
-                        },
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // =================================================
-                  // PROMO
-                  // =================================================
-
-                  MilestoneApp6CartPromoSection(
-                    state: state,
-                    promoController: _promoController,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // =================================================
-                  // BILL SUMMARY
-                  // =================================================
-
-                  MilestoneApp6CartSummary(
-                    itemTotal: _logic.itemTotal,
-                    deliveryFee: _logic.deliveryFee,
-                    discount: _logic.discount,
-                    grandTotal: _logic.grandTotal,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // =================================================
-                  // PAYMENT INFORMATION
-                  // =================================================
-
-                  const MilestoneApp6CartPaymentInfo(),
-                ],
-              ),
+      child: RefreshIndicator(
+        onRefresh: controller.fetchCart,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            32,
+          ),
+          children: [
+            MilestoneApp6CartDeliveryAddress(
+              address: _logic.selectedApiAddress,
+              isLoading: _logic.isLoadingAddress,
+              state: state,
+              onAddressChanged: () async {
+                await _logic.loadAddressFromApi(
+                  forceRefresh: true,
+                  onChanged: () {
+                    if (mounted) setState(() {});
+                  },
+                );
+              },
             ),
-          ),
 
-          // ========================================================
-          // CHECKOUT BAR
-          // ========================================================
+            const SizedBox(height: 20),
 
-          MilestoneApp6CartBottomCheckoutBar(
-            grandTotal: _logic.grandTotal,
-            onCheckout: () {
-              _logic.handleCheckout();
-            },
-          ),
-        ],
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Your Items',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${items.length} item${items.length == 1 ? '' : 's'}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            ...items.map((item) {
+              return MilestoneApp6CartItem(
+                item: item,
+                onUpdateQuantity: (
+                    context,
+                    item,
+                    quantity,
+                    ) async {
+                  await _logic.updateQuantity(item, quantity);
+                  if (mounted) setState(() {});
+                },
+                onDelete: (context, item) async {
+                  await _logic.confirmDeleteCartItem(
+                    context,
+                    item,
+                  );
+                  if (mounted) setState(() {});
+                },
+              );
+            }),
+
+            const SizedBox(height: 16),
+
+            MilestoneApp6CartPromoSection(
+              state: state,
+              promoController: _promoController,
+            ),
+
+            const SizedBox(height: 20),
+
+            MilestoneApp6CartSummary(
+              itemTotal: _logic.itemTotal,
+              deliveryFee: _logic.deliveryFee,
+              discount: _logic.discount,
+              grandTotal: _logic.grandTotal,
+            ),
+
+            const SizedBox(height: 20),
+
+            const MilestoneApp6CartPaymentInfo(),
+
+            const SizedBox(height: 20),
+
+            // Checkout button is now part of the scrollable content.
+            MilestoneApp6CartBottomCheckoutBar(
+              grandTotal: _logic.grandTotal,
+              onCheckout: () {
+                _logic.handleCheckout();
+              },
+            ),
+
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
+
 }

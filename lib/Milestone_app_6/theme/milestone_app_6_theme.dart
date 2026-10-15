@@ -5,8 +5,9 @@ import 'milestone_app_6_typography.dart';
 
 class MilestoneApp6Theme {
   static ThemeData get light {
+    // LIGHT THEME
     final scheme = ColorScheme.fromSeed(
-      seedColor: MilestoneApp6Colors.orange,
+      seedColor: MilestoneApp6Colors.red,
       brightness: Brightness.light,
     );
 
@@ -33,8 +34,8 @@ class MilestoneApp6Theme {
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: MilestoneApp6Colors.surface,
-        indicatorColor:
-        MilestoneApp6Colors.orange.withOpacity(.12),
+        // LIGHT NAVIGATION BAR
+        indicatorColor: MilestoneApp6Colors.red.withOpacity(.12),
         labelTextStyle: const WidgetStatePropertyAll(
           MilestoneApp6Typography.label,
         ),
@@ -43,8 +44,9 @@ class MilestoneApp6Theme {
   }
 
   static ThemeData get dark {
+    // DARK THEME
     final scheme = ColorScheme.fromSeed(
-      seedColor: MilestoneApp6Colors.orange,
+      seedColor: MilestoneApp6Colors.red,
       brightness: Brightness.dark,
     );
 
@@ -72,8 +74,8 @@ class MilestoneApp6Theme {
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: MilestoneApp6Colors.darkSurface,
-        indicatorColor:
-        MilestoneApp6Colors.orange.withOpacity(.18),
+        // DARK NAVIGATION BAR
+        indicatorColor: MilestoneApp6Colors.red.withOpacity(.18),
         labelTextStyle: const WidgetStatePropertyAll(
           MilestoneApp6Typography.label,
         ),

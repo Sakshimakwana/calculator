@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/common_widgets/milestone_app_6_button.dart';
 
 class MilestoneApp6CartBottomCheckoutBar extends StatelessWidget {
@@ -17,47 +17,49 @@ class MilestoneApp6CartBottomCheckoutBar extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        12,
-      ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(
-            color: theme.dividerColor.withOpacity(.25),
-          ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: theme.dividerColor.withOpacity(0.2),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total',
+                'Total Amount',
                 style: TextStyle(
+                  fontSize: 14,
                   color: theme.hintColor,
-                  fontSize: 11,
                 ),
               ),
-
-              const SizedBox(height: 2),
-
               Text(
                 '₹${grandTotal.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 19,
+                style: TextStyle(
+                  fontSize: 21,
                   fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 18),
-
-          Expanded(
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 54,
             child: MilestoneApp6Button(
               label: 'Proceed to Checkout',
               onPressed: onCheckout,

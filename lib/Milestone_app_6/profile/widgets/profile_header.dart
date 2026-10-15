@@ -4,63 +4,123 @@ import '../../Login/auth_storage/auth_storage.dart';
 import '../../theme/milestone_app_6_colors.dart';
 
 class MilestoneApp6ProfileHeader extends StatelessWidget {
-  const MilestoneApp6ProfileHeader({
-    super.key,
-  });
+  const MilestoneApp6ProfileHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const CircleAvatar(
-          radius: 44,
-          backgroundColor: Color(0xFFFFE1D7),
-          child: Icon(
-            Icons.person,
-            size: 54,
-            color: MilestoneApp6Colors.orange,
+    final name = AuthStorage.fullName.trim();
+    final email = AuthStorage.email.trim();
+    final phone = AuthStorage.phoneNumber.trim();
+
+    final mutedColor = Theme.of(context).hintColor;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 7, 16, 7),
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFFFE9E2),
+                ),
+                child: const Icon(
+                  Icons.person_rounded,
+                  size: 45,
+                  color: MilestoneApp6Colors.orange,
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: -2,
+                child: Container(
+                  width: 37,
+                  height: 37,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF60331F),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: Colors.white,
+                    size: 19,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(
-          height: 12,
-        ),
-        Text(
-          AuthStorage.fullName.isNotEmpty ? AuthStorage.fullName : 'User',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(
-          height: 3,
-        ),
-        Text(
-          AuthStorage.email.isNotEmpty
-              ? AuthStorage.email
-              : 'No email available',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Theme.of(context).hintColor,
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(
-          height: 4,
-        ),
-        if (AuthStorage.phoneNumber.isNotEmpty)
+          const SizedBox(height: 7),
           Text(
-            AuthStorage.phoneNumber,
+            name.isNotEmpty ? name : 'User',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).hintColor,
-              fontSize: 12,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
+              color: Color(0xFF171717),
             ),
           ),
-        const SizedBox(
-          height: 28,
-        ),
-      ],
+          if (email.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              email,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: mutedColor,
+              ),
+            ),
+          ],
+          if (phone.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              phone,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: mutedColor,
+              ),
+            ),
+          ],
+          // const SizedBox(height: 13),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(
+          //     horizontal: 16,
+          //     vertical: 9,
+          //   ),
+          //   // decoration: BoxDecoration(
+          //   //   color: const Color(0xFFFFF1E3),
+          //   //   borderRadius: BorderRadius.circular(30),
+          //   // ),
+          //   // child: const Row(
+          //   //   mainAxisSize: MainAxisSize.min,
+          //   //   children: [
+          //   //     Icon(
+          //   //       Icons.workspace_premium_rounded,
+          //   //       color: Color(0xFF60331F),
+          //   //       size: 19,
+          //   //     ),
+          //   //     SizedBox(width: 8),
+          //   //     Text(
+          //   //       'Food Lover',
+          //   //       style: TextStyle(
+          //   //         color: Color(0xFF60331F),
+          //   //         fontSize: 14,
+          //   //         fontWeight: FontWeight.w600,
+          //   //       ),
+          //   //     ),
+          //   //   ],
+          //   // ),
+          // ),
+        ],
+      ),
     );
   }
 }

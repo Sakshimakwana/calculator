@@ -6,6 +6,7 @@ class MilestoneApp6Colors {
   static const green = Color(0xFF0B3D2E);
   static const cream = Color(0xFFFFF8F2);
   static const surface = Color(0xFFFFFFFF);
+  static const red = Color(0xFFFF514B);
 
   static const ink = Color(0xFF171717);
   static const muted = Color(0xFF777777);

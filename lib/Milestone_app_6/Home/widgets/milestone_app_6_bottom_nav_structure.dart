@@ -17,18 +17,15 @@ class MilestoneApp6Shell extends StatefulWidget {
   });
 
   @override
-  State<MilestoneApp6Shell> createState() =>
-      _MilestoneApp6ShellState();
+  State<MilestoneApp6Shell> createState() => _MilestoneApp6ShellState();
 }
 
-class _MilestoneApp6ShellState
-    extends State<MilestoneApp6Shell> {
+class _MilestoneApp6ShellState extends State<MilestoneApp6Shell> {
   // ==============================================================
   // BOTTOM NAVIGATION VISIBILITY
   // ==============================================================
 
-  final ValueNotifier<bool> _bottomNavVisible =
-  ValueNotifier<bool>(true);
+  final ValueNotifier<bool> _bottomNavVisible = ValueNotifier<bool>(true);
 
   // ==============================================================
   // DISPOSE
@@ -45,11 +42,10 @@ class _MilestoneApp6ShellState
   // ==============================================================
 
   bool _handleScrollNotification(
-      BuildContext context,
-      ScrollNotification notification,
-      ) {
-    final location =
-        GoRouterState.of(context).uri.path;
+    BuildContext context,
+    ScrollNotification notification,
+  ) {
+    final location = GoRouterState.of(context).uri.path;
 
     // ============================================================
     // ONLY HOME
@@ -72,8 +68,7 @@ class _MilestoneApp6ShellState
       // SCROLL DOWN
       // ----------------------------------------------------------
 
-      if (notification.direction ==
-          ScrollDirection.reverse) {
+      if (notification.direction == ScrollDirection.reverse) {
         if (_bottomNavVisible.value) {
           _bottomNavVisible.value = false;
         }
@@ -83,8 +78,7 @@ class _MilestoneApp6ShellState
       // SCROLL UP
       // ----------------------------------------------------------
 
-      else if (notification.direction ==
-          ScrollDirection.forward) {
+      else if (notification.direction == ScrollDirection.forward) {
         if (!_bottomNavVisible.value) {
           _bottomNavVisible.value = true;
         }
@@ -110,71 +104,65 @@ class _MilestoneApp6ShellState
 
   @override
   Widget build(BuildContext context) {
-    final tablet =
-        MediaQuery.sizeOf(context).width >= 700;
+    final tablet = MediaQuery.sizeOf(context).width >= 700;
     return Scaffold(
-    body: Stack(
-    children: [
-    // HOME CONTENT — scrolls behind the floating bar.
-    Positioned.fill(
-    child: NotificationListener<ScrollNotification>(
-    onNotification: (notification) {
-    return _handleScrollNotification(
-    context,
-    notification,
-    );
-    },
-    child: Row(
-    children: [
-    if (tablet) _sideBar(context),
-    Expanded(
-    child: widget.child,
-    ),
-    ],
-    ),
-    ),
-    ),
+      body: Stack(
+        children: [
+          // HOME CONTENT — scrolls behind the floating bar.
+          Positioned.fill(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                return _handleScrollNotification(
+                  context,
+                  notification,
+                );
+              },
+              child: Row(
+                children: [
+                  if (tablet) _sideBar(context),
+                  Expanded(
+                    child: widget.child,
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-    // FLOATING MOBILE NAVIGATION — overlays the content.
-    if (!tablet)
-    Positioned(
-    left: 20,
-    right: 20,
-    bottom: 0,
-    child: ValueListenableBuilder<bool>(
-    valueListenable: _bottomNavVisible,
-    builder: (context, visible, child) {
-    return AnimatedSlide(
-    duration: const Duration(milliseconds: 250),
-    curve: Curves.easeOutCubic,
-    offset: visible
-    ? Offset.zero
-        : const Offset(0, 1.5),
-    child: AnimatedOpacity(
-    duration: const Duration(milliseconds: 200),
-    opacity: visible ? 1 : 0,
-    child: IgnorePointer(
-    ignoring: !visible,
-    child: Padding(
-    padding: EdgeInsets.only(
-    bottom: MediaQuery.of(context)
-        .padding
-        .bottom + 12,
-    ),
-    child: MilestoneApp6BottomNav(
-    state: widget.state,
-    ),
-    ),
-    ),
-    ),
+          // FLOATING MOBILE NAVIGATION — overlays the content.
+          if (!tablet)
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 0,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _bottomNavVisible,
+                builder: (context, visible, child) {
+                  return AnimatedSlide(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    offset: visible ? Offset.zero : const Offset(0, 1.5),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: visible ? 1 : 0,
+                      child: IgnorePointer(
+                        ignoring: !visible,
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).padding.bottom + 12,
+                          ),
+                          child: MilestoneApp6BottomNav(
+                            state: widget.state,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     );
-    },
-    ),
-    ),
-    ],
-    ),
-    );
-
   }
 
   // ==============================================================
@@ -182,16 +170,12 @@ class _MilestoneApp6ShellState
   // ==============================================================
 
   Widget _sideBar(
-      BuildContext context,
-      ) {
-    final location =
-        GoRouterState.of(context)
-            .uri
-            .path;
+    BuildContext context,
+  ) {
+    final location = GoRouterState.of(context).uri.path;
 
     return NavigationRail(
-      selectedIndex:
-      _selectedIndex(location),
+      selectedIndex: _selectedIndex(location),
 
       // ============================================================
       // NAVIGATION
@@ -216,22 +200,19 @@ class _MilestoneApp6ShellState
       // LABEL
       // ============================================================
 
-      labelType:
-      NavigationRailLabelType.all,
+      labelType: NavigationRailLabelType.all,
 
       // ============================================================
       // BACKGROUND
       // ============================================================
 
-      backgroundColor:
-      MilestoneApp6Colors.orangeDark,
+      backgroundColor: MilestoneApp6Colors.orangeDark,
 
       // ============================================================
       // SELECTED ICON
       // ============================================================
 
-      selectedIconTheme:
-      const IconThemeData(
+      selectedIconTheme: const IconThemeData(
         color: Colors.white,
       ),
 
@@ -239,8 +220,7 @@ class _MilestoneApp6ShellState
       // UNSELECTED ICON
       // ============================================================
 
-      unselectedIconTheme:
-      const IconThemeData(
+      unselectedIconTheme: const IconThemeData(
         color: Colors.white70,
       ),
 
@@ -248,8 +228,7 @@ class _MilestoneApp6ShellState
       // SELECTED TEXT
       // ============================================================
 
-      selectedLabelTextStyle:
-      const TextStyle(
+      selectedLabelTextStyle: const TextStyle(
         color: Colors.white,
         fontSize: 11,
       ),
@@ -258,8 +237,7 @@ class _MilestoneApp6ShellState
       // UNSELECTED TEXT
       // ============================================================
 
-      unselectedLabelTextStyle:
-      const TextStyle(
+      unselectedLabelTextStyle: const TextStyle(
         color: Colors.white70,
         fontSize: 11,
       ),
@@ -357,8 +335,8 @@ class _MilestoneApp6ShellState
   // ==============================================================
 
   int _selectedIndex(
-      String location,
-      ) {
+    String location,
+  ) {
     if (location.startsWith(
       '/categories',
     )) {

@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/somthing_went_wrong/screen/milestone_app_6_something_went_wrong_screen.dart';
@@ -15,7 +14,6 @@ class MilestoneApp6InternetGuard extends StatefulWidget {
     this.onConnectionRestored,
   });
 
-
   @override
   State<MilestoneApp6InternetGuard> createState() =>
       _MilestoneApp6InternetGuardState();
@@ -24,8 +22,7 @@ class MilestoneApp6InternetGuard extends StatefulWidget {
 class _MilestoneApp6InternetGuardState
     extends State<MilestoneApp6InternetGuard>
     with WidgetsBindingObserver {
-  final InternetConnection _internetConnection =
-  InternetConnection();
+  final InternetConnection _internetConnection = InternetConnection();
 
   StreamSubscription<InternetStatus>? _subscription;
 
@@ -43,28 +40,32 @@ class _MilestoneApp6InternetGuardState
     _checkInternet();
 
     _subscription = _internetConnection.onStatusChange.listen(
-          (InternetStatus status) async {
+          (InternetStatus status) {
         if (!mounted) return;
 
         final bool isOffline =
             status == InternetStatus.disconnected;
 
         final bool connectionRestored =
-            _wasOffline && !isOffline;
+            (_wasOffline || _isOffline) && !isOffline;
+
+        _wasOffline = isOffline;
 
         setState(() {
           _isOffline = isOffline;
           _checking = false;
         });
 
-        _wasOffline = isOffline;
-
         if (connectionRestored) {
-          await _refreshAfterConnection();
+          _refreshAfterConnection();
         }
+      },
+      onError: (Object error) {
+        debugPrint('Internet status error: $error');
       },
     );
   }
+
   Future<void> _refreshAfterConnection() async {
     if (_isRefreshing || !mounted) return;
 
@@ -73,7 +74,7 @@ class _MilestoneApp6InternetGuardState
     try {
       await widget.onConnectionRestored?.call();
     } catch (e) {
-      debugPrint('Internet restored refresh error: $e');
+      debugPrint('Refresh after internet restored failed: $e');
     } finally {
       _isRefreshing = false;
     }
@@ -81,22 +82,45 @@ class _MilestoneApp6InternetGuardState
 
   Future<void> _checkInternet() async {
     try {
-      final hasInternet =
+      final bool hasInternet =
       await _internetConnection.hasInternetAccess;
 
       if (!mounted) return;
+
+      final bool connectionRestored =
+          (_wasOffline || _isOffline) && hasInternet;
+
+      _wasOffline = !hasInternet;
 
       setState(() {
         _isOffline = !hasInternet;
         _checking = false;
       });
-    } catch (_) {
+
+      if (connectionRestored) {
+        await _refreshAfterConnection();
+      }
+    } catch (e) {
+      debugPrint('Internet check failed: $e');
+
       if (!mounted) return;
+
+      _wasOffline = true;
 
       setState(() {
         _isOffline = true;
         _checking = false;
       });
+    }
+  }
+
+  Future<void> _retry() async {
+    await _checkInternet();
+
+    if (!mounted) return;
+
+    if (!_isOffline) {
+      await _refreshAfterConnection();
     }
   }
 
@@ -132,14 +156,8 @@ class _MilestoneApp6InternetGuardState
                   child: CircularProgressIndicator(),
                 )
                     : SomethingWentWrongScreen(
-                  onRetry: () async {
-                    await _checkInternet();
-
-                    if (mounted && !_isOffline) {
-                      await _refreshAfterConnection();
-                    }
-                  },
-                )
+                  onRetry: _retry,
+                ),
               ),
             ),
           ),

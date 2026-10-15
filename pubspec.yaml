@@ -39,6 +39,7 @@ dependencies:
   dio_cache_interceptor: ^4.0.7
   crypto: ^3.0.7
   internet_connection_checker_plus: ^3.1.2
+  connectivity_plus: ^6.1.4
 
 
 dev_dependencies:
