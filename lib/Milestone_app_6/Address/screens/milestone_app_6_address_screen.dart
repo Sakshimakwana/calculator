@@ -9,13 +9,18 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/widgets/addre
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../state/milestone_app_6_state.dart';
+import 'package:provider/provider.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_controller/cart_controller.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
 
 class MilestoneApp6AddressScreen extends StatefulWidget {
   final MilestoneApp6State state;
+  final bool fromCart;
 
   const MilestoneApp6AddressScreen({
     super.key,
     required this.state,
+    this.fromCart = false,
   });
 
   @override
@@ -189,7 +194,10 @@ class _MilestoneApp6AddressScreenState
             _logic.savedAddresses.length > 1,
 
             onSelect: () {
-              _logic.selectAddress(address);
+              _logic.selectAddress(
+                address,
+                fromCart: widget.fromCart,
+              );
             },
 
             onEdit: () {

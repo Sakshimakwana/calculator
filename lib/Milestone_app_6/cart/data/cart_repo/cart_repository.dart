@@ -2,6 +2,7 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/constants/api_co
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/core/network/api_service.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/model/cart_response_model.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 
 class CartRepository {
@@ -80,24 +81,31 @@ class CartRepository {
 
   Future<void> clearCart() async {
     try {
-      final response = await apiService.delete(
-        ApiConstants.clearCart,
-      );
+      // Fetch the latest cart from the backend.
+      final currentCart = await fetchCart();
 
-      if (response.statusCode == 200 ||
-          response.statusCode == 204) {
-        return;
+      // Delete every cart item from the backend.
+      for (final item in currentCart.data) {
+        await deleteCart(cartId: item.id);
       }
 
-      throw Exception(
-        'Clear cart failed: ${response.statusCode}',
-      );
+      // Verify that the cart is empty.
+      final remainingCart = await fetchCart();
+
+      if (remainingCart.data.isNotEmpty) {
+        throw Exception(
+          'Failed to remove all cart products.',
+        );
+      }
+
+      debugPrint('CART CLEARED SUCCESSFULLY');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data ??
+        e.response?.data?.toString() ??
             e.message ??
-            'Unable to clear cart',
+            'Unable to clear cart.',
       );
     }
   }
+
 }

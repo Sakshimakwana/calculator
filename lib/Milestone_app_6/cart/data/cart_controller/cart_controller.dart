@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../model/cart_response_model.dart';
 import '../cart_repo/cart_repository.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_cart_storage.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
 
 class CartController extends ChangeNotifier {
   final CartRepository repository;
@@ -186,30 +188,112 @@ class CartController extends ChangeNotifier {
 
       await repository.clearCart();
 
+      // Clear local cart only after the repository succeeds.
       cartItems.clear();
 
       isDeletingCart = false;
       notifyListeners();
 
+      debugPrint('Cart cleared successfully');
       return true;
-    } on DioException catch (e) {
-      isDeletingCart = false;
-
-      errorMessage =
-          e.response?.data?.toString() ??
-              e.message ??
-              'Unable to clear cart.';
-
-      notifyListeners();
-
-      return false;
     } catch (e) {
       isDeletingCart = false;
       errorMessage = e.toString();
 
       notifyListeners();
 
+      debugPrint('Failed to clear cart: $e');
       return false;
     }
   }
+
+  Future<bool> switchAddressCart({
+    required int? oldAddressId,
+    required int newAddressId,
+  }) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      // 1. Get the latest backend cart before changing addresses.
+      final currentResponse = await repository.fetchCart();
+      final currentItems = currentResponse.data;
+
+      // 2. Save the current cart against the old address.
+      if (oldAddressId != null) {
+        final snapshot = currentItems.map((item) {
+          return <String, int>{
+            'menu_item_id': item.menuItem.id,
+            'restaurant_id': item.restaurantId,
+            'quantity': item.quantity,
+          };
+        }).toList();
+
+        await AddressCartStorage.saveCart(
+          addressId: oldAddressId,
+          items: snapshot,
+        );
+      }
+
+      // 3. Clear the active backend cart.
+      await repository.clearCart();
+
+      // 4. Restore the cart previously saved for the new address.
+      final savedItems = await AddressCartStorage.getCart(newAddressId);
+
+      for (final item in savedItems) {
+        await repository.addToCart(
+          menuItemId: item['menu_item_id']!,
+          restaurantId: item['restaurant_id']!,
+          quantity: item['quantity']!,
+        );
+      }
+
+      // 5. Refresh the controller with the active address's cart.
+      final updatedResponse = await repository.fetchCart();
+      cartItems = updatedResponse.data;
+
+      isLoading = false;
+      notifyListeners();
+
+      debugPrint(
+        'Cart switched from address $oldAddressId to $newAddressId. '
+            'Restored ${cartItems.length} item(s).',
+      );
+
+      return true;
+    } catch (e) {
+      errorMessage = 'Unable to switch address cart: $e';
+
+      // Best-effort rollback: restore the old address's saved cart.
+      try {
+        await repository.clearCart();
+
+        if (oldAddressId != null) {
+          final oldItems = await AddressCartStorage.getCart(oldAddressId);
+
+          for (final item in oldItems) {
+            await repository.addToCart(
+              menuItemId: item['menu_item_id']!,
+              restaurantId: item['restaurant_id']!,
+              quantity: item['quantity']!,
+            );
+          }
+        }
+
+        final rollbackResponse = await repository.fetchCart();
+        cartItems = rollbackResponse.data;
+      } catch (rollbackError) {
+        debugPrint('Cart rollback failed: $rollbackError');
+      }
+
+      isLoading = false;
+      notifyListeners();
+
+      debugPrint('Failed to switch address cart: $e');
+      return false;
+    }
+  }
+
 }

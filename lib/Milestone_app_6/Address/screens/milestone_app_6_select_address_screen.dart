@@ -8,9 +8,12 @@ import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/widgets/selec
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/widgets/select_address/select_address_search_field.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Login/auth_storage/auth_storage.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/service/milestone_app_6_address_api.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_controller/cart_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../models/milestone_app_6_address_model.dart';
+import 'package:provider/provider.dart';
+
 
 class MilestoneApp6SelectAddressScreen
     extends StatefulWidget {
@@ -206,19 +209,49 @@ class _MilestoneApp6SelectAddressScreenState
       MilestoneApp6Address address,
       ) async {
     if (address.id <= 0) {
-      _showMessage(
-        'Invalid address ID.',
-      );
+      _showMessage('Invalid address ID.');
       return;
     }
 
-    await AddressStorage.saveSelectedAddressId(
-      address.id,
-    );
+    final oldAddressId = AddressStorage.selectedAddressId;
 
-    if (!mounted) return;
+    // Same address: keep the existing cart.
+    if (oldAddressId == address.id) {
+      if (!mounted) return;
+      context.go('/home');
+      return;
+    }
 
-    context.go('/home');
+    try {
+      // Clear the backend cart and local cart before changing address.
+      final cartController = context.read<CartController>();
+
+      final cleared = await cartController.clearCart();
+
+      if (!mounted) return;
+
+      if (!cleared) {
+        _showMessage(
+          'Unable to clear your cart. Please try again.',
+        );
+        return;
+      }
+
+      // Save the new address only after cart clearing succeeds.
+      await AddressStorage.saveSelectedAddressId(address.id);
+
+      if (!mounted) return;
+
+      _showMessage('Delivery address updated. Please add products again.');
+
+      context.go('/home');
+    } catch (e) {
+      if (!mounted) return;
+
+      _showMessage(
+        'Unable to change address. Please try again.',
+      );
+    }
   }
 
   void _addNewAddress() {

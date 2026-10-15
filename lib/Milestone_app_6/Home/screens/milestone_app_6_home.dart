@@ -1,6 +1,5 @@
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/methods/milestone_app_6_home_logic.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_app_bar.dart';
-import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_banner.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_empty_food_state.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_restaurants_section.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Home/widgets/milestone_app_6_home_section_title.dart';
@@ -74,7 +73,9 @@ class _MilestoneApp6HomeScreenState
     final bool hasSearch =
         logic.searchController.text.trim().isNotEmpty;
 
-    return CustomScrollView(
+    return PopScope(
+      canPop: true,
+      child: CustomScrollView(
       controller:
       logic.homeScrollController,
       physics:
@@ -216,6 +217,7 @@ class _MilestoneApp6HomeScreenState
           ),
         ),
       ],
+    ),
     );
   }
 }

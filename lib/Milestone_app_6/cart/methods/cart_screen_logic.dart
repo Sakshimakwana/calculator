@@ -69,6 +69,63 @@ class MilestoneApp6CartScreenLogic {
     return total < 0 ? 0 : total;
   }
 
+  Future<bool> handleDeliveryAddressChange(
+      MilestoneApp6Address newAddress, {
+        VoidCallback? onChanged,
+      }) async {
+    final oldAddressId = AddressStorage.selectedAddressId;
+
+    // Nothing changed: keep the existing cart.
+    if (oldAddressId == newAddress.id) {
+      selectedApiAddress = newAddress;
+      state.setAddress(newAddress);
+      onChanged?.call();
+      return true;
+    }
+
+    final controller = context.read<CartController>();
+
+    // Remove old products from the backend first.
+    if (controller.cartItems.isNotEmpty) {
+      final cleared = await controller.clearCart();
+
+      if (!cleared) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                controller.errorMessage ??
+                    'Could not clear the previous cart.',
+              ),
+            ),
+          );
+        }
+
+        return false;
+      }
+    }
+
+    // Save the new address only after the cart is cleared.
+    await AddressStorage.saveSelectedAddressId(
+      newAddress.id,
+    );
+
+    selectedApiAddress = newAddress;
+    state.setAddress(newAddress);
+
+    // Keep the existing address cache synchronized.
+    _cachedSelectedAddress = newAddress;
+
+    onChanged?.call();
+
+    debugPrint(
+      'ADDRESS CHANGED: $oldAddressId -> ${newAddress.id}',
+    );
+    debugPrint('OLD CART CLEARED');
+
+    return true;
+  }
+
   // ============================================================
   // LOAD ADDRESS FROM API
   // ============================================================

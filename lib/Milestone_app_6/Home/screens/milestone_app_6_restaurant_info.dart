@@ -293,21 +293,30 @@ class _MilestoneApp6RestaurantInfoScreenState
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _refreshMenu,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            _buildHeader(
-              context,
-              theme,
-              isTablet,
-            ),
-            _buildMenuContent(
-              context,
-              theme,
-              isTablet,
-            ),
-          ],
+      child: CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        _buildHeader(
+          context,
+          theme,
+          isTablet,
         ),
+
+        _buildMenuContent(
+          context,
+          theme,
+          isTablet,
+        ),
+
+        // Bottom spacing: keeps the last food cards
+        // visible above the floating navigation.
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 110 + MediaQuery.of(context).padding.bottom,
+          ),
+        ),
+      ],
+    ),
       ),
     );
   }

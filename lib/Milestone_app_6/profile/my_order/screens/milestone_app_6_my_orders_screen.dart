@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_reviews/data/review_controller/review_controller.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/profile/my_order/my_order_widgets/my_orders_shimmer.dart';
 
 class MilestoneApp6MyOrdersScreen extends StatefulWidget {
   final MilestoneApp6State state;
@@ -494,9 +495,7 @@ class _MilestoneApp6MyOrdersScreenState
                       constraints.maxWidth >= 700 ? 32.0 : 16.0;
                   if (orderController.isLoadingMyOrders &&
                       orderController.myOrders.isEmpty) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return const MyOrdersShimmer();
                   }
                   if (orderController.myOrdersErrorMessage != null &&
                       orderController.myOrders.isEmpty) {

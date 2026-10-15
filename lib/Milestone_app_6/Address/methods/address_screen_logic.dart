@@ -11,6 +11,8 @@ import 'package:go_router/go_router.dart';
 import '../models/milestone_app_6_save_addresses_actions_model_.dart';
 import '../models/milestone_app_6_address_model.dart';
 import '../../state/milestone_app_6_state.dart';
+import 'package:provider/provider.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_controller/cart_controller.dart';
 
 class AddressScreenLogic {
   AddressScreenLogic({
@@ -131,30 +133,74 @@ class AddressScreenLogic {
     }
   }
 
+
   Future<void> selectAddress(
-      MilestoneApp6Address address,
-      ) async {
-    if (address.id <= 0) {
-      showMessage('Invalid address ID.');
-      return;
-    }
+      MilestoneApp6Address address, {
+        required bool fromCart,
+      }) async {
+    // If the address is already selected, do not clear the cart.
+    final oldAddressId = AddressStorage.selectedAddressId;
 
-    try {
-      await AddressStorage.saveSelectedAddressId(address.id);
-
+    if (oldAddressId == address.id) {
       _state.setAddress(address);
 
       if (!_context.mounted) return;
 
-      _context.go('/home');
+      if (fromCart) {
+        _context.go('/cart');
+      } else {
+        _context.go('/home');
+      }
+      return;
+    }
+
+    try {
+      final cartController = _context.read<CartController>();
+
+// Save the old address cart and restore the new address cart.
+      final bool switched = await cartController.switchAddressCart(
+        oldAddressId: oldAddressId,
+        newAddressId: address.id,
+      );
+
+      if (!_context.mounted) return;
+
+      if (!switched) {
+        ScaffoldMessenger.of(_context).showSnackBar(
+          SnackBar(
+            content: Text(
+              cartController.errorMessage ??
+                  'Could not switch the cart. Address was not changed.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Save the newly selected address.
+      await AddressStorage.saveSelectedAddressId(address.id);
+
+      if (!_context.mounted) return;
+
+      _state.setAddress(address);
+
+      // Navigate according to the screen where address selection began.
+      if (fromCart) {
+        _context.go('/cart');
+      } else {
+        _context.go('/home');
+      }
     } catch (e) {
       if (!_context.mounted) return;
 
-      showMessage(
-        'Unable to select address: $e',
+      ScaffoldMessenger.of(_context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to change address: $e'),
+        ),
       );
     }
   }
+
 
   Future<void> addAddress({
     double? latitude,

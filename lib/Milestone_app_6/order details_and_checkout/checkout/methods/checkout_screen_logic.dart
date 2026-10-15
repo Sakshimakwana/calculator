@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../order_details/data/controllers/order_controller.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/data/address_storage/address_storage.dart';
 
 const String razorpayKeyId = 'rzp_test_TZROdQUkcaHWjq';
 
@@ -320,70 +321,155 @@ class CheckoutScreenLogic {
     required bool isBuyNow,
   }) async {
     _isBuyNow = isBuyNow;
+
     final orderController = context.read<OrderController>();
     final cartController = context.read<CartController>();
 
+    // 1. Validate the selected address.
     final selectedAddress = state.selectedAddress;
+
     if (selectedAddress == null) {
       showSnackBar('Please select a delivery address.');
       return false;
     }
 
-    final int? addressId = int.tryParse(selectedAddress.id.toString());
+    final int? addressId =
+    int.tryParse(selectedAddress.id.toString());
+
     if (addressId == null) {
       showSnackBar('Invalid delivery address.');
       return false;
     }
 
+    // 2. Prevent checkout with an outdated address.
+    final savedAddressId = AddressStorage.selectedAddressId;
+
+    if (savedAddressId == null || savedAddressId != addressId) {
+      showSnackBar(
+        'Your delivery address has changed. '
+            'Please reopen checkout.',
+      );
+      return false;
+    }
+
+    // 3. Refresh and validate the cart for normal checkout.
+    // Buy Now uses its own product, so skip the cart validation.
+    if (!isBuyNow) {
+      final bool cartLoaded = await cartController.fetchCart();
+
+      if (!isMounted()) return false;
+
+      if (!cartLoaded || cartController.cartItems.isEmpty) {
+        orderedItems = [];
+        onChanged();
+
+        showSnackBar(
+          'Your cart is empty or could not be refreshed. '
+              'Please add products again.',
+        );
+        return false;
+      }
+
+      // Convert the latest backend cart into checkout items.
+      final latestItems = cartController.cartItems
+          .map(convertApiCartItem)
+          .toList();
+
+      // Check whether products or quantities changed since checkout opened.
+      bool sameCart = latestItems.length == orderedItems.length;
+
+      if (sameCart) {
+        for (final latest in latestItems) {
+          final index = orderedItems.indexWhere(
+                (old) => old.food.id == latest.food.id,
+          );
+
+          if (index == -1 ||
+              orderedItems[index].quantity != latest.quantity) {
+            sameCart = false;
+            break;
+          }
+        }
+      }
+
+      if (!sameCart) {
+        orderedItems = latestItems;
+        onChanged();
+
+        showSnackBar(
+          'Your cart has changed. Please review your updated '
+              'cart before placing the order again.',
+        );
+        return false;
+      }
+    }
+
+    // 4. Validate payment method.
     final String? paymentMethod = selectedPaymentMethod;
+
     if (paymentMethod == null) {
       showSnackBar('Please select a payment method.');
       return false;
     }
 
+    // 5. Place the order.
     debugPrint('========== PLACE ORDER =========');
+
     final bool orderPlaced = await orderController.placeOrder(
       addressId: addressId,
-      deliveryInstructions: deliveryInstructionsController.text.trim(),
+      deliveryInstructions:
+      deliveryInstructionsController.text.trim(),
     );
 
     if (!isMounted()) return false;
 
     if (!orderPlaced) {
-      showSnackBar(orderController.errorMessage ?? 'Unable to place order.');
+      showSnackBar(
+        orderController.errorMessage ?? 'Unable to place order.',
+      );
       return false;
     }
 
     final int? newOrderId = orderController.orderId;
+
     if (newOrderId == null) {
       showSnackBar('Order ID was not received.');
       return false;
     }
 
     debugPrint('NEW ORDER CREATED: $newOrderId');
-    final String backendPaymentMethod =
-        paymentMethod == 'online' ? 'razorpay' : 'cod';
 
+    final String backendPaymentMethod =
+    paymentMethod == 'online' ? 'razorpay' : 'cod';
+
+    // 6. Create the backend payment.
     debugPrint('========== PAYMENT API =========');
     debugPrint('Backend Payment Method: $backendPaymentMethod');
 
     final bool paymentSuccess = await orderController.makePayment(
       orderId: newOrderId,
-      paymentRequest: {'payment_method': backendPaymentMethod},
+      paymentRequest: {
+        'payment_method': backendPaymentMethod,
+      },
     );
 
     if (!isMounted()) return false;
 
     if (!paymentSuccess) {
-      showSnackBar(orderController.paymentErrorMessage ?? 'Payment failed.');
+      showSnackBar(
+        orderController.paymentErrorMessage ?? 'Payment failed.',
+      );
       return false;
     }
 
     debugPrint('========== PAYMENT API SUCCESS =========');
     debugPrint('Payment created for order: $newOrderId');
 
+    // 7. Online payment: open Razorpay.
     if (paymentMethod == 'online') {
-      final Map<String, dynamic>? paymentData = orderController.paymentData;
+      final Map<String, dynamic>? paymentData =
+          orderController.paymentData;
+
       if (paymentData == null) {
         showSnackBar('Razorpay payment data was not received.');
         return false;
@@ -391,35 +477,41 @@ class CheckoutScreenLogic {
 
       debugPrint('========== RAZORPAY PAYMENT DATA =========');
       debugPrint('$paymentData');
+
       openRazorpayCheckout(
         paymentData: paymentData,
         backendOrderId: newOrderId,
       );
+
       return true;
     }
 
+    // 8. COD: refresh order information.
     final bool orderInfoLoaded =
-        await orderController.fetchOrderInfo(newOrderId);
+    await orderController.fetchOrderInfo(newOrderId);
+
     if (!orderInfoLoaded) {
       debugPrint(
         'WARNING: Order info could not be refreshed after COD payment.',
       );
     }
 
+    // 9. Clear the cart after successful COD order/payment.
     if (!isBuyNow) {
-      try {
-        await cartController.clearCart();
-      } catch (error, stackTrace) {
-        debugPrint('WARNING: Could not clear cart after COD order: $error');
-        debugPrintStack(stackTrace: stackTrace);
+      final bool cartCleared = await cartController.clearCart();
+
+      if (!cartCleared) {
+        debugPrint(
+          'WARNING: COD succeeded, but the cart could not be cleared.',
+        );
       }
     }
 
     debugPrint('========== COD ORDER COMPLETED =========');
     debugPrint('COD ORDER ID: $newOrderId');
 
-// Navigate after the COD order and payment API succeed.
     if (!isMounted()) return false;
+
     context.go('/order-details/$newOrderId');
     return true;
   }

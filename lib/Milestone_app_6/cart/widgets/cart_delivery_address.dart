@@ -68,10 +68,9 @@ class MilestoneApp6CartDeliveryAddress extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () async {
-                  await context.push(
-                    '/profile/address',
-                    extra: state,
-                  );
+                  await context.push('/profile/address?fromCart=true');
+
+                  if (!context.mounted) return;
 
                   await onAddressChanged();
                 },

@@ -291,20 +291,26 @@ class MilestoneApp6Routes {
               },
             ),
 
+
             GoRoute(
               path: '/profile/address',
               pageBuilder: (
                   context,
                   routeState,
                   ) {
+                final bool fromCart =
+                    routeState.uri.queryParameters['fromCart'] == 'true';
+
                 return _page(
                   routeState,
                   MilestoneApp6AddressScreen(
                     state: state,
+                    fromCart: fromCart,
                   ),
                 );
               },
             ),
+
 
             GoRoute(
               path: '/cart',

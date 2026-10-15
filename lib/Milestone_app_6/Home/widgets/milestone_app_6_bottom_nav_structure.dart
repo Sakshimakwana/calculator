@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../state/milestone_app_6_state.dart';
 import '../../theme/milestone_app_6_colors.dart';
 import 'milestone_app_6_bottom_nav.dart';
@@ -36,6 +36,70 @@ class _MilestoneApp6ShellState extends State<MilestoneApp6Shell> {
     _bottomNavVisible.dispose();
     super.dispose();
   }
+
+
+  Future<void> _handleBack(BuildContext context) async {
+    final router = GoRouter.of(context);
+    final location = router.state.uri.path;
+
+    // Navigate to the previous screen if possible.
+    if (router.canPop()) {
+      router.pop();
+      return;
+    }
+
+    // If not on Home, return to Home first.
+    if (!location.startsWith('/home')) {
+      router.go('/home');
+      return;
+    }
+
+    // On Home: ask before exiting.
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Exit App?',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to exit this app?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF514B),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Exit'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldExit == true) {
+      await SystemNavigator.pop();
+    }
+  }
+
+
 
   // ==============================================================
   // SCROLL LISTENER
@@ -105,8 +169,15 @@ class _MilestoneApp6ShellState extends State<MilestoneApp6Shell> {
   @override
   Widget build(BuildContext context) {
     final tablet = MediaQuery.sizeOf(context).width >= 700;
-    return Scaffold(
-      body: Stack(
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+      if (didPop) return;
+
+      _handleBack(context);
+    },
+    child: Scaffold(
+    body: Stack(
         children: [
           // HOME CONTENT — scrolls behind the floating bar.
           Positioned.fill(
@@ -162,6 +233,7 @@ class _MilestoneApp6ShellState extends State<MilestoneApp6Shell> {
             ),
         ],
       ),
+    ),
     );
   }
 
