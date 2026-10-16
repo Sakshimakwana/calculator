@@ -18,7 +18,7 @@ class MilestoneApp6CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
+    const Color primary = Color(0xFFFF514B);
 
     return GestureDetector(
       onTap: onTap,

@@ -1,5 +1,5 @@
-
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 class SomethingWentWrongScreen extends StatefulWidget {
@@ -19,10 +19,16 @@ class _SomethingWentWrongScreenState
     extends State<SomethingWentWrongScreen>
     with TickerProviderStateMixin {
   static const Color cream = Color(0xFFFFF8F2);
-  static const Color brown = Color(0xFF70452F);
-  static const Color darkBrown = Color(0xFF30231D);
-  static const Color mutedBrown = Color(0xFF9A8173);
-  static const Color peach = Color(0xFFF4E4D9);
+  static const Color red = Color(0xFFFF514B);
+  static const Color darkRed = Color(0xFFB92D2D);
+  static const Color mutedRed = Color(0xFFCF6B66);
+  static const Color peach = Color(0xFFFFE7E2);
+  static const Color black = Color(0xFF000000);
+  static const Color grey = Color(0xFF808080);
+  static const Color lightGrey = Color(0xFFE0E0E0);
+  static const Color darkGrey = Color(0xFF424242);
+  static const Color mutedGrey = Color(0xFF9E9E9E);
+
 
   late final AnimationController _floatController;
   late final AnimationController _entryController;
@@ -72,16 +78,19 @@ class _SomethingWentWrongScreenState
     return AnimatedBuilder(
       animation: _floatController,
       builder: (context, child) {
-        final double movement = math.sin(
-          (_floatController.value * math.pi) + phase,
-        ) * 9;
+        final double movement =
+            math.sin((_floatController.value * math.pi) + phase) * 9;
 
         return Transform.translate(
           offset: Offset(0, movement),
           child: child,
         );
       },
-      child: Icon(icon, size: size, color: color),
+      child: Icon(
+        icon,
+        size: size,
+        color: color,
+      ),
     );
   }
 
@@ -116,6 +125,7 @@ class _SomethingWentWrongScreenState
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
+                              // Background circle
                               Container(
                                 width: 205,
                                 height: 205,
@@ -124,7 +134,7 @@ class _SomethingWentWrongScreenState
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: brown.withOpacity(0.08),
+                                      color: red.withOpacity(0.08),
                                       blurRadius: 28,
                                       spreadRadius: 4,
                                     ),
@@ -139,21 +149,23 @@ class _SomethingWentWrongScreenState
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFFE8D0C0),
+                                    color: const Color(0xFFFFC7C3),
                                     width: 1.5,
                                   ),
                                 ),
                               ),
 
-                              // Takeaway bag
+                              // Takeaway bag animation
                               AnimatedBuilder(
                                 animation: _floatController,
                                 builder: (context, child) {
-                                  final angle =
+                                  final double angle =
                                       math.sin(
                                         _floatController.value *
-                                            math.pi * 2,
-                                      ) * 0.045;
+                                            math.pi *
+                                            2,
+                                      ) *
+                                          0.045;
 
                                   return Transform.rotate(
                                     angle: angle,
@@ -164,12 +176,11 @@ class _SomethingWentWrongScreenState
                                   width: 112,
                                   height: 125,
                                   decoration: BoxDecoration(
-                                    color: brown,
-                                    borderRadius:
-                                    BorderRadius.circular(23),
+                                    color: red,
+                                    borderRadius: BorderRadius.circular(23),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: brown.withOpacity(0.22),
+                                        color: red.withOpacity(0.22),
                                         blurRadius: 20,
                                         offset: const Offset(0, 10),
                                       ),
@@ -185,7 +196,7 @@ class _SomethingWentWrongScreenState
                                           height: 25,
                                           decoration: BoxDecoration(
                                             border: Border.all(
-                                              color: brown,
+                                              color: red,
                                               width: 7,
                                             ),
                                             borderRadius:
@@ -206,8 +217,7 @@ class _SomethingWentWrongScreenState
                                             'TASTY!',
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontWeight:
-                                              FontWeight.w800,
+                                              fontWeight: FontWeight.w800,
                                               letterSpacing: 1.5,
                                               fontSize: 11,
                                             ),
@@ -219,7 +229,7 @@ class _SomethingWentWrongScreenState
                                 ),
                               ),
 
-                              // Floating food symbols
+                              // Floating pizza icon
                               Positioned(
                                 top: 26,
                                 right: 24,
@@ -230,6 +240,8 @@ class _SomethingWentWrongScreenState
                                   0,
                                 ),
                               ),
+
+                              // Floating bakery icon
                               Positioned(
                                 left: 20,
                                 top: 65,
@@ -240,6 +252,8 @@ class _SomethingWentWrongScreenState
                                   1.4,
                                 ),
                               ),
+
+                              // Floating burger icon
                               Positioned(
                                 right: 23,
                                 bottom: 40,
@@ -250,6 +264,8 @@ class _SomethingWentWrongScreenState
                                   2.1,
                                 ),
                               ),
+
+                              // Decorative dot
                               Positioned(
                                 left: 37,
                                 bottom: 25,
@@ -260,6 +276,8 @@ class _SomethingWentWrongScreenState
                                   0.8,
                                 ),
                               ),
+
+                              // Floating star
                               Positioned(
                                 right: 64,
                                 top: 7,
@@ -271,7 +289,7 @@ class _SomethingWentWrongScreenState
                                 ),
                               ),
 
-                              // Small broken delivery trail
+                              // Delivery trail
                               Positioned(
                                 bottom: 6,
                                 child: Row(
@@ -286,7 +304,7 @@ class _SomethingWentWrongScreenState
                                         width: 17,
                                         height: 3,
                                         decoration: BoxDecoration(
-                                          color: mutedBrown,
+                                          color: mutedRed,
                                           borderRadius:
                                           BorderRadius.circular(5),
                                         ),
@@ -304,6 +322,7 @@ class _SomethingWentWrongScreenState
 
                       const SizedBox(height: 22),
 
+                      // Animated error message
                       FadeTransition(
                         opacity: _entry,
                         child: SlideTransition(
@@ -320,10 +339,12 @@ class _SomethingWentWrongScreenState
                                   fontSize: 25,
                                   height: 1.3,
                                   fontWeight: FontWeight.w800,
-                                  color: darkBrown,
+                                  color: black,
                                 ),
                               ),
+
                               const SizedBox(height: 13),
+
                               const Text(
                                 'Looks like our kitchen lost its '
                                     'connection!\nCheck your internet '
@@ -332,18 +353,20 @@ class _SomethingWentWrongScreenState
                                 style: TextStyle(
                                   fontSize: 15,
                                   height: 1.7,
-                                  color: mutedBrown,
+                                  color: grey,
                                 ),
                               ),
+
                               const SizedBox(height: 28),
 
+                              // Retry button
                               SizedBox(
                                 width: double.infinity,
                                 height: 56,
                                 child: ElevatedButton(
                                   onPressed: widget.onRetry,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: brown,
+                                    backgroundColor: red,
                                     foregroundColor: Colors.white,
                                     elevation: 3,
                                     shape: RoundedRectangleBorder(
@@ -352,8 +375,7 @@ class _SomethingWentWrongScreenState
                                     ),
                                   ),
                                   child: const Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(Icons.refresh_rounded),
                                       SizedBox(width: 10),
@@ -370,10 +392,12 @@ class _SomethingWentWrongScreenState
                               ),
 
                               const SizedBox(height: 19),
+
                               const Text(
                                 'GOOD FOOD IS WORTH THE WAIT',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: mutedBrown,
+                                  color: grey,
                                   fontSize: 10,
                                   letterSpacing: 2,
                                   fontWeight: FontWeight.w700,
@@ -383,6 +407,7 @@ class _SomethingWentWrongScreenState
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -400,7 +425,7 @@ class _SomethingWentWrongScreenState
       width: size,
       height: size,
       decoration: const BoxDecoration(
-        color: mutedBrown,
+        color: mutedRed,
         shape: BoxShape.circle,
       ),
     );
