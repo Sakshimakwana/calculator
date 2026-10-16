@@ -1,4 +1,5 @@
 
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class CheckoutCouponSection extends StatelessWidget {
@@ -68,10 +69,20 @@ class CheckoutCouponSection extends StatelessWidget {
               couponApplied
                   ? OutlinedButton(
                 onPressed: onRemove,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: MilestoneApp6Colors.red,
+                  side: const BorderSide(
+                    color: MilestoneApp6Colors.red,
+                  ),
+                ),
                 child: const Text('Remove'),
               )
                   : FilledButton(
                 onPressed: onApply,
+                style: FilledButton.styleFrom(
+                  backgroundColor: MilestoneApp6Colors.red,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Apply'),
               ),
             ],
@@ -82,14 +93,14 @@ class CheckoutCouponSection extends StatelessWidget {
               children: [
                 Icon(
                   Icons.check_circle,
-                  color: colorScheme.primary,
+                  color: MilestoneApp6Colors.red,
                   size: 18,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   'FOOD10 applied • 10% OFF',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.primary,
+                    color: MilestoneApp6Colors.red,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

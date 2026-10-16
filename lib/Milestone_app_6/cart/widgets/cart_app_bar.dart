@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_controller/cart_controller.dart';
+
+import '../../theme/milestone_app_6_colors.dart';
 
 class MilestoneApp6CartAppBar extends StatelessWidget
     implements PreferredSizeWidget {
@@ -39,9 +40,13 @@ class MilestoneApp6CartAppBar extends StatelessWidget
             onPressed: context.read<CartController>().isDeletingCart
                 ? null
                 : onClear,
+            style: TextButton.styleFrom(
+              foregroundColor: MilestoneApp6Colors.red,
+            ),
             child: const Text(
               'Clear',
               style: TextStyle(
+                color: MilestoneApp6Colors.red,
                 fontWeight: FontWeight.w700,
               ),
             ),

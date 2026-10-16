@@ -1,4 +1,5 @@
 
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class CheckoutSecurePayment extends StatelessWidget {
@@ -13,7 +14,7 @@ class CheckoutSecurePayment extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.06),
+        color: MilestoneApp6Colors.red.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: colorScheme.primary.withValues(alpha: 0.18),
@@ -24,7 +25,7 @@ class CheckoutSecurePayment extends StatelessWidget {
         children: [
           Icon(
             Icons.verified_user_outlined,
-            color: colorScheme.primary,
+            color: MilestoneApp6Colors.red,
             size: 24,
           ),
           const SizedBox(width: 12),

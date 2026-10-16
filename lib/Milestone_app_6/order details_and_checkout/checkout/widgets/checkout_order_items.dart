@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../../cart/data/milestone_app_6_cart_item.dart';
@@ -107,7 +108,7 @@ class _CheckoutItem extends StatelessWidget {
                 'Size: ${item.size}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: theme.colorScheme.primary,
+                  color: MilestoneApp6Colors.red,
                   fontWeight: FontWeight.w700,
                 ),
               ),

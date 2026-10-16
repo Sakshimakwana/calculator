@@ -1,5 +1,6 @@
 
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/model/cart_response_model.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/milestone_app_6_food.dart';
@@ -397,36 +398,24 @@ class MilestoneApp6FoodCard extends StatelessWidget {
                                 );
                               }
                                   : null,
-                              style:
-                              ElevatedButton
-                                  .styleFrom(
-                                padding:
-                                EdgeInsets.zero,
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.zero,
                                 elevation: 0,
-                                minimumSize:
-                                Size.zero,
-                                tapTargetSize:
-                                MaterialTapTargetSize
-                                    .shrinkWrap,
-                                backgroundColor:
-                                canAddToCart
-                                    ? theme
-                                    .colorScheme
-                                    .primary
-                                    : const Color(
-                                  0xFFE0E0E0,
-                                ),
-                                disabledBackgroundColor:
-                                const Color(
-                                  0xFFE0E0E0,
-                                ),
-                                shape:
-                                RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                    8,
-                                  ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+                                // Force your app's red color
+                                backgroundColor: const Color(0xFFFF514B),
+                                foregroundColor: Colors.white,
+
+                                // Keep unavailable buttons grey
+                                disabledBackgroundColor: const Color(0xFFE0E0E0),
+                                disabledForegroundColor: const Color(0xFF757575),
+
+                                surfaceTintColor: Colors.transparent,
+
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: Text(
@@ -483,14 +472,13 @@ class _QuantityControl
 
   @override
   Widget build(BuildContext context) {
-    final Color primary =
-        Theme.of(context).colorScheme.primary;
+    final primaryColor = MilestoneApp6Colors.red;
 
     return Container(
       height: 27,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: primary,
+        color: primaryColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

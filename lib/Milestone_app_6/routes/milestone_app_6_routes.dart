@@ -189,25 +189,19 @@ class MilestoneApp6Routes {
           },
         ),
 
+
         ShellRoute(
-          builder: (
-              context,
-              routeState,
-              child,
-              ) {
+          builder: (context, routeState, child) {
             return MilestoneApp6Shell(
               state: state,
               child: child,
             );
           },
-
           routes: [
+            // HOME — bottom navigation visible
             GoRoute(
               path: '/home',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
+              pageBuilder: (context, routeState) {
                 return _page(
                   routeState,
                   MilestoneApp6HomeScreen(
@@ -217,107 +211,10 @@ class MilestoneApp6Routes {
               },
             ),
 
-            GoRoute(
-              path: '/categories',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
-                return _page(
-                  routeState,
-                  MilestoneApp6CategoriesScreen(
-                    state: state,
-                  ),
-                );
-              },
-            ),
-
-            GoRoute(
-              path: '/restaurants',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
-                return _page(
-                  routeState,
-                  MilestoneApp6RestaurantsScreen(
-                    state: state,
-                  ),
-                );
-              },
-            ),
-
-            GoRoute(
-              path: '/restaurant-info',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
-                final extra = routeState.extra;
-
-                if (extra is! Map<String, dynamic>) {
-                  return const NoTransitionPage<void>(
-                    child: Scaffold(
-                      body: Center(
-                        child: Text(
-                          'Restaurant information is missing.',
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                final restaurant = extra['restaurant'];
-
-                if (restaurant is! MilestoneApp6Restaurant) {
-                  return const NoTransitionPage<void>(
-                    child: Scaffold(
-                      body: Center(
-                        child: Text(
-                          'Invalid restaurant information.',
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                return _page(
-                  routeState,
-                  MilestoneApp6RestaurantInfoScreen(
-                    restaurant: restaurant,
-                    state: state,
-                  ),
-                );
-              },
-            ),
-
-
-            GoRoute(
-              path: '/profile/address',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
-                final bool fromCart =
-                    routeState.uri.queryParameters['fromCart'] == 'true';
-
-                return _page(
-                  routeState,
-                  MilestoneApp6AddressScreen(
-                    state: state,
-                    fromCart: fromCart,
-                  ),
-                );
-              },
-            ),
-
-
+            // CART — bottom navigation visible
             GoRoute(
               path: '/cart',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
+              pageBuilder: (context, routeState) {
                 return _page(
                   routeState,
                   MilestoneApp6CartScreen(
@@ -327,12 +224,10 @@ class MilestoneApp6Routes {
               },
             ),
 
+            // PROFILE — bottom navigation visible
             GoRoute(
               path: '/profile',
-              pageBuilder: (
-                  context,
-                  routeState,
-                  ) {
+              pageBuilder: (context, routeState) {
                 return _page(
                   routeState,
                   MilestoneApp6ProfileScreen(
@@ -343,6 +238,93 @@ class MilestoneApp6Routes {
             ),
           ],
         ),
+
+        // CATEGORIES — bottom navigation hidden
+        GoRoute(
+          path: '/categories',
+          pageBuilder: (context, routeState) {
+            return _page(
+              routeState,
+              MilestoneApp6CategoriesScreen(
+                state: state,
+              ),
+            );
+          },
+        ),
+
+// RESTAURANTS — bottom navigation hidden
+        GoRoute(
+          path: '/restaurants',
+          pageBuilder: (context, routeState) {
+            return _page(
+              routeState,
+              MilestoneApp6RestaurantsScreen(
+                state: state,
+              ),
+            );
+          },
+        ),
+
+// RESTAURANT INFO — bottom navigation hidden
+        GoRoute(
+          path: '/restaurant-info',
+          pageBuilder: (context, routeState) {
+            final extra = routeState.extra;
+
+            if (extra is! Map<String, dynamic>) {
+              return const NoTransitionPage<void>(
+                child: Scaffold(
+                  body: Center(
+                    child: Text(
+                      'Restaurant information is missing.',
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final restaurant = extra['restaurant'];
+
+            if (restaurant is! MilestoneApp6Restaurant) {
+              return const NoTransitionPage<void>(
+                child: Scaffold(
+                  body: Center(
+                    child: Text(
+                      'Invalid restaurant information.',
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return _page(
+              routeState,
+              MilestoneApp6RestaurantInfoScreen(
+                restaurant: restaurant,
+                state: state,
+              ),
+            );
+          },
+        ),
+
+// ADDRESS FROM PROFILE OR CART — bottom navigation hidden
+        GoRoute(
+          path: '/profile/address',
+          pageBuilder: (context, routeState) {
+            final fromCart =
+                routeState.uri.queryParameters['fromCart'] == 'true';
+
+            return _page(
+              routeState,
+              MilestoneApp6AddressScreen(
+                state: state,
+                fromCart: fromCart,
+              ),
+            );
+          },
+        ),
+
+
 
         GoRoute(
           path: '/my-orders',

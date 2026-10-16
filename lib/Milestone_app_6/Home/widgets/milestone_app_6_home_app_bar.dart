@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../Address/models/milestone_app_6_address_model.dart';
@@ -67,7 +68,7 @@ class _MilestoneApp6HomeAppBarState extends State<MilestoneApp6HomeAppBar>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
+    final primaryColor = MilestoneApp6Colors.red;
     final isDark = theme.brightness == Brightness.dark;
 
     final addressLabel = widget.selectedAddress == null

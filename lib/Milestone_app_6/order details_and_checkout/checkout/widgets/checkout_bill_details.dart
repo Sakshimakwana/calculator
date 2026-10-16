@@ -1,4 +1,5 @@
 
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class CheckoutBillDetails extends StatelessWidget {
@@ -93,7 +94,7 @@ class CheckoutBillDetails extends StatelessWidget {
             context,
             title: 'Discount',
             amount: '-${_formatAmount(discount)}',
-            amountColor: colorScheme.primary,
+            amountColor: MilestoneApp6Colors.red,
           ),
           Divider(
             height: 20,
@@ -104,7 +105,7 @@ class CheckoutBillDetails extends StatelessWidget {
             title: 'To Pay',
             amount: _formatAmount(totalPayment),
             isTotal: true,
-            amountColor: colorScheme.primary,
+            amountColor:MilestoneApp6Colors.red ,
           ),
         ],
       ),

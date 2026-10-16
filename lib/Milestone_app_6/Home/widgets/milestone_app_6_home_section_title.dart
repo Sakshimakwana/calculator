@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class MilestoneApp6HomeSectionTitle extends StatelessWidget {
@@ -42,7 +43,7 @@ class MilestoneApp6HomeSectionTitle extends StatelessWidget {
             child: Text(
               'See All',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
+                color: MilestoneApp6Colors.red,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),

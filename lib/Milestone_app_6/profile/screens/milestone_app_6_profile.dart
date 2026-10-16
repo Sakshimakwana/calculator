@@ -37,19 +37,12 @@ class MilestoneApp6ProfileScreen extends StatelessWidget {
                 .of(context)
                 .scaffoldBackgroundColor,
             leadingWidth: 80,
-            leading: TextButton.icon(
+            leading: IconButton(
               onPressed: () => context.go('/home'),
               icon: const Icon(
                 Icons.chevron_left_rounded,
-                size: 27,
-                color: MilestoneApp6Colors.orange,
-              ),
-              label: const Text(
-                'Home',
-                style: TextStyle(
-                  color: MilestoneApp6Colors.orange,
-                  fontSize: 14,
-                ),
+                size: 30,
+                color: MilestoneApp6Colors.ink,
               ),
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
@@ -159,7 +152,7 @@ class MilestoneApp6ProfileScreen extends StatelessWidget {
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF70452F), // Primary brown
+            backgroundColor:  MilestoneApp6Colors.red, // Primary brown
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(

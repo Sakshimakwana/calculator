@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class MilestoneApp6CartPaymentInfo extends StatelessWidget {
@@ -20,7 +21,7 @@ class MilestoneApp6CartPaymentInfo extends StatelessWidget {
           Icon(
             Icons.lock_outline_rounded,
             size: 19,
-            color: theme.colorScheme.primary,
+            color: MilestoneApp6Colors.red,
           ),
           const SizedBox(width: 9),
 

@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class HomeSearchBar extends StatefulWidget {
@@ -88,7 +89,9 @@ class _HomeSearchBarState extends State<HomeSearchBar>
     final hasText = widget.controller.text.trim().isNotEmpty;
     final showTextField = hasText || _focusNode.hasFocus;
 
-    final background = isDark ? const Color(0xFF2D2924) : const Color(0xFFF2E6D8);
+    final background = isDark
+        ? MilestoneApp6Colors.red.withOpacity(0.16)
+        : MilestoneApp6Colors.red.withOpacity(0.08);
 
     final foreground = isDark ? Colors.white70 : const Color(0xFF786858);
 
@@ -98,7 +101,7 @@ class _HomeSearchBarState extends State<HomeSearchBar>
         color: background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.10),
+          color: MilestoneApp6Colors.red.withOpacity(isDark ? 0.25 : 0.15),
         ),
       ),
       child: Row(

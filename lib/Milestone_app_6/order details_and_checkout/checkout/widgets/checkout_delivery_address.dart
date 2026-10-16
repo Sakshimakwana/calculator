@@ -1,4 +1,5 @@
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,7 +31,7 @@ class CheckoutDeliveryAddress extends StatelessWidget {
             children: [
               Icon(
                 Icons.location_on_rounded,
-                color: theme.colorScheme.primary,
+                color: MilestoneApp6Colors.red,
               ),
               const SizedBox(width: 8),
               const Expanded(
@@ -49,6 +50,9 @@ class CheckoutDeliveryAddress extends StatelessWidget {
                     extra: state,
                   );
                 },
+                style: TextButton.styleFrom(
+                  foregroundColor: MilestoneApp6Colors.red,
+                ),
                 child: Text(
                   address == null ? 'Add' : 'Change',
                 ),
@@ -63,7 +67,7 @@ class CheckoutDeliveryAddress extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.05),
+                color: MilestoneApp6Colors.red.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -71,7 +75,7 @@ class CheckoutDeliveryAddress extends StatelessWidget {
                 children: [
                   Icon(
                     _addressIcon(address.label),
-                    color: theme.colorScheme.primary,
+                    color: MilestoneApp6Colors.red,
                   ),
                   const SizedBox(width: 11),
                   Expanded(

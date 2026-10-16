@@ -21,6 +21,11 @@ class MilestoneApp6Shell extends StatefulWidget {
 }
 
 class _MilestoneApp6ShellState extends State<MilestoneApp6Shell> {
+  bool _shouldShowNavigation(String location) {
+    return location == '/home' ||
+        location == '/cart' ||
+        location == '/profile';
+  }
   // ==============================================================
   // BOTTOM NAVIGATION VISIBILITY
   // ==============================================================
@@ -99,27 +104,16 @@ class _MilestoneApp6ShellState extends State<MilestoneApp6Shell> {
     }
   }
 
-
-
-  // ==============================================================
-  // SCROLL LISTENER
-  // ==============================================================
-
   bool _handleScrollNotification(
     BuildContext context,
     ScrollNotification notification,
   ) {
     final location = GoRouterState.of(context).uri.path;
 
-    // ============================================================
-    // ONLY HOME
-    // ============================================================
-
-    if (!location.startsWith('/home')) {
+    if (location != '/home') {
       if (!_bottomNavVisible.value) {
         _bottomNavVisible.value = true;
       }
-
       return false;
     }
 
@@ -166,76 +160,87 @@ class _MilestoneApp6ShellState extends State<MilestoneApp6Shell> {
   // BUILD
   // ==============================================================
 
+
   @override
   Widget build(BuildContext context) {
     final tablet = MediaQuery.sizeOf(context).width >= 700;
-    return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-      if (didPop) return;
+    final location = GoRouterState.of(context).uri.path;
 
-      _handleBack(context);
-    },
-    child: Scaffold(
-    body: Stack(
-        children: [
-          // HOME CONTENT — scrolls behind the floating bar.
-          Positioned.fill(
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                return _handleScrollNotification(
-                  context,
-                  notification,
-                );
-              },
-              child: Row(
-                children: [
-                  if (tablet) _sideBar(context),
-                  Expanded(
-                    child: widget.child,
-                  ),
-                ],
+    final showNavigation = _shouldShowNavigation(location);
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBack(context);
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // SCREEN CONTENT
+            Positioned.fill(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  return _handleScrollNotification(
+                    context,
+                    notification,
+                  );
+                },
+                child: Row(
+                  children: [
+                    // Show sidebar only on the three main routes.
+                    if (tablet && showNavigation)
+                      _sideBar(context),
+
+                    Expanded(
+                      child: widget.child,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // FLOATING MOBILE NAVIGATION — overlays the content.
-          if (!tablet)
-            Positioned(
-              left: 20,
-              right: 20,
-              bottom: 0,
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _bottomNavVisible,
-                builder: (context, visible, child) {
-                  return AnimatedSlide(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                    offset: visible ? Offset.zero : const Offset(0, 1.5),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: visible ? 1 : 0,
-                      child: IgnorePointer(
-                        ignoring: !visible,
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).padding.bottom + 12,
-                          ),
-                          child: MilestoneApp6BottomNav(
-                            state: widget.state,
+            // FLOATING BOTTOM NAVIGATION
+            if (!tablet && showNavigation)
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: 0,
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: _bottomNavVisible,
+                  builder: (context, visible, child) {
+                    return AnimatedSlide(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      offset: visible
+                          ? Offset.zero
+                          : const Offset(0, 1.5),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: visible ? 1 : 0,
+                        child: IgnorePointer(
+                          ignoring: !visible,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              bottom:
+                              MediaQuery.of(context).padding.bottom + 12,
+                            ),
+                            child: MilestoneApp6BottomNav(
+                              state: widget.state,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
+
 
   // ==============================================================
   // SIDEBAR

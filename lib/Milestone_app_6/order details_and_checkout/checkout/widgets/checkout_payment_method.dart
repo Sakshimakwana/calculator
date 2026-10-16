@@ -1,4 +1,5 @@
 
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class CheckoutPaymentMethod extends StatelessWidget {
@@ -76,12 +77,12 @@ class CheckoutPaymentMethod extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? colorScheme.primary
+                ? MilestoneApp6Colors.red
                 : theme.dividerColor,
             width: isSelected ? 1.5 : 1,
           ),
           color: isSelected
-              ? colorScheme.primary.withValues(alpha: 0.06)
+              ? MilestoneApp6Colors.red.withValues(alpha: 0.06)
               : theme.cardColor,
         ),
         child: Row(
@@ -89,7 +90,7 @@ class CheckoutPaymentMethod extends StatelessWidget {
             Icon(
               icon,
               color: isSelected
-                  ? colorScheme.primary
+                  ? MilestoneApp6Colors.red
                   : theme.iconTheme.color,
             ),
             const SizedBox(width: 12),
@@ -101,12 +102,14 @@ class CheckoutPaymentMethod extends StatelessWidget {
                     title,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: MilestoneApp6Colors.red,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall,
+                    selectionColor: MilestoneApp6Colors.red,
                   ),
                 ],
               ),
@@ -114,6 +117,7 @@ class CheckoutPaymentMethod extends StatelessWidget {
             Radio<String>(
               value: value,
               groupValue: selectedPaymentMethod,
+              activeColor: MilestoneApp6Colors.red,
               onChanged: (newValue) {
                 if (newValue != null) {
                   onPaymentMethodChanged(newValue);

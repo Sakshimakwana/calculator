@@ -33,7 +33,7 @@ class MilestoneApp6Button extends StatelessWidget {
 
         style: ElevatedButton.styleFrom(
           backgroundColor:
-          MilestoneApp6Colors.orange,
+          MilestoneApp6Colors.red,
 
           foregroundColor: Colors.white,
 

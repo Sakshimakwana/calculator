@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/Address/models/milestone_app_6_address_model.dart';
@@ -38,12 +39,12 @@ class MilestoneApp6CartDeliveryAddress extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(.10),
+                  color: MilestoneApp6Colors.red.withOpacity(.10),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.location_on_outlined,
-                  color: theme.colorScheme.primary,
+                  color: MilestoneApp6Colors.red,
                 ),
               ),
               const SizedBox(width: 12),
@@ -82,7 +83,7 @@ class MilestoneApp6CartDeliveryAddress extends StatelessWidget {
                       : 'Change',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
+                    color: MilestoneApp6Colors.red,
                   ),
                 ),
               ),
@@ -109,7 +110,7 @@ class MilestoneApp6CartDeliveryAddress extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(.05),
+                color: MilestoneApp6Colors.red.withOpacity(.05),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -118,7 +119,7 @@ class MilestoneApp6CartDeliveryAddress extends StatelessWidget {
                   Icon(
                     _addressIcon(address!.label),
                     size: 19,
-                    color: theme.colorScheme.primary,
+                    color: MilestoneApp6Colors.red,
                   ),
                   const SizedBox(width: 10),
                   Expanded(

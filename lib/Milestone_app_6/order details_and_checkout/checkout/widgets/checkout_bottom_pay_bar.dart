@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class CheckoutBottomPayBar extends StatelessWidget {
@@ -58,7 +59,7 @@ class CheckoutBottomPayBar extends StatelessWidget {
                     '₹${totalPayment.toStringAsFixed(2)}',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
+                      color: MilestoneApp6Colors.red,
                     ),
                   ),
                 ],
@@ -75,11 +76,11 @@ class CheckoutBottomPayBar extends StatelessWidget {
                     await onPayPressed();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: colorScheme.onPrimary,
+                    backgroundColor: MilestoneApp6Colors.red,
+                    foregroundColor: Colors.white,
                     disabledBackgroundColor:
-                    colorScheme.primary.withValues(alpha: 0.65),
-                    disabledForegroundColor: colorScheme.onPrimary,
+                    MilestoneApp6Colors.red.withOpacity(0.65),
+                    disabledForegroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

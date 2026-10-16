@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class MilestoneApp6LogoutDialog {
@@ -22,17 +23,20 @@ class MilestoneApp6LogoutDialog {
               onPressed: () {
                 Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'Cancel',
+              style: TextButton.styleFrom(
+                foregroundColor: MilestoneApp6Colors.red,
               ),
+              child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
-              child: const Text(
-                'Logout',
+              style: FilledButton.styleFrom(
+                backgroundColor: MilestoneApp6Colors.red,
+                foregroundColor: Colors.white,
               ),
+              child: const Text('Logout'),
             ),
           ],
         );

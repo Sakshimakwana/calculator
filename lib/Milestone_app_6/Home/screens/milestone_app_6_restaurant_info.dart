@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/cart/data/cart_controller/cart_controller.dart';
 import 'package:flutter/material.dart';
@@ -336,6 +337,7 @@ class _MilestoneApp6RestaurantInfoScreenState
         child: CircleAvatar(
           backgroundColor: theme.colorScheme.surface,
           child: IconButton(
+            color:MilestoneApp6Colors.red ,
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () {
               context.pop();
@@ -756,7 +758,7 @@ class _MilestoneApp6RestaurantInfoScreenState
               Icon(
                 Icons.restaurant_menu_rounded,
                 size: 21,
-                color: theme.colorScheme.primary,
+                color: MilestoneApp6Colors.red,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -930,14 +932,12 @@ class _MilestoneApp6RestaurantInfoScreenState
                                   elevation: 0,
                                   backgroundColor: isAdding
                                       ? Colors.grey.shade300
-                                      : const Color(
-                                          0xFF9B4F3A,
-                                        ),
+                                      :  MilestoneApp6Colors.red,
                                   disabledBackgroundColor: isAdding
                                       ? const Color(0xFFF0E2DD)
                                       : Colors.grey.shade300,
                                   disabledForegroundColor: isAdding
-                                      ? const Color(0xFF6B3A2D)
+                                      ?MilestoneApp6Colors.red
                                       : Colors.white,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
@@ -956,7 +956,7 @@ class _MilestoneApp6RestaurantInfoScreenState
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                     color: isAdding
-                                        ? const Color(0xFF6B3A2D)
+                                        ?  MilestoneApp6Colors.red
                                         : available
                                             ? Colors.white
                                             : const Color(0xFF666666),
@@ -1385,7 +1385,7 @@ class _MilestoneApp6RestaurantInfoScreenState
             Icon(
               Icons.restaurant_menu_outlined,
               size: 55,
-              color: Theme.of(context).colorScheme.primary,
+              color: MilestoneApp6Colors.red,
             ),
             const SizedBox(height: 14),
             const Text(

@@ -20,15 +20,15 @@ class MilestoneApp6ProfileMenuItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLogout = title.toLowerCase() == 'logout';
 
-    const primaryBrown = Color(0xFF70452F);
+    const primaryred = MilestoneApp6Colors.red;
 
-    final foregroundColor = isLogout ? Colors.white : const Color(0xFF60331F);
+    final foregroundColor = isLogout ? Colors.white :MilestoneApp6Colors.red;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: isLogout
-            ? primaryBrown
+            ? primaryred
             : Theme.of(context).brightness == Brightness.dark
                 ? Theme.of(context).cardColor
                 : const Color(0xFFF5F6F8),

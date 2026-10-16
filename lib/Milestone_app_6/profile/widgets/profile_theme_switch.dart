@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../state/milestone_app_6_state.dart';
@@ -32,7 +33,7 @@ class MilestoneApp6ProfileThemeSwitch extends StatelessWidget {
         children: [
           const Icon(
             Icons.dark_mode_outlined,
-            color: Color(0xFF60331F),
+            color: MilestoneApp6Colors.red,
             size: 24,
           ),
           const SizedBox(width: 20),
@@ -63,7 +64,7 @@ class MilestoneApp6ProfileThemeSwitch extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: const Color(0xFF60331F),
+              color: MilestoneApp6Colors.red,
               borderRadius: BorderRadius.circular(30),
             ),
             child: Row(
@@ -114,7 +115,7 @@ class _ThemeOption extends StatelessWidget {
         child: Icon(
           icon,
           size: 18,
-          color: selected ? const Color(0xFF60331F) : Colors.white,
+          color: selected ? MilestoneApp6Colors.red : Colors.white,
         ),
       ),
     );

@@ -42,7 +42,7 @@ class MilestoneApp6ProfileHeader extends StatelessWidget {
                   width: 37,
                   height: 37,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF60331F),
+                    color: MilestoneApp6Colors.red,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -89,36 +89,6 @@ class MilestoneApp6ProfileHeader extends StatelessWidget {
               ),
             ),
           ],
-          // const SizedBox(height: 13),
-          // Container(
-          //   padding: const EdgeInsets.symmetric(
-          //     horizontal: 16,
-          //     vertical: 9,
-          //   ),
-          //   // decoration: BoxDecoration(
-          //   //   color: const Color(0xFFFFF1E3),
-          //   //   borderRadius: BorderRadius.circular(30),
-          //   // ),
-          //   // child: const Row(
-          //   //   mainAxisSize: MainAxisSize.min,
-          //   //   children: [
-          //   //     Icon(
-          //   //       Icons.workspace_premium_rounded,
-          //   //       color: Color(0xFF60331F),
-          //   //       size: 19,
-          //   //     ),
-          //   //     SizedBox(width: 8),
-          //   //     Text(
-          //   //       'Food Lover',
-          //   //       style: TextStyle(
-          //   //         color: Color(0xFF60331F),
-          //   //         fontSize: 14,
-          //   //         fontWeight: FontWeight.w600,
-          //   //       ),
-          //   //     ),
-          //   //   ],
-          //   // ),
-          // ),
         ],
       ),
     );

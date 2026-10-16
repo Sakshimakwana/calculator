@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 import 'package:app_matic_tech_flutter_app/Milestone_app_6/state/milestone_app_6_state.dart';
@@ -109,7 +110,23 @@ class _MilestoneApp6CartPromoSectionState
                 height: 48,
                 child: FilledButton(
                   onPressed: _applyPromoCode,
-                  child: const Text('Apply'),
+                  style: FilledButton.styleFrom(
+                    foregroundColor: MilestoneApp6Colors.red,
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(
+                      color: MilestoneApp6Colors.red,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Apply',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: MilestoneApp6Colors.red,
+                    ),
+                  ),
                 ),
               ),
             ],

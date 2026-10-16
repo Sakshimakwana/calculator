@@ -1,3 +1,4 @@
+import 'package:app_matic_tech_flutter_app/Milestone_app_6/theme/milestone_app_6_colors.dart';
 import 'package:flutter/material.dart';
 
 class CheckoutSteps extends StatelessWidget {
@@ -13,7 +14,7 @@ class CheckoutSteps extends StatelessWidget {
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.06),
+        color: MilestoneApp6Colors.red.withOpacity(0.06),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -30,7 +31,7 @@ class CheckoutSteps extends StatelessWidget {
               margin: const EdgeInsets.symmetric(
                 horizontal: 8,
               ),
-              color: theme.colorScheme.primary.withOpacity(0.25),
+              color: MilestoneApp6Colors.red.withOpacity(0.25),
             ),
           ),
           _Step(
@@ -83,7 +84,7 @@ class _Step extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active
-                ? theme.colorScheme.primary
+                ? MilestoneApp6Colors.red
                 : theme.dividerColor.withOpacity(0.35),
             shape: BoxShape.circle,
           ),
@@ -102,7 +103,7 @@ class _Step extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontWeight: active ? FontWeight.w800 : FontWeight.w500,
-            color: active ? theme.colorScheme.primary : theme.hintColor,
+            color: active ? MilestoneApp6Colors.red : theme.hintColor,
           ),
         ),
       ],
